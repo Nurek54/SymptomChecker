@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square" alt="Next.js" />
   <img src="https://img.shields.io/badge/XGBoost-2.x-orange?style=flat-square" alt="XGBoost" />
   <img src="https://img.shields.io/badge/Bielik-11B-purple?style=flat-square" alt="Bielik LLM" />
-  <img src="https://img.shields.io/badge/License-TBD-lightgrey?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/License-All_Rights_Reserved-red?style=flat-square" alt="License" />
 </p>
 
 <br />
@@ -30,7 +30,7 @@
 
 ## About
 
-**SymptomChecker** is a research-grade diagnostic chat assistant. The user describes their symptoms in Polish (English also supported), the system extracts them through a hybrid dictionary + multilingual embedding matcher, asks adaptive follow-up questions, and finally returns the **Top-3 most probable conditions** with a short clinical-style summary generated locally by a Polish LLM (Bielik 11B).
+**SymptomChecker** is a research-grade diagnostic chat assistant developed as part of an engineering thesis (*praca inżynierska*). The user describes their symptoms in Polish (English also supported), the system extracts them through a hybrid dictionary + multilingual embedding matcher, asks adaptive follow-up questions, and finally returns the **Top-3 most probable conditions** with a short clinical-style summary generated locally by a Polish LLM (Bielik 11B).
 
 The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) - letting the model both leverage strong batch training and adapt to drift over time.
 
@@ -131,6 +131,7 @@ SymptomChecker/
 ├── logs/
 ├── .env.example
 ├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
@@ -178,16 +179,19 @@ Other quantizations (Q4_K_M, Q5_K_M) work too - update `LLM_SLOTS["bielik"]["FIL
 
 #### Training datasets
 
-Place your training data at the paths defined in `backend/config.py`:
+The training datasets used for this project are **not redistributed in this repository** for size and licensing reasons. If you would like to obtain them for academic review, evaluation, or reproducing the results of the thesis, please contact the author (see [Contact](#contact)) - datasets will be shared on request.
+
+The application expects the following files at the paths defined in `backend/config.py`:
 
 | Path | Required for | Approx. size |
 |------|--------------|--------------|
 | `backend/data/Final_Dataset_Diseases_and_Symptoms.csv` | XGBoost initial training | ~130 MB |
+| `backend/data/Final_Dataset_Diseases_and_Symptoms.class_weight.csv` | Per-class sample weights (auto-applied) | ~30 KB |
 | `backend/data/calibration.csv` | River temperature calibration | ~30 MB |
 | `backend/data/train_remainder.csv` | River incremental updates (optional) | ~100 MB |
-| `backend/data/Final_Testset_for_Eval.csv` | held-out evaluation (already in repo) | ~13 MB |
+| `backend/data/Final_Testset_for_Eval.csv` | Held-out evaluation (already in repo) | ~13 MB |
 
-> *TODO (repo owner): if your training data is public, link it here. If private, document how to regenerate it from `Dataset_1/` or `Dataset_2/`.*
+If you want to use **your own dataset** instead, see the [Dataset Format](#dataset-format) section below - as long as your CSVs match the expected schema, the pipeline will train, calibrate, and evaluate without any code changes.
 
 ### Frontend
 
@@ -266,32 +270,95 @@ Once loaded, generation is fast (a few seconds per Top-3 summary on GPU).
 
 ## Dataset Format
 
-The XGBoost trainer expects a **wide binary feature matrix** in CSV form.
+If you don't have the original training data and want to use your own, the CSV files must follow the schema below. Match the schema and the entire training, calibration and evaluation pipeline will work without code changes.
 
-### Required columns
+### 1. Main training CSV - `Final_Dataset_Diseases_and_Symptoms.csv`
 
-- **`diseases`** *(string)* - the target label (disease name). Required.
-- **One column per symptom** *(integer 0 or 1)* - binary presence/absence. Names must match the symptom keys in `backend/data/symptoms_pl_en.json` (English side).
-- **`weight`** *(float, optional)* - sample weight. Auto-derived from `class_weight.csv` if absent, or defaults to `1.0`.
+A **wide binary feature matrix** in CSV form. One row = one labeled patient case.
 
-Reserved column names: `diseases`, `xgb_label`, `weight` - don't use these as features.
+**Required columns:**
 
-### Example
+| Column | Type | Description |
+|--------|------|-------------|
+| `diseases` | string | Target label - disease name (e.g. `"Influenza"`). **Required.** |
+| `<symptom_name>` × N | int (0/1) | One column per symptom, binary presence/absence. Names must match the **English keys** in `backend/data/symptoms_pl_en.json`. |
+| `weight` | float | *(Optional)* Per-sample weight. Auto-derived from `class_weight.csv` if absent; defaults to `1.0`. |
+
+**Reserved column names** (do not use as features): `diseases`, `xgb_label`, `weight`.
+
+**Example:**
 
 ```csv
-diseases,fever,cough,headache,nausea,fatigue,sore_throat,...
-Influenza,1,1,1,0,1,1,...
-COVID-19,1,1,0,1,1,1,...
-Migraine,0,0,1,1,1,0,...
-Common Cold,0,1,1,0,1,1,...
+diseases,fever,cough,headache,nausea,fatigue,sore_throat,chest_pain,...
+Influenza,1,1,1,0,1,1,0,...
+COVID-19,1,1,0,1,1,1,0,...
+Migraine,0,0,1,1,1,0,0,...
+Common Cold,0,1,1,0,1,1,0,...
+Pneumonia,1,1,0,0,1,0,1,...
 ```
 
-Notes:
+**Notes:**
 - Rows with `NaN` are dropped automatically.
-- Symptom column names are **case-sensitive**.
-- Internally the classifier uses `uint8` 0/1 - strings or floats will be coerced or rejected.
+- Symptom column names are **case-sensitive** and must match the dictionary keys exactly.
+- The classifier internally uses `uint8` 0/1 - strings or floats will be coerced or rejected.
+- Each disease class should have **at least 3 samples** for stratified 3-fold CV; classes with fewer samples are kept for final training but excluded from hyperparameter search.
 
-The `calibration.csv` file (used by River) follows the same schema.
+### 2. Class weight CSV - `Final_Dataset_Diseases_and_Symptoms.class_weight.csv`
+
+Used as a fallback to populate `weight` when the main CSV doesn't include it. Already shipped in the repo, but you can regenerate it from your dataset.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `disease` | string | Disease name (must match values in `diseases` column of main CSV) |
+| `count` | int | Number of samples for this disease |
+| `class_weight` | float | Weight multiplier applied to samples of this class |
+
+**Example:**
+
+```csv
+disease,count,class_weight
+Influenza,1850,1.0
+COVID-19,2100,0.88
+Migraine,420,4.4
+Pneumonia,950,1.95
+```
+
+### 3. Calibration CSV - `calibration.csv`
+
+Same schema as the main training CSV. A held-out portion (typically 5–10% of training data, stratified by disease) used by the River temperature calibrator. The `weight` column is optional here.
+
+### 4. Test set CSV - `Final_Testset_for_Eval.csv`
+
+Same schema as the main training CSV. Used by `ml_validation_runner` for end-to-end evaluation. **Already shipped in the repo.**
+
+### 5. Symptom dictionary - `symptoms_pl_en.json`
+
+Maps Polish symptom phrases to English keys (which become CSV column names). Already shipped in the repo. Format:
+
+```json
+{
+  "gorączka": "fever",
+  "kaszel": "cough",
+  "ból głowy": "headache",
+  "ból gardła": "sore_throat",
+  ...
+}
+```
+
+If you add new symptoms to your CSV, you also need to add the PL↔EN mapping here so the symptom matcher can extract them from user input.
+
+### 6. Disease dictionary - `diseases_pl_en.json`
+
+Same idea, but for diseases - used by the LLM prompt localizer to translate Top-3 results into Polish. Format:
+
+```json
+{
+  "Influenza": "Grypa",
+  "Migraine": "Migrena",
+  "Pneumonia": "Zapalenie płuc",
+  ...
+}
+```
 
 ## API Endpoints
 
@@ -414,42 +481,22 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `TOPN_DIAGNOSES` | `3` | Number of diagnoses returned |
 | `SUMMARY_MODE` | `"llm"` | `"llm"` or `"template"` |
 
-## Tests
-
-```bash
-# Backend
-cd backend
-pytest
-
-# Frontend - unit (vitest)
-cd frontend
-npm run test
-
-# Frontend - e2e (Playwright)
-cd frontend
-npx playwright install      # first run only
-npm run test:e2e
-```
-
-## Roadmap / Known Issues
-
-- [ ] Move `_uid()` from three routers into a shared `Depends`
-- [ ] `SessionStore` - add TTL + eviction; not safe under multi-worker setups
-- [ ] Refactor `prompt_builder.py` (620 lines, four responsibilities)
-- [ ] Replace `print()` with the project logger in ML modules
-- [ ] Replace `conftest.py` monkey-patches with proper integration tests
-- [ ] Move hardcoded thresholds in `symptom_matcher` into config
-
-## Acknowledgments
-
-- **Bielik LLM** by [SpeakLeash](https://huggingface.co/speakleash) - the open Polish-language model that powers the diagnosis summaries
-- Built with the help of **vibe coding** - AI-assisted development through natural-language conversation with [Claude](https://claude.ai)
-- XGBoost, scikit-learn, River, FastAPI, Next.js - the open-source giants this project stands on
-
 ## License
 
-*TODO - choose one (MIT / Apache-2.0 / GPL / proprietary).*
+**Copyright © 2026 Grzegorz Sienkiewicz. All Rights Reserved.**
+
+This software was developed as part of an engineering thesis (*praca inżynierska*). It is published on GitHub for **academic review and portfolio purposes only**. No license is granted to use, copy, modify, distribute, sublicense, or commercialize the code, in whole or in part, without the prior written consent of the author.
+
+If you would like to use any part of this project - for academic citation, research, evaluation, or any other purpose - please contact the author (see [Contact](#contact) below). Permissions will be considered on a case-by-case basis.
+
+Third-party open-source dependencies remain governed by their own licenses (see `backend/requirements.txt` and `frontend/package.json`).
+
+See the [LICENSE](LICENSE) file for full terms.
 
 ## Contact
 
-Grzegorz Sienkiewicz - [@Nurek54](https://github.com/Nurek54)
+**Grzegorz Sienkiewicz**
+✉️ gsienkiewicz03@gmail.com
+🐙 GitHub: [@Nurek54](https://github.com/Nurek54)
+
+For training dataset access, license inquiries, or questions about the thesis, please reach out via email.
