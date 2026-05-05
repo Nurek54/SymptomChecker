@@ -23,7 +23,7 @@
 <br />
 
 <p align="center">
-  <img src="preview.png" alt="SymptomChecker — Hero" width="720" />
+  <img src="preview.png" alt="SymptomChecker - Hero" width="720" />
 </p>
 
 ---
@@ -32,7 +32,7 @@
 
 **SymptomChecker** is a research-grade diagnostic chat assistant. The user describes their symptoms in Polish (English also supported), the system extracts them through a hybrid dictionary + multilingual embedding matcher, asks adaptive follow-up questions, and finally returns the **Top-3 most probable conditions** with a short clinical-style summary generated locally by a Polish LLM (Bielik 11B).
 
-The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) — letting the model both leverage strong batch training and adapt to drift over time.
+The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) - letting the model both leverage strong batch training and adapt to drift over time.
 
 > ⚠️ **Disclaimer.** This is an educational / research project. **It is NOT a substitute for professional medical advice.** The output is not a medical diagnosis. If your symptoms worsen or red flags appear, contact a doctor or emergency services (112 / 911).
 
@@ -42,21 +42,21 @@ The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tune
 Symptom input (PL/EN)  →  Dictionary + embedding match  →  Follow-up loop  →  Ensemble Top-3  →  LLM summary
 ```
 
-The user never sees raw probabilities or model internals — only the chat, the running symptom list, and the final diagnosis card.
+The user never sees raw probabilities or model internals - only the chat, the running symptom list, and the final diagnosis card.
 
 ## Features
 
-- **Bilingual symptom extraction** — multilingual `sentence-transformers` matcher backed by a curated PL/EN dictionary, with rule-first fallback for short / ambiguous tokens
-- **Adaptive follow-up** — model-split selector picks the next best question based on which features would most reduce ensemble disagreement
-- **Hybrid ensemble** — XGBoost (Bayesian-tuned, 32 iters × 3-fold CV, GPU-accelerated) fused with River OVR Logistic / FTRL (online learning) using dynamic confidence-gap weights
-- **Local LLM** — Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers`, no external API calls, no data leaves the machine
-- **Calibrated probabilities** — temperature scaling on both XGBoost and River outputs for honest confidence
-- **Stateful sessions** — server-side session store tracks symptoms, follow-ups asked, and prediction history per user
-- **Auth** — Supabase JWT (HS256 + JWKS fallback) with local profile sync, plus optional guest mode
-- **Persistent history** — SQLAlchemy 2.x ORM stores conversations, messages, extracted symptoms and triage results
-- **Validation pipeline** — `ml_validation_runner` produces full reports: confusion matrices, per-class F1, top-50 frequent/rare slices, all rendered as SVG
-- **Production-leaning hygiene** — CORS, secure cookies, request validation, sensitive-data masking in logs
-- **Comprehensive test suite** — pytest for backend (units + API), vitest for component logic, Playwright for end-to-end flows
+- **Bilingual symptom extraction** - multilingual `sentence-transformers` matcher backed by a curated PL/EN dictionary, with rule-first fallback for short / ambiguous tokens
+- **Adaptive follow-up** - model-split selector picks the next best question based on which features would most reduce ensemble disagreement
+- **Hybrid ensemble** - XGBoost (Bayesian-tuned, 32 iters × 3-fold CV, GPU-accelerated) fused with River OVR Logistic / FTRL (online learning) using dynamic confidence-gap weights
+- **Local LLM** - Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers`, no external API calls, no data leaves the machine
+- **Calibrated probabilities** - temperature scaling on both XGBoost and River outputs for honest confidence
+- **Stateful sessions** - server-side session store tracks symptoms, follow-ups asked, and prediction history per user
+- **Auth** - Supabase JWT (HS256 + JWKS fallback) with local profile sync, plus optional guest mode
+- **Persistent history** - SQLAlchemy 2.x ORM stores conversations, messages, extracted symptoms and triage results
+- **Validation pipeline** - `ml_validation_runner` produces full reports: confusion matrices, per-class F1, top-50 frequent/rare slices, all rendered as SVG
+- **Production-leaning hygiene** - CORS, secure cookies, request validation, sensitive-data masking in logs
+- **Comprehensive test suite** - pytest for backend (units + API), vitest for component logic, Playwright for end-to-end flows
 
 ## Tech Stack
 
@@ -142,7 +142,7 @@ SymptomChecker/
 - **Node.js 18+** and npm
 - **CUDA-capable GPU** strongly recommended (for fast XGBoost training and LLM inference). CPU works but is significantly slower.
 - **~25 GB free disk space** (LLM weights, ML models, datasets)
-- **Supabase project** — optional; the app can run in guest mode without it
+- **Supabase project** - optional; the app can run in guest mode without it
 
 ### Backend
 
@@ -156,13 +156,13 @@ pip install -r requirements.txt
 cp .env.example .env             # fill in at minimum AUTH_SECRET_KEY
 ```
 
-> `bitsandbytes` is commented out by default — known issues on Windows. Uncomment on Linux if you need 8-bit quantization for the Transformers fallback path.
+> `bitsandbytes` is commented out by default - known issues on Windows. Uncomment on Linux if you need 8-bit quantization for the Transformers fallback path.
 
 ### Download external artifacts
 
-These files are excluded from the repo due to size — you need to provide them yourself.
+These files are excluded from the repo due to size - you need to provide them yourself.
 
-#### LLM weights — Bielik 11B GGUF
+#### LLM weights - Bielik 11B GGUF
 
 Download `Bielik-11B-v2.3-Instruct.Q6_K.gguf` (~8.7 GB) from HuggingFace:
 
@@ -174,7 +174,7 @@ Place at:
 backend/weights/bielik-gguf/Bielik-11B-v2.3-Instruct.Q6_K.gguf
 ```
 
-Other quantizations (Q4_K_M, Q5_K_M) work too — update `LLM_SLOTS["bielik"]["FILENAME"]` in `backend/config.py`.
+Other quantizations (Q4_K_M, Q5_K_M) work too - update `LLM_SLOTS["bielik"]["FILENAME"]` in `backend/config.py`.
 
 #### Training datasets
 
@@ -200,18 +200,18 @@ cp .env.example .env.local       # fill in NEXT_PUBLIC_SUPABASE_URL etc.
 ### Running
 
 ```bash
-# Terminal 1 — backend
+# Terminal 1 - backend
 cd backend
 python main.py
 # default: http://127.0.0.1:8000  (Swagger docs at /docs)
 
-# Terminal 2 — frontend
+# Terminal 2 - frontend
 cd frontend
 npm run dev
 # http://localhost:3000
 ```
 
-## First Run — Training Pipeline
+## First Run - Training Pipeline
 
 The very first time you start the backend, **the system trains the ML models from scratch** on your dataset. Subsequent runs reuse the trained artifacts and start in seconds.
 
@@ -219,16 +219,16 @@ The very first time you start the backend, **the system trains the ML models fro
 
 `StartupManager` checks for the presence of:
 
-- `backend/ml/xgb_model.joblib` — main XGBoost classifier
-- `backend/ml/label_encoder.joblib` — disease label encoder
-- `backend/ml/xgb_best_params.joblib` — Bayes-optimized hyperparameters
-- `backend/ml/river_ovr_ftrl.joblib` — River OVR/FTRL model (shipped in the repo)
-- `backend/ml/river_ovr_ftrl.calibration.joblib` — River temperature calibrator
+- `backend/ml/xgb_model.joblib` - main XGBoost classifier
+- `backend/ml/label_encoder.joblib` - disease label encoder
+- `backend/ml/xgb_best_params.joblib` - Bayes-optimized hyperparameters
+- `backend/ml/river_ovr_ftrl.joblib` - River OVR/FTRL model (shipped in the repo)
+- `backend/ml/river_ovr_ftrl.calibration.joblib` - River temperature calibrator
 
 If any of the XGB artifacts are missing, the full pipeline runs:
 
 1. **Load training data** from `DATA_CSV` (default: `Final_Dataset_Diseases_and_Symptoms.csv`)
-2. **Bayesian hyperparameter search** — `XGB_N_ITER_BAYES` × `XGB_CV_SPLITS`-fold CV (default: 32 × 3 = 96 fits)
+2. **Bayesian hyperparameter search** - `XGB_N_ITER_BAYES` × `XGB_CV_SPLITS`-fold CV (default: 32 × 3 = 96 fits)
 3. **Final training** on the full dataset with the best params
 4. **Temperature calibration** for probability outputs
 5. **Save artifacts** to `backend/ml/`
@@ -249,18 +249,18 @@ Speed up dev iterations by lowering `XGB_N_ITER_BAYES` to `8–16` in `backend/c
 
 ### River calibration
 
-- **First start with `RIVER_CALIBRATE_ON_START=True`**: reads `calibration.csv`, fits a temperature scalar — typically **30–90 seconds**
+- **First start with `RIVER_CALIBRATE_ON_START=True`**: reads `calibration.csv`, fits a temperature scalar - typically **30–90 seconds**
 - **Subsequent starts**: calibrator loaded from disk (~1 s)
 
 ### LLM loading
 
-Bielik 11B Q6_K is **not trained** — only loaded into memory:
+Bielik 11B Q6_K is **not trained** - only loaded into memory:
 
 | Setup | Load time |
 |-------|-----------|
 | GPU + NVMe SSD | ~30–90 s |
 | CPU + NVMe | ~1–2 min |
-| HDD | painfully slow — move the GGUF to an SSD |
+| HDD | painfully slow - move the GGUF to an SSD |
 
 Once loaded, generation is fast (a few seconds per Top-3 summary on GPU).
 
@@ -270,11 +270,11 @@ The XGBoost trainer expects a **wide binary feature matrix** in CSV form.
 
 ### Required columns
 
-- **`diseases`** *(string)* — the target label (disease name). Required.
-- **One column per symptom** *(integer 0 or 1)* — binary presence/absence. Names must match the symptom keys in `backend/data/symptoms_pl_en.json` (English side).
-- **`weight`** *(float, optional)* — sample weight. Auto-derived from `class_weight.csv` if absent, or defaults to `1.0`.
+- **`diseases`** *(string)* - the target label (disease name). Required.
+- **One column per symptom** *(integer 0 or 1)* - binary presence/absence. Names must match the symptom keys in `backend/data/symptoms_pl_en.json` (English side).
+- **`weight`** *(float, optional)* - sample weight. Auto-derived from `class_weight.csv` if absent, or defaults to `1.0`.
 
-Reserved column names: `diseases`, `xgb_label`, `weight` — don't use these as features.
+Reserved column names: `diseases`, `xgb_label`, `weight` - don't use these as features.
 
 ### Example
 
@@ -289,7 +289,7 @@ Common Cold,0,1,1,0,1,1,...
 Notes:
 - Rows with `NaN` are dropped automatically.
 - Symptom column names are **case-sensitive**.
-- Internally the classifier uses `uint8` 0/1 — strings or floats will be coerced or rejected.
+- Internally the classifier uses `uint8` 0/1 - strings or floats will be coerced or rejected.
 
 The `calibration.csv` file (used by River) follows the same schema.
 
@@ -298,7 +298,7 @@ The `calibration.csv` file (used by River) follows the same schema.
 ### Chat
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/chat` | Main entry — send user message, get extracted symptoms + Top-3 diagnoses + LLM summary |
+| `POST` | `/chat` | Main entry - send user message, get extracted symptoms + Top-3 diagnoses + LLM summary |
 
 ### Auth
 | Method | Endpoint | Description |
@@ -346,7 +346,7 @@ Full Swagger docs at `http://127.0.0.1:8000/docs` once the backend is running.
 
 ## Configuration
 
-All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides come from `.env`. Below are the most relevant settings — full list in the file itself.
+All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides come from `.env`. Below are the most relevant settings - full list in the file itself.
 
 ### Runtime / environment
 
@@ -361,9 +361,9 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 
 | Setting | Source | Default | Purpose |
 |---------|--------|---------|---------|
-| `AUTH_SECRET_KEY` | env | — | JWT secret (fallback when no Supabase) |
-| `SUPABASE_URL` | env | — | Supabase project URL |
-| `SUPABASE_JWT_SECRET` | env | — | Supabase HS256 JWT secret |
+| `AUTH_SECRET_KEY` | env | - | JWT secret (fallback when no Supabase) |
+| `SUPABASE_URL` | env | - | Supabase project URL |
+| `SUPABASE_JWT_SECRET` | env | - | Supabase HS256 JWT secret |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | env | `60` | JWT lifetime |
 | `SESSION_COOKIE_SECURE` | env | `false` | set `true` over HTTPS |
 
@@ -421,11 +421,11 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 cd backend
 pytest
 
-# Frontend — unit (vitest)
+# Frontend - unit (vitest)
 cd frontend
 npm run test
 
-# Frontend — e2e (Playwright)
+# Frontend - e2e (Playwright)
 cd frontend
 npx playwright install      # first run only
 npm run test:e2e
@@ -434,7 +434,7 @@ npm run test:e2e
 ## Roadmap / Known Issues
 
 - [ ] Move `_uid()` from three routers into a shared `Depends`
-- [ ] `SessionStore` — add TTL + eviction; not safe under multi-worker setups
+- [ ] `SessionStore` - add TTL + eviction; not safe under multi-worker setups
 - [ ] Refactor `prompt_builder.py` (620 lines, four responsibilities)
 - [ ] Replace `print()` with the project logger in ML modules
 - [ ] Replace `conftest.py` monkey-patches with proper integration tests
@@ -442,14 +442,14 @@ npm run test:e2e
 
 ## Acknowledgments
 
-- **Bielik LLM** by [SpeakLeash](https://huggingface.co/speakleash) — the open Polish-language model that powers the diagnosis summaries
-- Built with the help of **vibe coding** — AI-assisted development through natural-language conversation with [Claude](https://claude.ai)
-- XGBoost, scikit-learn, River, FastAPI, Next.js — the open-source giants this project stands on
+- **Bielik LLM** by [SpeakLeash](https://huggingface.co/speakleash) - the open Polish-language model that powers the diagnosis summaries
+- Built with the help of **vibe coding** - AI-assisted development through natural-language conversation with [Claude](https://claude.ai)
+- XGBoost, scikit-learn, River, FastAPI, Next.js - the open-source giants this project stands on
 
 ## License
 
-*TODO — choose one (MIT / Apache-2.0 / GPL / proprietary).*
+*TODO - choose one (MIT / Apache-2.0 / GPL / proprietary).*
 
 ## Contact
 
-Grzegorz Sienkiewicz — [@Nurek54](https://github.com/Nurek54)
+Grzegorz Sienkiewicz - [@Nurek54](https://github.com/Nurek54)
