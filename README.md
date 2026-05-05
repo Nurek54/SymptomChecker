@@ -34,7 +34,7 @@
 
 The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) - letting the model both leverage strong batch training and adapt to drift over time.
 
-> ⚠️ **Disclaimer.** This is an educational / research project. **It is NOT a substitute for professional medical advice.** The output is not a medical diagnosis. If your symptoms worsen or red flags appear, contact a doctor or emergency services (112 / 911).
+> ⚠️ **Disclaimer.** This is an educational / research project. **It is NOT a substitute for professional medical advice.** The output is not a medical diagnosis. If your symptoms worsen or red flags appear, contact a doctor or emergency services.
 
 ## User Flow
 
