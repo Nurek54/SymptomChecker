@@ -1,0 +1,3094 @@
+[
+{
+"en": "abdominal aortic aneurysm",
+"pl": "tętniak aorty brzusznej"
+},
+{
+"en": "abdominal hernia",
+"pl": "przepuklina brzuszna"
+},
+{
+"en": "abscess of nose",
+"pl": "ropień nosa"
+},
+{
+"en": "abscess of the lung",
+"pl": "ropień płuca"
+},
+{
+"en": "abscess of the pharynx",
+"pl": "ropień gardła"
+},
+{
+"en": "acanthosis nigricans",
+"pl": "rogowacenie ciemne"
+},
+{
+"en": "acariasis",
+"pl": "akaroza"
+},
+{
+"en": "achalasia",
+"pl": "achalazja"
+},
+{
+"en": "acne",
+"pl": "trądzik"
+},
+{
+"en": "actinic keratosis",
+"pl": "rogowacenie słoneczne"
+},
+{
+"en": "acute bronchiolitis",
+"pl": "ostre zapalenie oskrzelików"
+},
+{
+"en": "acute bronchitis",
+"pl": "ostre zapalenie oskrzeli"
+},
+{
+"en": "acute bronchospasm",
+"pl": "ostry skurcz oskrzeli"
+},
+{
+"en": "acute fatty liver of pregnancy (aflp)",
+"pl": "ostre stłuszczenie wątroby ciężarnych (AFLP)"
+},
+{
+"en": "acute glaucoma",
+"pl": "ostra jaskra"
+},
+{
+"en": "acute kidney injury",
+"pl": "ostre uszkodzenie nerek"
+},
+{
+"en": "acute otitis media",
+"pl": "ostre zapalenie ucha środkowego"
+},
+{
+"en": "acute pancreatitis",
+"pl": "ostre zapalenie trzustki"
+},
+{
+"en": "acute respiratory distress syndrome (ards)",
+"pl": "zespół ostrej niewydolności oddechowej (ARDS)"
+},
+{
+"en": "acute sinusitis",
+"pl": "ostre zapalenie zatok"
+},
+{
+"en": "acute stress reaction",
+"pl": "ostra reakcja na stres"
+},
+{
+"en": "adhesive capsulitis of the shoulder",
+"pl": "zespół zamrożonego barku"
+},
+{
+"en": "adjustment reaction",
+"pl": "zaburzenie adaptacyjne"
+},
+{
+"en": "adrenal adenoma",
+"pl": "gruczolak nadnercza"
+},
+{
+"en": "adrenal cancer",
+"pl": "rak nadnercza"
+},
+{
+"en": "alcohol abuse",
+"pl": "nadużywanie alkoholu"
+},
+{
+"en": "alcohol intoxication",
+"pl": "zatrucie alkoholowe"
+},
+{
+"en": "alcohol withdrawal",
+"pl": "zespół odstawienia alkoholu"
+},
+{
+"en": "alcoholic liver disease",
+"pl": "alkoholowa choroba wątroby"
+},
+{
+"en": "allergy",
+"pl": "alergia"
+},
+{
+"en": "allergy to animals",
+"pl": "alergia na zwierzęta"
+},
+{
+"en": "alopecia",
+"pl": "łysienie"
+},
+{
+"en": "alzheimer disease",
+"pl": "choroba Alzheimera"
+},
+{
+"en": "amblyopia",
+"pl": "niedowidzenie"
+},
+{
+"en": "amyloidosis",
+"pl": "amyloidoza"
+},
+{
+"en": "amyotrophic lateral sclerosis (als)",
+"pl": "stwardnienie zanikowe boczne (ALS)"
+},
+{
+"en": "anal fissure",
+"pl": "szczelina odbytu"
+},
+{
+"en": "anal fistula",
+"pl": "przetoka odbytu"
+},
+{
+"en": "anemia",
+"pl": "niedokrwistość"
+},
+{
+"en": "anemia due to chronic kidney disease",
+"pl": "niedokrwistość w przebiegu przewlekłej choroby nerek"
+},
+{
+"en": "anemia due to malignancy",
+"pl": "niedokrwistość w przebiegu choroby nowotworowej"
+},
+{
+"en": "anemia of chronic disease",
+"pl": "niedokrwistość chorób przewlekłych"
+},
+{
+"en": "angina",
+"pl": "dławica piersiowa"
+},
+{
+"en": "ankylosing spondylitis",
+"pl": "zesztywniające zapalenie stawów kręgosłupa"
+},
+{
+"en": "anxiety",
+"pl": "zaburzenie lękowe"
+},
+{
+"en": "aortic valve disease",
+"pl": "choroba zastawki aortalnej"
+},
+{
+"en": "aphakia",
+"pl": "afakia"
+},
+{
+"en": "aphthous ulcer",
+"pl": "aftowe zapalenie jamy ustnej"
+},
+{
+"en": "aplastic anemia",
+"pl": "niedokrwistość aplastyczna"
+},
+{
+"en": "appendicitis",
+"pl": "zapalenie wyrostka robaczkowego"
+},
+{
+"en": "arrhythmia",
+"pl": "arytmia"
+},
+{
+"en": "arthritis of the hip",
+"pl": "zapalenie stawu biodrowego"
+},
+{
+"en": "ascending cholangitis",
+"pl": "wstępujące zapalenie dróg żółciowych"
+},
+{
+"en": "asperger syndrome",
+"pl": "zespół Aspergera"
+},
+{
+"en": "aspergillosis",
+"pl": "aspergiloza"
+},
+{
+"en": "asthma",
+"pl": "astma"
+},
+{
+"en": "astigmatism",
+"pl": "astygmatyzm"
+},
+{
+"en": "atelectasis",
+"pl": "niedodma"
+},
+{
+"en": "athlete's foot",
+"pl": "grzybica stóp"
+},
+{
+"en": "atonic bladder",
+"pl": "atoniczny pęcherz moczowy"
+},
+{
+"en": "atrial fibrillation",
+"pl": "migotanie przedsionków"
+},
+{
+"en": "atrial flutter",
+"pl": "trzepotanie przedsionków"
+},
+{
+"en": "atrophic skin condition",
+"pl": "zanikowe zmiany skórne"
+},
+{
+"en": "atrophic vaginitis",
+"pl": "zanikowe zapalenie pochwy"
+},
+{
+"en": "atrophy of the corpus cavernosum",
+"pl": "zanik ciał jamistych"
+},
+{
+"en": "attention deficit hyperactivity disorder (adhd)",
+"pl": "zespół nadpobudliwości psychoruchowej z deficytem uwagi (ADHD)"
+},
+{
+"en": "autism",
+"pl": "autyzm"
+},
+{
+"en": "autonomic nervous system disorder",
+"pl": "zaburzenie autonomicznego układu nerwowego"
+},
+{
+"en": "avascular necrosis",
+"pl": "jałowa martwica kości"
+},
+{
+"en": "balanitis",
+"pl": "zapalenie żołędzi"
+},
+{
+"en": "bell palsy",
+"pl": "porażenie Bella"
+},
+{
+"en": "benign kidney cyst",
+"pl": "łagodna torbiel nerki"
+},
+{
+"en": "benign paroxysmal positional vertical (bppv)",
+"pl": "łagodne napadowe położeniowe zawroty głowy (BPPV)"
+},
+{
+"en": "benign prostatic hyperplasia (bph)",
+"pl": "łagodny przerost gruczołu krokowego (BPH)"
+},
+{
+"en": "benign vaginal discharge (leukorrhea)",
+"pl": "upławy"
+},
+{
+"en": "bipolar disorder",
+"pl": "choroba afektywna dwubiegunowa"
+},
+{
+"en": "birth trauma",
+"pl": "uraz okołoporodowy"
+},
+{
+"en": "bladder cancer",
+"pl": "rak pęcherza moczowego"
+},
+{
+"en": "bladder disorder",
+"pl": "choroba pęcherza moczowego"
+},
+{
+"en": "bladder obstruction",
+"pl": "niedrożność pęcherza moczowego"
+},
+{
+"en": "blepharitis",
+"pl": "zapalenie powiek"
+},
+{
+"en": "blepharospasm",
+"pl": "skurcz powiek"
+},
+{
+"en": "bone cancer",
+"pl": "nowotwór kości"
+},
+{
+"en": "bone disorder",
+"pl": "choroba kości"
+},
+{
+"en": "bone spur of the calcaneous",
+"pl": "ostroga piętowa"
+},
+{
+"en": "brachial neuritis",
+"pl": "zapalenie splotu ramiennego"
+},
+{
+"en": "brain cancer",
+"pl": "nowotwór mózgu"
+},
+{
+"en": "breast cancer",
+"pl": "rak piersi"
+},
+{
+"en": "breast cyst",
+"pl": "torbiel piersi"
+},
+{
+"en": "breast infection (mastitis)",
+"pl": "zapalenie piersi"
+},
+{
+"en": "broken tooth",
+"pl": "złamany ząb"
+},
+{
+"en": "bunion",
+"pl": "haluks"
+},
+{
+"en": "burn",
+"pl": "oparzenie"
+},
+{
+"en": "bursitis",
+"pl": "zapalenie kaletki"
+},
+{
+"en": "callus",
+"pl": "modzel"
+},
+{
+"en": "carbon monoxide poisoning",
+"pl": "zatrucie tlenkiem węgla"
+},
+{
+"en": "carcinoid syndrome",
+"pl": "zespół rakowiaka"
+},
+{
+"en": "cardiac arrest",
+"pl": "nagłe zatrzymanie krążenia"
+},
+{
+"en": "cardiomyopathy",
+"pl": "kardiomiopatia"
+},
+{
+"en": "carpal tunnel syndrome",
+"pl": "zespół cieśni nadgarstka"
+},
+{
+"en": "cat scratch disease",
+"pl": "choroba kociego pazura"
+},
+{
+"en": "cataract",
+"pl": "zaćma"
+},
+{
+"en": "celiac disease",
+"pl": "celiakia"
+},
+{
+"en": "cellulitis or abscess of mouth",
+"pl": "zapalenie tkanki łącznej lub ropień jamy ustnej"
+},
+{
+"en": "central atherosclerosis",
+"pl": "miażdżyca"
+},
+{
+"en": "central retinal artery or vein occlusion",
+"pl": "zamknięcie centralnej tętnicy lub żyły siatkówki"
+},
+{
+"en": "cerebral edema",
+"pl": "obrzęk mózgu"
+},
+{
+"en": "cerebral palsy",
+"pl": "mózgowe porażenie dziecięce"
+},
+{
+"en": "cervical cancer",
+"pl": "rak szyjki macicy"
+},
+{
+"en": "cervical disorder",
+"pl": "choroba szyjki macicy"
+},
+{
+"en": "cervicitis",
+"pl": "zapalenie szyjki macicy"
+},
+{
+"en": "chalazion",
+"pl": "gradówka"
+},
+{
+"en": "chickenpox",
+"pl": "ospa wietrzna"
+},
+{
+"en": "chlamydia",
+"pl": "chlamydioza"
+},
+{
+"en": "cholecystitis",
+"pl": "zapalenie pęcherzyka żółciowego"
+},
+{
+"en": "choledocholithiasis",
+"pl": "kamica przewodu żółciowego wspólnego"
+},
+{
+"en": "cholesteatoma",
+"pl": "perlaka"
+},
+{
+"en": "chondromalacia of the patella",
+"pl": "chondromalacja rzepki"
+},
+{
+"en": "chorioretinitis",
+"pl": "zapalenie naczyniówki i siatkówki"
+},
+{
+"en": "chronic back pain",
+"pl": "przewlekły ból pleców"
+},
+{
+"en": "chronic constipation",
+"pl": "przewlekłe zaparcie"
+},
+{
+"en": "chronic glaucoma",
+"pl": "przewlekła jaskra"
+},
+{
+"en": "chronic inflammatory demyelinating polyneuropathy (cidp)",
+"pl": "przewlekła zapalna demielinizacyjna polineuropatia (CIDP)"
+},
+{
+"en": "chronic kidney disease",
+"pl": "przewlekła choroba nerek"
+},
+{
+"en": "chronic knee pain",
+"pl": "przewlekły ból kolana"
+},
+{
+"en": "chronic obstructive pulmonary disease (copd)",
+"pl": "przewlekła obturacyjna choroba płuc (POChP)"
+},
+{
+"en": "chronic otitis media",
+"pl": "przewlekłe zapalenie ucha środkowego"
+},
+{
+"en": "chronic pain disorder",
+"pl": "przewlekły zespół bólowy"
+},
+{
+"en": "chronic pancreatitis",
+"pl": "przewlekłe zapalenie trzustki"
+},
+{
+"en": "chronic rheumatic fever",
+"pl": "przewlekła gorączka reumatyczna"
+},
+{
+"en": "chronic sinusitis",
+"pl": "przewlekłe zapalenie zatok"
+},
+{
+"en": "chronic ulcer",
+"pl": "przewlekłe owrzodzenie"
+},
+{
+"en": "cirrhosis",
+"pl": "marskość wątroby"
+},
+{
+"en": "coagulation (bleeding) disorder",
+"pl": "zaburzenie krzepnięcia krwi"
+},
+{
+"en": "cold sore",
+"pl": "opryszczka wargowa"
+},
+{
+"en": "colonic polyp",
+"pl": "polip jelita grubego"
+},
+{
+"en": "colorectal cancer",
+"pl": "rak jelita grubego"
+},
+{
+"en": "common cold",
+"pl": "przeziębienie"
+},
+{
+"en": "complex regional pain syndrome",
+"pl": "kompleksowy zespół bólu regionalnego (CRPS)"
+},
+{
+"en": "concussion",
+"pl": "wstrząśnienie mózgu"
+},
+{
+"en": "conduct disorder",
+"pl": "zaburzenia zachowania"
+},
+{
+"en": "conductive hearing loss",
+"pl": "niedosłuch przewodzeniowy"
+},
+{
+"en": "congenital heart defect",
+"pl": "wrodzona wada serca"
+},
+{
+"en": "congenital malformation syndrome",
+"pl": "zespół wrodzonych wad rozwojowych"
+},
+{
+"en": "conjunctivitis",
+"pl": "zapalenie spojówek"
+},
+{
+"en": "conjunctivitis due to allergy",
+"pl": "alergiczne zapalenie spojówek"
+},
+{
+"en": "conjunctivitis due to bacteria",
+"pl": "bakteryjne zapalenie spojówek"
+},
+{
+"en": "conjunctivitis due to virus",
+"pl": "wirusowe zapalenie spojówek"
+},
+{
+"en": "connective tissue disorder",
+"pl": "choroba tkanki łącznej"
+},
+{
+"en": "contact dermatitis",
+"pl": "kontaktowe zapalenie skóry"
+},
+{
+"en": "conversion disorder",
+"pl": "zaburzenie konwersyjne"
+},
+{
+"en": "cornea infection",
+"pl": "infekcja rogówki"
+},
+{
+"en": "corneal abrasion",
+"pl": "otarcie rogówki"
+},
+{
+"en": "corneal disorder",
+"pl": "choroba rogówki"
+},
+{
+"en": "coronary atherosclerosis",
+"pl": "miażdżyca tętnic wieńcowych"
+},
+{
+"en": "cranial nerve palsy",
+"pl": "porażenie nerwu czaszkowego"
+},
+{
+"en": "crohn disease",
+"pl": "choroba Crohna"
+},
+{
+"en": "croup",
+"pl": "krup (podgłośniowe zapalenie krtani)"
+},
+{
+"en": "crushing injury",
+"pl": "uraz zmiażdżeniowy"
+},
+{
+"en": "cryptococcosis",
+"pl": "kryptokokoza"
+},
+{
+"en": "cryptorchidism",
+"pl": "wnętrostwo"
+},
+{
+"en": "cushing syndrome",
+"pl": "zespół Cushinga"
+},
+{
+"en": "cyst of the eyelid",
+"pl": "torbiel powieki"
+},
+{
+"en": "cystic fibrosis",
+"pl": "mukowiscydoza"
+},
+{
+"en": "cysticercosis",
+"pl": "wągrzyca"
+},
+{
+"en": "cystitis",
+"pl": "zapalenie pęcherza moczowego"
+},
+{
+"en": "de quervain disease",
+"pl": "choroba De Quervaina"
+},
+{
+"en": "decubitus ulcer",
+"pl": "odleżyna"
+},
+{
+"en": "deep vein thrombosis (dvt)",
+"pl": "zakrzepica żył głębokich (ZŻG)"
+},
+{
+"en": "degenerative disc disease",
+"pl": "zwyrodnienie krążka międzykręgowego"
+},
+{
+"en": "delirium",
+"pl": "majaczenie"
+},
+{
+"en": "dementia",
+"pl": "otępienie"
+},
+{
+"en": "dengue fever",
+"pl": "gorączka denga"
+},
+{
+"en": "dental caries",
+"pl": "próchnica zębów"
+},
+{
+"en": "depression",
+"pl": "depresja"
+},
+{
+"en": "dermatitis due to sun exposure",
+"pl": "fotodermatoza"
+},
+{
+"en": "developmental disability",
+"pl": "niepełnosprawność intelektualna"
+},
+{
+"en": "deviated nasal septum",
+"pl": "skrzywiona przegroda nosowa"
+},
+{
+"en": "diabetes",
+"pl": "cukrzyca"
+},
+{
+"en": "diabetes insipidus",
+"pl": "moczówka prosta"
+},
+{
+"en": "diabetic ketoacidosis",
+"pl": "cukrzycowa kwasica ketonowa"
+},
+{
+"en": "diabetic kidney disease",
+"pl": "nefropatia cukrzycowa"
+},
+{
+"en": "diabetic peripheral neuropathy",
+"pl": "cukrzycowa neuropatia obwodowa"
+},
+{
+"en": "diabetic retinopathy",
+"pl": "retinopatia cukrzycowa"
+},
+{
+"en": "diaper rash",
+"pl": "pieluszkowe zapalenie skóry"
+},
+{
+"en": "dislocation of the ankle",
+"pl": "zwichnięcie stawu skokowego"
+},
+{
+"en": "dislocation of the elbow",
+"pl": "zwichnięcie stawu łokciowego"
+},
+{
+"en": "dislocation of the finger",
+"pl": "zwichnięcie palca"
+},
+{
+"en": "dislocation of the foot",
+"pl": "zwichnięcie stopy"
+},
+{
+"en": "dislocation of the hip",
+"pl": "zwichnięcie stawu biodrowego"
+},
+{
+"en": "dislocation of the knee",
+"pl": "zwichnięcie stawu kolanowego"
+},
+{
+"en": "dislocation of the patella",
+"pl": "zwichnięcie rzepki"
+},
+{
+"en": "dislocation of the shoulder",
+"pl": "zwichnięcie stawu ramiennego"
+},
+{
+"en": "dislocation of the vertebra",
+"pl": "zwichnięcie kręgu"
+},
+{
+"en": "dislocation of the wrist",
+"pl": "zwichnięcie nadgarstka"
+},
+{
+"en": "dissociative disorder",
+"pl": "zaburzenie dysocjacyjne"
+},
+{
+"en": "diverticulitis",
+"pl": "zapalenie uchyłków"
+},
+{
+"en": "diverticulosis",
+"pl": "uchyłkowatość"
+},
+{
+"en": "down syndrome",
+"pl": "zespół Downa"
+},
+{
+"en": "drug abuse",
+"pl": "nadużywanie narkotyków"
+},
+{
+"en": "drug abuse (barbiturates)",
+"pl": "nadużywanie barbituranów"
+},
+{
+"en": "drug abuse (cocaine)",
+"pl": "nadużywanie kokainy"
+},
+{
+"en": "drug abuse (methamphetamine)",
+"pl": "nadużywanie metamfetaminy"
+},
+{
+"en": "drug abuse (opioids)",
+"pl": "nadużywanie opioidów"
+},
+{
+"en": "drug poisoning due to medication",
+"pl": "zatrucie lekami"
+},
+{
+"en": "drug reaction",
+"pl": "reakcja polekowa"
+},
+{
+"en": "drug withdrawal",
+"pl": "zespół odstawienny"
+},
+{
+"en": "dry eye of unknown cause",
+"pl": "zespół suchego oka"
+},
+{
+"en": "dumping syndrome",
+"pl": "zespół poposiłkowy (dumping syndrome)"
+},
+{
+"en": "dyshidrosis",
+"pl": "dyshydroza"
+},
+{
+"en": "dysthymic disorder",
+"pl": "dystymia"
+},
+{
+"en": "ear drum damage",
+"pl": "uszkodzenie błony bębenkowej"
+},
+{
+"en": "ear wax impaction",
+"pl": "czop woskowinowy"
+},
+{
+"en": "eating disorder",
+"pl": "zaburzenie odżywiania"
+},
+{
+"en": "ectopic pregnancy",
+"pl": "ciąża pozamaciczna"
+},
+{
+"en": "ectropion",
+"pl": "ektropion"
+},
+{
+"en": "eczema",
+"pl": "wyprysk (egzema)"
+},
+{
+"en": "edward syndrome",
+"pl": "zespół Edwardsa"
+},
+{
+"en": "emphysema",
+"pl": "rozedma płuc"
+},
+{
+"en": "empyema",
+"pl": "ropniak opłucnej"
+},
+{
+"en": "encephalitis",
+"pl": "zapalenie mózgu"
+},
+{
+"en": "endocarditis",
+"pl": "zapalenie wsierdzia"
+},
+{
+"en": "endometrial cancer",
+"pl": "rak endometrium"
+},
+{
+"en": "endometrial hyperplasia",
+"pl": "rozrost endometrium"
+},
+{
+"en": "endometriosis",
+"pl": "endometrioza"
+},
+{
+"en": "endophthalmitis",
+"pl": "zapalenie wnętrza gałki ocznej"
+},
+{
+"en": "envenomation from spider or animal bite",
+"pl": "zatrucie jadem wskutek ukąszenia pająka lub innego zwierzęcia"
+},
+{
+"en": "ependymoma",
+"pl": "wyściółczak"
+},
+{
+"en": "epididymitis",
+"pl": "zapalenie najądrza"
+},
+{
+"en": "epidural hemorrhage",
+"pl": "krwiak nadtwardówkowy"
+},
+{
+"en": "epilepsy",
+"pl": "padaczka"
+},
+{
+"en": "erectile dysfunction",
+"pl": "zaburzenia erekcji"
+},
+{
+"en": "erythema multiforme",
+"pl": "rumień wielopostaciowy"
+},
+{
+"en": "esophageal cancer",
+"pl": "rak przełyku"
+},
+{
+"en": "esophageal varices",
+"pl": "żylaki przełyku"
+},
+{
+"en": "esophagitis",
+"pl": "zapalenie przełyku"
+},
+{
+"en": "essential tremor",
+"pl": "drżenie samoistne"
+},
+{
+"en": "eustachian tube dysfunction (ear disorder)",
+"pl": "dysfunkcja trąbki Eustachiusza"
+},
+{
+"en": "extrapyramidal effect of drugs",
+"pl": "polekowe objawy pozapiramidowe"
+},
+{
+"en": "eye alignment disorder",
+"pl": "zez"
+},
+{
+"en": "factitious disorder",
+"pl": "zaburzenie pozorowane"
+},
+{
+"en": "female genitalia infection",
+"pl": "infekcja żeńskich narządów płciowych"
+},
+{
+"en": "female infertility of unknown cause",
+"pl": "niepłodność kobieca o nieznanej przyczynie"
+},
+{
+"en": "fetal alcohol syndrome",
+"pl": "płodowy zespół alkoholowy"
+},
+{
+"en": "fibroadenoma",
+"pl": "gruczolakowłókniak"
+},
+{
+"en": "fibrocystic breast disease",
+"pl": "mastopatia"
+},
+{
+"en": "fibromyalgia",
+"pl": "fibromialgia"
+},
+{
+"en": "flat feet",
+"pl": "płaskostopie"
+},
+{
+"en": "floaters",
+"pl": "męty w ciele szklistym"
+},
+{
+"en": "flu",
+"pl": "grypa"
+},
+{
+"en": "fluid overload",
+"pl": "przewodnienie"
+},
+{
+"en": "folate deficiency",
+"pl": "niedobór kwasu foliowego"
+},
+{
+"en": "food allergy",
+"pl": "alergia pokarmowa"
+},
+{
+"en": "foreign body in the ear",
+"pl": "ciało obce w uchu"
+},
+{
+"en": "foreign body in the eye",
+"pl": "ciało obce w oku"
+},
+{
+"en": "foreign body in the gastrointestinal tract",
+"pl": "ciało obce w przewodzie pokarmowym"
+},
+{
+"en": "foreign body in the nose",
+"pl": "ciało obce w nosie"
+},
+{
+"en": "foreign body in the throat",
+"pl": "ciało obce w gardle"
+},
+{
+"en": "foreign body in the vagina",
+"pl": "ciało obce w pochwie"
+},
+{
+"en": "fracture of the ankle",
+"pl": "złamanie kostki"
+},
+{
+"en": "fracture of the arm",
+"pl": "złamanie ręki"
+},
+{
+"en": "fracture of the facial bones",
+"pl": "złamanie kości twarzy"
+},
+{
+"en": "fracture of the finger",
+"pl": "złamanie palca"
+},
+{
+"en": "fracture of the foot",
+"pl": "złamanie stopy"
+},
+{
+"en": "fracture of the hand",
+"pl": "złamanie ręki"
+},
+{
+"en": "fracture of the jaw",
+"pl": "złamanie szczęki"
+},
+{
+"en": "fracture of the leg",
+"pl": "złamanie nogi"
+},
+{
+"en": "fracture of the neck",
+"pl": "złamanie kręgosłupa szyjnego"
+},
+{
+"en": "fracture of the patella",
+"pl": "złamanie rzepki"
+},
+{
+"en": "fracture of the pelvis",
+"pl": "złamanie miednicy"
+},
+{
+"en": "fracture of the rib",
+"pl": "złamanie żebra"
+},
+{
+"en": "fracture of the shoulder",
+"pl": "złamanie barku"
+},
+{
+"en": "fracture of the skull",
+"pl": "złamanie czaszki"
+},
+{
+"en": "fracture of the vertebra",
+"pl": "złamanie kręgu"
+},
+{
+"en": "friedrich ataxia",
+"pl": "ataksja Friedreicha"
+},
+{
+"en": "frostbite",
+"pl": "odmrożenie"
+},
+{
+"en": "fungal infection of the hair",
+"pl": "grzybica skóry owłosionej głowy"
+},
+{
+"en": "fungal infection of the skin",
+"pl": "grzybica skóry"
+},
+{
+"en": "g6pd enzyme deficiency",
+"pl": "niedobór enzymu G6PD"
+},
+{
+"en": "galactorrhea of unknown cause",
+"pl": "mlekotok o nieznanej przyczynie"
+},
+{
+"en": "gallstone",
+"pl": "kamica żółciowa"
+},
+{
+"en": "ganglion cyst",
+"pl": "torbiel galaretowata (ganglion)"
+},
+{
+"en": "gas gangrene",
+"pl": "zgorzel gazowa"
+},
+{
+"en": "gastritis",
+"pl": "zapalenie żołądka"
+},
+{
+"en": "gastroduodenal ulcer",
+"pl": "choroba wrzodowa żołądka i dwunastnicy"
+},
+{
+"en": "gastroesophageal reflux disease (gerd)",
+"pl": "choroba refluksowa przełyku (GERD)"
+},
+{
+"en": "gastrointestinal hemorrhage",
+"pl": "krwawienie z przewodu pokarmowego"
+},
+{
+"en": "gastroparesis",
+"pl": "gastropareza"
+},
+{
+"en": "genital herpes",
+"pl": "opryszczka narządów płciowych"
+},
+{
+"en": "gestational diabetes",
+"pl": "cukrzyca ciążowa"
+},
+{
+"en": "glaucoma",
+"pl": "jaskra"
+},
+{
+"en": "glucocorticoid deficiency",
+"pl": "niewydolność kory nadnerczy"
+},
+{
+"en": "goiter",
+"pl": "wole"
+},
+{
+"en": "gonorrhea",
+"pl": "rzeżączka"
+},
+{
+"en": "gout",
+"pl": "dna moczanowa"
+},
+{
+"en": "granuloma inguinale",
+"pl": "ziarniniak pachwinowy"
+},
+{
+"en": "graves disease",
+"pl": "choroba Gravesa-Basedowa"
+},
+{
+"en": "guillain barre syndrome",
+"pl": "zespół Guillaina-Barrégo"
+},
+{
+"en": "gum disease",
+"pl": "choroba dziąseł"
+},
+{
+"en": "gynecomastia",
+"pl": "ginekomastia"
+},
+{
+"en": "hammer toe",
+"pl": "palec młotkowaty"
+},
+{
+"en": "hashimoto thyroiditis",
+"pl": "choroba Hashimoto"
+},
+{
+"en": "head and neck cancer",
+"pl": "rak głowy i szyi"
+},
+{
+"en": "head injury",
+"pl": "uraz głowy"
+},
+{
+"en": "headache after lumbar puncture",
+"pl": "ból głowy po punkcji lędźwiowej"
+},
+{
+"en": "heart attack",
+"pl": "zawał serca"
+},
+{
+"en": "heart block",
+"pl": "blok serca"
+},
+{
+"en": "heart contusion",
+"pl": "stłuczenie serca"
+},
+{
+"en": "heart failure",
+"pl": "niewydolność serca"
+},
+{
+"en": "heat exhaustion",
+"pl": "wyczerpanie cieplne"
+},
+{
+"en": "heat stroke",
+"pl": "udar cieplny"
+},
+{
+"en": "hemangioma",
+"pl": "naczyniak"
+},
+{
+"en": "hemarthrosis",
+"pl": "krwiak stawowy"
+},
+{
+"en": "hematoma",
+"pl": "krwiak"
+},
+{
+"en": "hemiplegia",
+"pl": "porażenie połowicze"
+},
+{
+"en": "hemochromatosis",
+"pl": "hemochromatoza"
+},
+{
+"en": "hemolytic anemia",
+"pl": "niedokrwistość hemolityczna"
+},
+{
+"en": "hemophilia",
+"pl": "hemofilia"
+},
+{
+"en": "hemorrhoids",
+"pl": "hemoroidy"
+},
+{
+"en": "hepatic encephalopathy",
+"pl": "encefalopatia wątrobowa"
+},
+{
+"en": "hepatitis due to a toxin",
+"pl": "toksyczne zapalenie wątroby"
+},
+{
+"en": "herniated disk",
+"pl": "przepuklina krążka międzykręgowego"
+},
+{
+"en": "herpangina",
+"pl": "opryszczkowe zapalenie gardła"
+},
+{
+"en": "hiatal hernia",
+"pl": "przepuklina rozworu przełykowego"
+},
+{
+"en": "hidradenitis suppurativa",
+"pl": "trądzik odwrócony"
+},
+{
+"en": "high blood pressure",
+"pl": "nadciśnienie tętnicze"
+},
+{
+"en": "hirschsprung disease",
+"pl": "choroba Hirschsprunga"
+},
+{
+"en": "hirsutism",
+"pl": "hirsutyzm"
+},
+{
+"en": "histoplasmosis",
+"pl": "histoplazmoza"
+},
+{
+"en": "hormone disorder",
+"pl": "zaburzenie hormonalne"
+},
+{
+"en": "hpv",
+"pl": "zakażenie wirusem HPV"
+},
+{
+"en": "human immunodeficiency virus infection (hiv)",
+"pl": "zakażenie wirusem HIV"
+},
+{
+"en": "huntington disease",
+"pl": "choroba Huntingtona"
+},
+{
+"en": "hydatidiform mole",
+"pl": "zaśniad groniasty"
+},
+{
+"en": "hydrocele of the testicle",
+"pl": "wodniak jądra"
+},
+{
+"en": "hydrocephalus",
+"pl": "wodogłowie"
+},
+{
+"en": "hydronephrosis",
+"pl": "wodonercze"
+},
+{
+"en": "hypercalcemia",
+"pl": "hiperkalcemia"
+},
+{
+"en": "hypercholesterolemia",
+"pl": "hipercholesterolemia"
+},
+{
+"en": "hyperemesis gravidarum",
+"pl": "niepowściągliwe wymioty ciężarnych"
+},
+{
+"en": "hypergammaglobulinemia",
+"pl": "hipergammaglobulinemia"
+},
+{
+"en": "hyperhidrosis",
+"pl": "nadpotliwość"
+},
+{
+"en": "hyperkalemia",
+"pl": "hiperkaliemia"
+},
+{
+"en": "hyperlipidemia",
+"pl": "hiperlipidemia"
+},
+{
+"en": "hypernatremia",
+"pl": "hipernatremia"
+},
+{
+"en": "hyperopia",
+"pl": "nadwzroczność"
+},
+{
+"en": "hyperosmotic hyperketotic state",
+"pl": "hiperosmolarny zespół hiperglikemiczny"
+},
+{
+"en": "hypertension of pregnancy",
+"pl": "nadciśnienie ciążowe"
+},
+{
+"en": "hypertensive heart disease",
+"pl": "nadciśnieniowa choroba serca"
+},
+{
+"en": "hypertrophic obstructive cardiomyopathy (hocm)",
+"pl": "przerostowa kardiomiopatia ze zwężeniem drogi odpływu (HOCM)"
+},
+{
+"en": "hypocalcemia",
+"pl": "hipokalcemia"
+},
+{
+"en": "hypoglycemia",
+"pl": "hipoglikemia"
+},
+{
+"en": "hypokalemia",
+"pl": "hipokaliemia"
+},
+{
+"en": "hyponatremia",
+"pl": "hiponatremia"
+},
+{
+"en": "hypothermia",
+"pl": "hipotermia"
+},
+{
+"en": "hypothyroidism",
+"pl": "niedoczynność tarczycy"
+},
+{
+"en": "hypovolemia",
+"pl": "hipowolemia"
+},
+{
+"en": "idiopathic absence of menstruation",
+"pl": "brak miesiączki o nieznanej przyczynie"
+},
+{
+"en": "idiopathic excessive menstruation",
+"pl": "nadmierne krwawienie miesiączkowe o nieznanej przyczynie"
+},
+{
+"en": "idiopathic infrequent menstruation",
+"pl": "rzadkie miesiączki o nieznanej przyczynie"
+},
+{
+"en": "idiopathic irregular menstrual cycle",
+"pl": "nieregularny cykl menstruacyjny o nieznanej przyczynie"
+},
+{
+"en": "idiopathic nonmenstrual bleeding",
+"pl": "krwawienie pozamiesiączkowe o nieznanej przyczynie"
+},
+{
+"en": "idiopathic painful menstruation",
+"pl": "bolesne miesiączkowanie o nieznanej przyczynie"
+},
+{
+"en": "ileus",
+"pl": "niedrożność jelit"
+},
+{
+"en": "impetigo",
+"pl": "liszajec"
+},
+{
+"en": "impulse control disorder",
+"pl": "zaburzenie kontroli impulsów"
+},
+{
+"en": "indigestion",
+"pl": "niestrawność"
+},
+{
+"en": "induced abortion",
+"pl": "aborcja"
+},
+{
+"en": "infection of open wound",
+"pl": "zakażenie otwartej rany"
+},
+{
+"en": "infectious gastroenteritis",
+"pl": "zakaźne zapalenie żołądka i jelit"
+},
+{
+"en": "ingrown toe nail",
+"pl": "wrastający paznokieć"
+},
+{
+"en": "inguinal hernia",
+"pl": "przepuklina pachwinowa"
+},
+{
+"en": "injury of the ankle",
+"pl": "uraz kostki"
+},
+{
+"en": "injury to internal organ",
+"pl": "uraz narządu wewnętrznego"
+},
+{
+"en": "injury to the abdomen",
+"pl": "uraz brzucha"
+},
+{
+"en": "injury to the arm",
+"pl": "uraz ramienia"
+},
+{
+"en": "injury to the face",
+"pl": "uraz twarzy"
+},
+{
+"en": "injury to the finger",
+"pl": "uraz palca"
+},
+{
+"en": "injury to the hand",
+"pl": "uraz ręki"
+},
+{
+"en": "injury to the hip",
+"pl": "uraz biodra"
+},
+{
+"en": "injury to the knee",
+"pl": "uraz kolana"
+},
+{
+"en": "injury to the leg",
+"pl": "uraz nogi"
+},
+{
+"en": "injury to the shoulder",
+"pl": "uraz barku"
+},
+{
+"en": "injury to the spinal cord",
+"pl": "uraz rdzenia kręgowego"
+},
+{
+"en": "injury to the trunk",
+"pl": "uraz tułowia"
+},
+{
+"en": "insect bite",
+"pl": "ukąszenie owada"
+},
+{
+"en": "insulin overdose",
+"pl": "przedawkowanie insuliny"
+},
+{
+"en": "interstitial lung disease",
+"pl": "śródmiąższowa choroba płuc"
+},
+{
+"en": "intertrigo (skin condition)",
+"pl": "wyprzenie"
+},
+{
+"en": "intestinal cancer",
+"pl": "rak jelita"
+},
+{
+"en": "intestinal disease",
+"pl": "choroba jelit"
+},
+{
+"en": "intestinal malabsorption",
+"pl": "zespół złego wchłaniania"
+},
+{
+"en": "intestinal obstruction",
+"pl": "niedrożność jelit"
+},
+{
+"en": "intracerebral hemorrhage",
+"pl": "krwotok śródmózgowy"
+},
+{
+"en": "intracranial abscess",
+"pl": "ropień wewnątrzczaszkowy"
+},
+{
+"en": "intracranial hemorrhage",
+"pl": "krwotok wewnątrzczaszkowy"
+},
+{
+"en": "intussusception",
+"pl": "wgłobienie jelita"
+},
+{
+"en": "iridocyclitis",
+"pl": "zapalenie tęczówki i ciała rzęskowego"
+},
+{
+"en": "iron deficiency anemia",
+"pl": "niedokrwistość z niedoboru żelaza"
+},
+{
+"en": "irritable bowel syndrome",
+"pl": "zespół jelita drażliwego"
+},
+{
+"en": "ischemia of the bowel",
+"pl": "niedokrwienie jelit"
+},
+{
+"en": "ischemic heart disease",
+"pl": "choroba niedokrwienna serca"
+},
+{
+"en": "itching of unknown cause",
+"pl": "świąd o nieznanej przyczynie"
+},
+{
+"en": "jaw disorder",
+"pl": "zaburzenie stawu skroniowo-żuchwowego"
+},
+{
+"en": "joint effusion",
+"pl": "wysięk w stawie"
+},
+{
+"en": "juvenile rheumatoid arthritis",
+"pl": "młodzieńcze idiopatyczne zapalenie stawów (MIZS)"
+},
+{
+"en": "kaposi sarcoma",
+"pl": "mięsak Kaposiego"
+},
+{
+"en": "kidney cancer",
+"pl": "rak nerki"
+},
+{
+"en": "kidney disease due to longstanding hypertension",
+"pl": "nefropatia nadciśnieniowa"
+},
+{
+"en": "kidney failure",
+"pl": "niewydolność nerek"
+},
+{
+"en": "kidney stone",
+"pl": "kamica nerkowa"
+},
+{
+"en": "knee ligament or meniscus tear",
+"pl": "zerwanie więzadła lub łąkotki kolana"
+},
+{
+"en": "labyrinthitis",
+"pl": "zapalenie błędnika"
+},
+{
+"en": "lactose intolerance",
+"pl": "nietolerancja laktozy"
+},
+{
+"en": "laryngitis",
+"pl": "zapalenie krtani"
+},
+{
+"en": "lateral epicondylitis (tennis elbow)",
+"pl": "łokieć tenisisty"
+},
+{
+"en": "leukemia",
+"pl": "białaczka"
+},
+{
+"en": "lewy body dementia",
+"pl": "otępienie z ciałami Lewy'ego"
+},
+{
+"en": "lice",
+"pl": "wszawica"
+},
+{
+"en": "lichen planus",
+"pl": "liszaj płaski"
+},
+{
+"en": "lichen simplex",
+"pl": "liszaj przewlekły prosty"
+},
+{
+"en": "lipoma",
+"pl": "tłuszczak"
+},
+{
+"en": "liver cancer",
+"pl": "rak wątroby"
+},
+{
+"en": "liver disease",
+"pl": "choroba wątroby"
+},
+{
+"en": "lumbago",
+"pl": "ból krzyża"
+},
+{
+"en": "lung cancer",
+"pl": "rak płuca"
+},
+{
+"en": "lung contusion",
+"pl": "stłuczenie płuca"
+},
+{
+"en": "lyme disease",
+"pl": "borelioza"
+},
+{
+"en": "lymphadenitis",
+"pl": "zapalenie węzłów chłonnych"
+},
+{
+"en": "lymphangitis",
+"pl": "zapalenie naczyń limfatycznych"
+},
+{
+"en": "lymphedema",
+"pl": "obrzęk limfatyczny"
+},
+{
+"en": "lymphogranuloma venereum",
+"pl": "ziarniniak weneryczny"
+},
+{
+"en": "lymphoma",
+"pl": "chłoniak"
+},
+{
+"en": "macular degeneration",
+"pl": "zwyrodnienie plamki żółtej"
+},
+{
+"en": "magnesium deficiency",
+"pl": "niedobór magnezu"
+},
+{
+"en": "malaria",
+"pl": "malaria"
+},
+{
+"en": "male genitalia infection",
+"pl": "infekcja męskich narządów płciowych"
+},
+{
+"en": "malignant hypertension",
+"pl": "złośliwe nadciśnienie"
+},
+{
+"en": "marijuana abuse",
+"pl": "nadużywanie marihuany"
+},
+{
+"en": "mastectomy",
+"pl": "mastektomia"
+},
+{
+"en": "mastoiditis",
+"pl": "zapalenie wyrostka sutkowatego"
+},
+{
+"en": "meckel diverticulum",
+"pl": "uchyłek Meckela"
+},
+{
+"en": "melanoma",
+"pl": "czerniak"
+},
+{
+"en": "meniere disease",
+"pl": "choroba Meniere'a"
+},
+{
+"en": "meningioma",
+"pl": "oponiak"
+},
+{
+"en": "meningitis",
+"pl": "zapalenie opon mózgowych"
+},
+{
+"en": "menopause",
+"pl": "menopauza"
+},
+{
+"en": "metabolic disorder",
+"pl": "zaburzenie metaboliczne"
+},
+{
+"en": "metastatic cancer",
+"pl": "nowotwór z przerzutami"
+},
+{
+"en": "migraine",
+"pl": "migrena"
+},
+{
+"en": "missed abortion",
+"pl": "poronienie chybione"
+},
+{
+"en": "mitral valve disease",
+"pl": "choroba zastawki mitralnej"
+},
+{
+"en": "mittelschmerz",
+"pl": "ból owulacyjny"
+},
+{
+"en": "molluscum contagiosum",
+"pl": "mięczak zakaźny"
+},
+{
+"en": "mononeuritis",
+"pl": "mononeuropatia"
+},
+{
+"en": "mononucleosis",
+"pl": "mononukleoza"
+},
+{
+"en": "moyamoya disease",
+"pl": "choroba moyamoya"
+},
+{
+"en": "mucositis",
+"pl": "zapalenie błony śluzowej"
+},
+{
+"en": "multiple myeloma",
+"pl": "szpiczak mnogi"
+},
+{
+"en": "multiple sclerosis",
+"pl": "stwardnienie rozsiane"
+},
+{
+"en": "mumps",
+"pl": "świnka"
+},
+{
+"en": "muscle spasm",
+"pl": "skurcz mięśni"
+},
+{
+"en": "muscular dystrophy",
+"pl": "dystrofia mięśniowa"
+},
+{
+"en": "myasthenia gravis",
+"pl": "miastenia"
+},
+{
+"en": "myelodysplastic syndrome",
+"pl": "zespół mielodysplastyczny"
+},
+{
+"en": "myocarditis",
+"pl": "zapalenie mięśnia sercowego"
+},
+{
+"en": "myoclonus",
+"pl": "mioklonie"
+},
+{
+"en": "myopia",
+"pl": "krótkowzroczność"
+},
+{
+"en": "myositis",
+"pl": "zapalenie mięśni"
+},
+{
+"en": "narcolepsy",
+"pl": "narkolepsja"
+},
+{
+"en": "nasal polyp",
+"pl": "polip nosa"
+},
+{
+"en": "necrotizing fasciitis",
+"pl": "martwicze zapalenie powięzi"
+},
+{
+"en": "neonatal jaundice",
+"pl": "żółtaczka noworodków"
+},
+{
+"en": "nerve impingement near the shoulder",
+"pl": "ucisk nerwu w okolicy barku"
+},
+{
+"en": "neuralgia",
+"pl": "nerwoból"
+},
+{
+"en": "neurofibromatosis",
+"pl": "nerwiakowłókniakowatość"
+},
+{
+"en": "neuropathy due to drugs",
+"pl": "polekowa neuropatia"
+},
+{
+"en": "neurosis",
+"pl": "nerwica"
+},
+{
+"en": "nonalcoholic liver disease (nash)",
+"pl": "niealkoholowe stłuszczeniowe zapalenie wątroby (NASH)"
+},
+{
+"en": "noninfectious gastroenteritis",
+"pl": "niezakaźne zapalenie żołądka i jelit"
+},
+{
+"en": "normal pressure hydrocephalus",
+"pl": "wodogłowie normotensyjne"
+},
+{
+"en": "nose disorder",
+"pl": "choroba nosa"
+},
+{
+"en": "obesity",
+"pl": "otyłość"
+},
+{
+"en": "obsessive compulsive disorder (ocd)",
+"pl": "zaburzenie obsesyjno-kompulsyjne (OCD)"
+},
+{
+"en": "obstructive sleep apnea (osa)",
+"pl": "obturacyjny bezdech senny (OSA)"
+},
+{
+"en": "omphalitis",
+"pl": "zapalenie pępka"
+},
+{
+"en": "onychomycosis",
+"pl": "grzybica paznokci"
+},
+{
+"en": "open wound due to trauma",
+"pl": "otwarta rana pourazowa"
+},
+{
+"en": "open wound from surgical incision",
+"pl": "otwarta rana pooperacyjna"
+},
+{
+"en": "open wound of the abdomen",
+"pl": "otwarta rana brzucha"
+},
+{
+"en": "open wound of the arm",
+"pl": "otwarta rana ramienia"
+},
+{
+"en": "open wound of the back",
+"pl": "otwarta rana pleców"
+},
+{
+"en": "open wound of the cheek",
+"pl": "otwarta rana policzka"
+},
+{
+"en": "open wound of the chest",
+"pl": "otwarta rana klatki piersiowej"
+},
+{
+"en": "open wound of the ear",
+"pl": "otwarta rana ucha"
+},
+{
+"en": "open wound of the eye",
+"pl": "otwarta rana oka"
+},
+{
+"en": "open wound of the face",
+"pl": "otwarta rana twarzy"
+},
+{
+"en": "open wound of the finger",
+"pl": "otwarta rana palca"
+},
+{
+"en": "open wound of the foot",
+"pl": "otwarta rana stopy"
+},
+{
+"en": "open wound of the hand",
+"pl": "otwarta rana ręki"
+},
+{
+"en": "open wound of the head",
+"pl": "otwarta rana głowy"
+},
+{
+"en": "open wound of the jaw",
+"pl": "otwarta rana szczęki"
+},
+{
+"en": "open wound of the knee",
+"pl": "otwarta rana kolana"
+},
+{
+"en": "open wound of the lip",
+"pl": "otwarta rana wargi"
+},
+{
+"en": "open wound of the mouth",
+"pl": "otwarta rana jamy ustnej"
+},
+{
+"en": "open wound of the neck",
+"pl": "otwarta rana szyi"
+},
+{
+"en": "open wound of the nose",
+"pl": "otwarta rana nosa"
+},
+{
+"en": "open wound of the shoulder",
+"pl": "otwarta rana barku"
+},
+{
+"en": "oppositional disorder",
+"pl": "zaburzenie opozycyjno-buntownicze"
+},
+{
+"en": "optic neuritis",
+"pl": "zapalenie nerwu wzrokowego"
+},
+{
+"en": "oral leukoplakia",
+"pl": "leukoplakia jamy ustnej"
+},
+{
+"en": "oral mucosal lesion",
+"pl": "zmiana na błonie śluzowej jamy ustnej"
+},
+{
+"en": "oral thrush (yeast infection)",
+"pl": "pleśniawki"
+},
+{
+"en": "orbital cellulitis",
+"pl": "zapalenie tkanki łącznej oczodołu"
+},
+{
+"en": "orthostatic hypotension",
+"pl": "hipotonia ortostatyczna"
+},
+{
+"en": "osteoarthritis",
+"pl": "choroba zwyrodnieniowa stawów"
+},
+{
+"en": "osteochondroma",
+"pl": "kostniakochrzęstniak"
+},
+{
+"en": "osteochondrosis",
+"pl": "osteochondroza"
+},
+{
+"en": "osteomyelitis",
+"pl": "zapalenie kości i szpiku"
+},
+{
+"en": "osteoporosis",
+"pl": "osteoporoza"
+},
+{
+"en": "otitis externa (swimmer's ear)",
+"pl": "zapalenie ucha zewnętrznego (ucho pływaka)"
+},
+{
+"en": "otitis media",
+"pl": "zapalenie ucha środkowego"
+},
+{
+"en": "otosclerosis",
+"pl": "otoskleroza"
+},
+{
+"en": "ovarian cancer",
+"pl": "rak jajnika"
+},
+{
+"en": "ovarian cyst",
+"pl": "torbiel jajnika"
+},
+{
+"en": "ovarian torsion",
+"pl": "skręt jajnika"
+},
+{
+"en": "overflow incontinence",
+"pl": "nietrzymanie moczu z przepełnienia"
+},
+{
+"en": "pain after an operation",
+"pl": "ból pooperacyjny"
+},
+{
+"en": "pain disorder affecting the neck",
+"pl": "przewlekły ból szyi"
+},
+{
+"en": "pancreatic cancer",
+"pl": "rak trzustki"
+},
+{
+"en": "panic attack",
+"pl": "atak paniki"
+},
+{
+"en": "panic disorder",
+"pl": "zaburzenie paniczne"
+},
+{
+"en": "parasitic disease",
+"pl": "choroba pasożytnicza"
+},
+{
+"en": "parathyroid adenoma",
+"pl": "gruczolak przytarczycy"
+},
+{
+"en": "parkinson disease",
+"pl": "choroba Parkinsona"
+},
+{
+"en": "paronychia",
+"pl": "zanokcica"
+},
+{
+"en": "paroxysmal supraventricular tachycardia",
+"pl": "napadowy częstoskurcz nadkomorowy"
+},
+{
+"en": "paroxysmal ventricular tachycardia",
+"pl": "napadowy częstoskurcz komorowy"
+},
+{
+"en": "pelvic fistula",
+"pl": "przetoka w obrębie miednicy"
+},
+{
+"en": "pelvic inflammatory disease",
+"pl": "zapalenie narządów miednicy mniejszej"
+},
+{
+"en": "pelvic organ prolapse",
+"pl": "wypadanie narządów miednicy mniejszej"
+},
+{
+"en": "pemphigus",
+"pl": "pęcherzyca"
+},
+{
+"en": "pericarditis",
+"pl": "zapalenie osierdzia"
+},
+{
+"en": "peripheral arterial disease",
+"pl": "choroba tętnic obwodowych"
+},
+{
+"en": "peripheral arterial embolism",
+"pl": "zator tętnicy obwodowej"
+},
+{
+"en": "peripheral nerve disorder",
+"pl": "neuropatia obwodowa"
+},
+{
+"en": "perirectal infection",
+"pl": "zakażenie okołoodbytnicze"
+},
+{
+"en": "peritonitis",
+"pl": "zapalenie otrzewnej"
+},
+{
+"en": "peritonsillar abscess",
+"pl": "ropień okołomigdałkowy"
+},
+{
+"en": "persistent vomiting of unknown cause",
+"pl": "utrzymujące się wymioty o nieznanej przyczynie"
+},
+{
+"en": "personality disorder",
+"pl": "zaburzenie osobowości"
+},
+{
+"en": "peyronie disease",
+"pl": "choroba Peyroniego"
+},
+{
+"en": "pharyngitis",
+"pl": "zapalenie gardła"
+},
+{
+"en": "phimosis",
+"pl": "stulejka"
+},
+{
+"en": "pilonidal cyst",
+"pl": "torbiel pilonidalna"
+},
+{
+"en": "pinguecula",
+"pl": "tłuszczyk"
+},
+{
+"en": "pinworm infection",
+"pl": "owsica"
+},
+{
+"en": "pituitary adenoma",
+"pl": "gruczolak przysadki"
+},
+{
+"en": "pituitary disorder",
+"pl": "choroba przysadki"
+},
+{
+"en": "pityriasis rosea",
+"pl": "łupież różowy"
+},
+{
+"en": "placenta previa",
+"pl": "łożysko przodujące"
+},
+{
+"en": "placental abruption",
+"pl": "przedwczesne odklejenie łożyska"
+},
+{
+"en": "plantar fasciitis",
+"pl": "zapalenie powięzi podeszwowej"
+},
+{
+"en": "pleural effusion",
+"pl": "wysięk opłucnowy"
+},
+{
+"en": "pneumoconiosis",
+"pl": "pylica płuc"
+},
+{
+"en": "pneumonia",
+"pl": "zapalenie płuc"
+},
+{
+"en": "pneumothorax",
+"pl": "odma opłucnowa"
+},
+{
+"en": "poisoning due to analgesics",
+"pl": "zatrucie lekami przeciwbólowymi"
+},
+{
+"en": "poisoning due to anticonvulsants",
+"pl": "zatrucie lekami przeciwdrgawkowymi"
+},
+{
+"en": "poisoning due to antidepressants",
+"pl": "zatrucie lekami przeciwdepresyjnymi"
+},
+{
+"en": "poisoning due to antihypertensives",
+"pl": "zatrucie lekami przeciwnadciśnieniowymi"
+},
+{
+"en": "poisoning due to antimicrobial drugs",
+"pl": "zatrucie lekami przeciwdrobnoustrojowymi"
+},
+{
+"en": "poisoning due to antipsychotics",
+"pl": "zatrucie lekami przeciwpsychotycznymi"
+},
+{
+"en": "poisoning due to ethylene glycol",
+"pl": "zatrucie glikolem etylenowym"
+},
+{
+"en": "poisoning due to gas",
+"pl": "zatrucie gazem"
+},
+{
+"en": "poisoning due to opioids",
+"pl": "zatrucie opioidami"
+},
+{
+"en": "poisoning due to sedatives",
+"pl": "zatrucie środkami uspokajającymi"
+},
+{
+"en": "polycystic kidney disease",
+"pl": "wielotorbielowatość nerek"
+},
+{
+"en": "polycystic ovarian syndrome (pcos)",
+"pl": "zespół policystycznych jajników (PCOS)"
+},
+{
+"en": "polycythemia vera",
+"pl": "czerwienica prawdziwa"
+},
+{
+"en": "polymyalgia rheumatica",
+"pl": "polimialgia reumatyczna"
+},
+{
+"en": "post-traumatic stress disorder (ptsd)",
+"pl": "zespół stresu pourazowego (PTSD)"
+},
+{
+"en": "postoperative infection",
+"pl": "zakażenie pooperacyjne"
+},
+{
+"en": "postpartum depression",
+"pl": "depresja poporodowa"
+},
+{
+"en": "preeclampsia",
+"pl": "stan przedrzucawkowy"
+},
+{
+"en": "pregnancy",
+"pl": "ciąża"
+},
+{
+"en": "premature atrial contractions (pacs)",
+"pl": "przedwczesne skurcze przedsionków"
+},
+{
+"en": "premature ovarian failure",
+"pl": "przedwczesne wygaśnięcie czynności jajników"
+},
+{
+"en": "premature rupture of amniotic membrane",
+"pl": "przedwczesne pęknięcie błon płodowych"
+},
+{
+"en": "premature ventricular contractions (pvcs)",
+"pl": "przedwczesne skurcze komorowe"
+},
+{
+"en": "premenstrual tension syndrome",
+"pl": "zespół napięcia przedmiesiączkowego"
+},
+{
+"en": "presbyacusis",
+"pl": "starczy niedosłuch"
+},
+{
+"en": "presbyopia",
+"pl": "starczowzroczność"
+},
+{
+"en": "priapism",
+"pl": "priapizm"
+},
+{
+"en": "primary immunodeficiency",
+"pl": "pierwotny niedobór odporności"
+},
+{
+"en": "primary insomnia",
+"pl": "pierwotna bezsenność"
+},
+{
+"en": "primary kidney disease",
+"pl": "pierwotna choroba nerek"
+},
+{
+"en": "primary thrombocythemia",
+"pl": "nadpłytkowość samoistna"
+},
+{
+"en": "problem during pregnancy",
+"pl": "powikłanie ciąży"
+},
+{
+"en": "prostate cancer",
+"pl": "rak prostaty"
+},
+{
+"en": "prostatitis",
+"pl": "zapalenie gruczołu krokowego"
+},
+{
+"en": "protein deficiency",
+"pl": "niedobór białka"
+},
+{
+"en": "pseudohypoparathyroidism",
+"pl": "rzekoma niedoczynność przytarczyc"
+},
+{
+"en": "pseudotumor cerebri",
+"pl": "idiopatyczne nadciśnienie śródczaszkowe"
+},
+{
+"en": "psoriasis",
+"pl": "łuszczyca"
+},
+{
+"en": "psychosexual disorder",
+"pl": "zaburzenie psychoseksualne"
+},
+{
+"en": "psychotic disorder",
+"pl": "zaburzenie psychotyczne"
+},
+{
+"en": "pterygium",
+"pl": "skrzydlik"
+},
+{
+"en": "pulmonary congestion",
+"pl": "przekrwienie płuc"
+},
+{
+"en": "pulmonary embolism",
+"pl": "zatorowość płucna"
+},
+{
+"en": "pulmonary eosinophilia",
+"pl": "eozynofilowe zapalenie płuc"
+},
+{
+"en": "pulmonary fibrosis",
+"pl": "włóknienie płuc"
+},
+{
+"en": "pulmonary hypertension",
+"pl": "nadciśnienie płucne"
+},
+{
+"en": "pulmonic valve disease",
+"pl": "choroba zastawki płucnej"
+},
+{
+"en": "pyelonephritis",
+"pl": "odmiedniczkowe zapalenie nerek"
+},
+{
+"en": "pyloric stenosis",
+"pl": "zwężenie odźwiernika"
+},
+{
+"en": "pyogenic skin infection",
+"pl": "ropne zakażenie skóry"
+},
+{
+"en": "raynaud disease",
+"pl": "choroba Raynauda"
+},
+{
+"en": "reactive arthritis",
+"pl": "reaktywne zapalenie stawów"
+},
+{
+"en": "rectal disorder",
+"pl": "choroba odbytnicy"
+},
+{
+"en": "restless leg syndrome",
+"pl": "zespół niespokojnych nóg"
+},
+{
+"en": "retinal detachment",
+"pl": "odwarstwienie siatkówki"
+},
+{
+"en": "retinopathy due to high blood pressure",
+"pl": "retinopatia nadciśnieniowa"
+},
+{
+"en": "rhabdomyolysis",
+"pl": "rabdomioliza"
+},
+{
+"en": "rheumatic fever",
+"pl": "gorączka reumatyczna"
+},
+{
+"en": "rheumatoid arthritis",
+"pl": "reumatoidalne zapalenie stawów"
+},
+{
+"en": "rocky mountain spotted fever",
+"pl": "gorączka plamista Gór Skalistych"
+},
+{
+"en": "rosacea",
+"pl": "trądzik różowaty"
+},
+{
+"en": "rotator cuff injury",
+"pl": "uraz stożka rotatorów"
+},
+{
+"en": "salivary gland disorder",
+"pl": "choroba ślinianek"
+},
+{
+"en": "sarcoidosis",
+"pl": "sarkoidoza"
+},
+{
+"en": "scabies",
+"pl": "świerzb"
+},
+{
+"en": "scar",
+"pl": "blizna"
+},
+{
+"en": "scarlet fever",
+"pl": "szkarlatyna"
+},
+{
+"en": "schizophrenia",
+"pl": "schizofrenia"
+},
+{
+"en": "sciatica",
+"pl": "rwa kulszowa"
+},
+{
+"en": "scleritis",
+"pl": "zapalenie twardówki"
+},
+{
+"en": "scleroderma",
+"pl": "twardzina"
+},
+{
+"en": "scoliosis",
+"pl": "skolioza"
+},
+{
+"en": "scurvy",
+"pl": "szkorbut"
+},
+{
+"en": "seasonal allergies (hay fever)",
+"pl": "katar sienny (alergia sezonowa)"
+},
+{
+"en": "sebaceous cyst",
+"pl": "torbiel łojowa"
+},
+{
+"en": "seborrheic dermatitis",
+"pl": "łojotokowe zapalenie skóry"
+},
+{
+"en": "seborrheic keratosis",
+"pl": "rogowacenie łojotokowe"
+},
+{
+"en": "sensorineural hearing loss",
+"pl": "niedosłuch odbiorczy"
+},
+{
+"en": "sepsis",
+"pl": "sepsa"
+},
+{
+"en": "septic arthritis",
+"pl": "septyczne zapalenie stawów"
+},
+{
+"en": "shingles (herpes zoster)",
+"pl": "półpasiec"
+},
+{
+"en": "sialoadenitis",
+"pl": "zapalenie ślinianki"
+},
+{
+"en": "sick sinus syndrome",
+"pl": "zespół chorego węzła zatokowego"
+},
+{
+"en": "sickle cell anemia",
+"pl": "niedokrwistość sierpowatokrwinkowa"
+},
+{
+"en": "sickle cell crisis",
+"pl": "przełom w niedokrwistości sierpowatokrwinkowej"
+},
+{
+"en": "sinus bradycardia",
+"pl": "bradykardia zatokowa"
+},
+{
+"en": "sjogren syndrome",
+"pl": "zespół Sjögrena"
+},
+{
+"en": "skin cancer",
+"pl": "rak skóry"
+},
+{
+"en": "skin disorder",
+"pl": "choroba skóry"
+},
+{
+"en": "skin pigmentation disorder",
+"pl": "zaburzenie pigmentacji skóry"
+},
+{
+"en": "skin polyp",
+"pl": "polip skórny"
+},
+{
+"en": "smoking or tobacco addiction",
+"pl": "uzależnienie od tytoniu"
+},
+{
+"en": "social phobia",
+"pl": "fobia społeczna"
+},
+{
+"en": "soft tissue sarcoma",
+"pl": "mięsak tkanek miękkich"
+},
+{
+"en": "somatization disorder",
+"pl": "zaburzenie somatyzacyjne"
+},
+{
+"en": "spermatocele",
+"pl": "spermatocela"
+},
+{
+"en": "spherocytosis",
+"pl": "sferocytoza"
+},
+{
+"en": "spina bifida",
+"pl": "rozszczep kręgosłupa"
+},
+{
+"en": "spinal stenosis",
+"pl": "zwężenie kanału kręgowego"
+},
+{
+"en": "spinocerebellar ataxia",
+"pl": "ataksja rdzeniowo-móżdżkowa"
+},
+{
+"en": "spondylitis",
+"pl": "zapalenie kręgosłupa"
+},
+{
+"en": "spondylolisthesis",
+"pl": "kręgozmyk"
+},
+{
+"en": "spondylosis",
+"pl": "spondyloza"
+},
+{
+"en": "spontaneous abortion",
+"pl": "poronienie samoistne"
+},
+{
+"en": "sporotrichosis",
+"pl": "sporotrychoza"
+},
+{
+"en": "sprain or strain",
+"pl": "skręcenie lub nadwyrężenie"
+},
+{
+"en": "stenosis of the tear duct",
+"pl": "zwężenie kanalika łzowego"
+},
+{
+"en": "stomach cancer",
+"pl": "rak żołądka"
+},
+{
+"en": "strep throat",
+"pl": "angina paciorkowcowa"
+},
+{
+"en": "stress incontinence",
+"pl": "wysiłkowe nietrzymanie moczu"
+},
+{
+"en": "stricture of the esophagus",
+"pl": "zwężenie przełyku"
+},
+{
+"en": "stroke",
+"pl": "udar mózgu"
+},
+{
+"en": "stye",
+"pl": "jęczmień"
+},
+{
+"en": "subacute thyroiditis",
+"pl": "podostre zapalenie tarczycy"
+},
+{
+"en": "subarachnoid hemorrhage",
+"pl": "krwotok podpajęczynówkowy"
+},
+{
+"en": "subconjunctival hemorrhage",
+"pl": "wylew podspojówkowy"
+},
+{
+"en": "subdural hemorrhage",
+"pl": "krwiak podtwardówkowy"
+},
+{
+"en": "substance-related mental disorder",
+"pl": "zaburzenie psychiczne związane z używaniem substancji"
+},
+{
+"en": "syndrome of inappropriate secretion of adh (siadh)",
+"pl": "zespół nieadekwatnego wydzielania ADH (SIADH)"
+},
+{
+"en": "syphilis",
+"pl": "kiła"
+},
+{
+"en": "syringomyelia",
+"pl": "syringomielia"
+},
+{
+"en": "systemic lupus erythematosis (sle)",
+"pl": "toczeń rumieniowaty układowy (SLE)"
+},
+{
+"en": "teething syndrome",
+"pl": "objawy ząbkowania"
+},
+{
+"en": "temporary or benign blood in urine",
+"pl": "przejściowy krwiomocz"
+},
+{
+"en": "temporomandibular joint disorder",
+"pl": "zaburzenie stawu skroniowo-żuchwowego"
+},
+{
+"en": "tendinitis",
+"pl": "zapalenie ścięgna"
+},
+{
+"en": "tension headache",
+"pl": "napięciowy ból głowy"
+},
+{
+"en": "testicular cancer",
+"pl": "rak jądra"
+},
+{
+"en": "testicular disorder",
+"pl": "choroba jądra"
+},
+{
+"en": "testicular torsion",
+"pl": "skręt jądra"
+},
+{
+"en": "thalassemia",
+"pl": "talasemia"
+},
+{
+"en": "thoracic aortic aneurysm",
+"pl": "tętniak aorty piersiowej"
+},
+{
+"en": "thoracic outlet syndrome",
+"pl": "zespół górnego otworu klatki piersiowej"
+},
+{
+"en": "threatened pregnancy",
+"pl": "zagrożona ciąża"
+},
+{
+"en": "thrombocytopenia",
+"pl": "małopłytkowość"
+},
+{
+"en": "thrombophlebitis",
+"pl": "zakrzepowe zapalenie żył"
+},
+{
+"en": "thyroid cancer",
+"pl": "rak tarczycy"
+},
+{
+"en": "thyroid disease",
+"pl": "choroba tarczycy"
+},
+{
+"en": "thyroid nodule",
+"pl": "guzek tarczycy"
+},
+{
+"en": "tic (movement) disorder",
+"pl": "zaburzenie tikowe"
+},
+{
+"en": "tietze syndrome",
+"pl": "zespół Tietzego"
+},
+{
+"en": "tinnitus of unknown cause",
+"pl": "szum w uszach o nieznanej przyczynie"
+},
+{
+"en": "tonsillar hypertrophy",
+"pl": "przerost migdałków"
+},
+{
+"en": "tonsillitis",
+"pl": "zapalenie migdałków"
+},
+{
+"en": "tooth abscess",
+"pl": "ropień zęba"
+},
+{
+"en": "tooth disorder",
+"pl": "choroba zębów"
+},
+{
+"en": "torticollis",
+"pl": "kręcz szyi"
+},
+{
+"en": "tourette syndrome",
+"pl": "zespół Tourette'a"
+},
+{
+"en": "toxic multinodular goiter",
+"pl": "toksyczne wole guzkowe"
+},
+{
+"en": "toxoplasmosis",
+"pl": "toksoplazmoza"
+},
+{
+"en": "tracheitis",
+"pl": "zapalenie tchawicy"
+},
+{
+"en": "transient ischemic attack",
+"pl": "przemijający atak niedokrwienny (TIA)"
+},
+{
+"en": "trichiasis",
+"pl": "wrastające rzęsy"
+},
+{
+"en": "trichinosis",
+"pl": "włośnica"
+},
+{
+"en": "trichomonas infection",
+"pl": "rzęsistkowica"
+},
+{
+"en": "tricuspid valve disease",
+"pl": "choroba zastawki trójdzielnej"
+},
+{
+"en": "trigeminal neuralgia",
+"pl": "neuralgia nerwu trójdzielnego"
+},
+{
+"en": "trigger finger (finger disorder)",
+"pl": "palec trzaskający"
+},
+{
+"en": "tuberculosis",
+"pl": "gruźlica"
+},
+{
+"en": "tuberous sclerosis",
+"pl": "stwardnienie guzowate"
+},
+{
+"en": "turner syndrome",
+"pl": "zespół Turnera"
+},
+{
+"en": "typhoid fever",
+"pl": "dur brzuszny"
+},
+{
+"en": "ulcerative colitis",
+"pl": "wrzodziejące zapalenie jelita grubego"
+},
+{
+"en": "urethral disorder",
+"pl": "choroba cewki moczowej"
+},
+{
+"en": "urethral stricture",
+"pl": "zwężenie cewki moczowej"
+},
+{
+"en": "urethral valves",
+"pl": "zastawki cewki moczowej"
+},
+{
+"en": "urethritis",
+"pl": "zapalenie cewki moczowej"
+},
+{
+"en": "urge incontinence",
+"pl": "naglące nietrzymanie moczu"
+},
+{
+"en": "urinary tract infection",
+"pl": "zakażenie dróg moczowych"
+},
+{
+"en": "urinary tract obstruction",
+"pl": "niedrożność dróg moczowych"
+},
+{
+"en": "uterine atony",
+"pl": "atonia macicy"
+},
+{
+"en": "uterine cancer",
+"pl": "rak macicy"
+},
+{
+"en": "uterine fibroids",
+"pl": "mięśniaki macicy"
+},
+{
+"en": "uveitis",
+"pl": "zapalenie błony naczyniowej oka"
+},
+{
+"en": "vacterl syndrome",
+"pl": "zespół VACTERL"
+},
+{
+"en": "vaginal cyst",
+"pl": "torbiel pochwy"
+},
+{
+"en": "vaginal yeast infection",
+"pl": "grzybica pochwy"
+},
+{
+"en": "vaginismus",
+"pl": "pochwica"
+},
+{
+"en": "vaginitis",
+"pl": "zapalenie pochwy"
+},
+{
+"en": "valley fever",
+"pl": "kokcydioidomikoza"
+},
+{
+"en": "varicocele of the testicles",
+"pl": "żylaki powrózka nasiennego"
+},
+{
+"en": "varicose veins",
+"pl": "żylaki"
+},
+{
+"en": "vasculitis",
+"pl": "zapalenie naczyń"
+},
+{
+"en": "venous insufficiency",
+"pl": "niewydolność żylna"
+},
+{
+"en": "vertebrobasilar insufficiency",
+"pl": "niewydolność kręgowo-podstawna"
+},
+{
+"en": "vesicoureteral reflux",
+"pl": "odpływ pęcherzowo-moczowodowy"
+},
+{
+"en": "viral exanthem",
+"pl": "wysypka wirusowa"
+},
+{
+"en": "viral hepatitis",
+"pl": "wirusowe zapalenie wątroby"
+},
+{
+"en": "viral warts",
+"pl": "brodawki wirusowe"
+},
+{
+"en": "vitamin a deficiency",
+"pl": "niedobór witaminy A"
+},
+{
+"en": "vitamin b12 deficiency",
+"pl": "niedobór witaminy B12"
+},
+{
+"en": "vitamin d deficiency",
+"pl": "niedobór witaminy D"
+},
+{
+"en": "vitreous degeneration",
+"pl": "zwyrodnienie ciała szklistego"
+},
+{
+"en": "vitreous hemorrhage",
+"pl": "wylew do ciała szklistego"
+},
+{
+"en": "vocal cord polyp",
+"pl": "polip struny głosowej"
+},
+{
+"en": "volvulus",
+"pl": "skręt jelita"
+},
+{
+"en": "von willebrand disease",
+"pl": "choroba von Willebranda"
+},
+{
+"en": "vulvar cancer",
+"pl": "rak sromu"
+},
+{
+"en": "vulvar disorder",
+"pl": "choroba sromu"
+},
+{
+"en": "vulvodynia",
+"pl": "wulwodynia"
+},
+{
+"en": "wernicke korsakoff syndrome",
+"pl": "zespół Wernickego-Korsakowa"
+},
+{
+"en": "white blood cell disease",
+"pl": "choroba białych krwinek"
+},
+{
+"en": "whooping cough",
+"pl": "krztusiec"
+},
+{
+"en": "wilson disease",
+"pl": "choroba Wilsona"
+},
+{
+"en": "yeast infection",
+"pl": "kandydoza"
+},
+{
+"en": "zenker diverticulum",
+"pl": "uchyłek Zenkera"
+}
+]

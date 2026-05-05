@@ -1,0 +1,3902 @@
+[
+  {
+    "en": "Abdominal aortic aneurysm",
+    "pl": "Tętniak aorty brzusznej",
+    "xgb_label": "abdominal_aortic_aneurysm"
+  },
+  {
+    "en": "Abdominal hernia",
+    "pl": "Przepuklina brzuszna",
+    "xgb_label": "abdominal_hernia"
+  },
+  {
+    "en": "Abscess of nose",
+    "pl": "Ropień nosa",
+    "xgb_label": "abscess_of_nose"
+  },
+  {
+    "en": "Abscess of the lung",
+    "pl": "Ropień płuca",
+    "xgb_label": "abscess_of_the_lung"
+  },
+  {
+    "en": "Abscess of the pharynx",
+    "pl": "Ropień gardła",
+    "xgb_label": "abscess_of_the_pharynx"
+  },
+  {
+    "en": "Acanthosis nigricans",
+    "pl": "Rogowacenie ciemne (acanthosis nigricans)",
+    "xgb_label": "acanthosis_nigricans"
+  },
+  {
+    "en": "Acariasis",
+    "pl": "Akarioza (zakażenie roztoczami)",
+    "xgb_label": "acariasis"
+  },
+  {
+    "en": "Achalasia",
+    "pl": "Achalazja przełyku",
+    "xgb_label": "achalasia"
+  },
+  {
+    "en": "Acne",
+    "pl": "Trądzik pospolity",
+    "xgb_label": "acne"
+  },
+  {
+    "en": "Actinic keratosis",
+    "pl": "Rogowacenie słoneczne (aktyw. aktyniczne)",
+    "xgb_label": "actinic_keratosis"
+  },
+  {
+    "en": "Acute bronchiolitis",
+    "pl": "Ostre zapalenie oskrzelików",
+    "xgb_label": "acute_bronchiolitis"
+  },
+  {
+    "en": "Acute bronchitis",
+    "pl": "Ostre zapalenie oskrzeli",
+    "xgb_label": "acute_bronchitis"
+  },
+  {
+    "en": "Acute bronchospasm",
+    "pl": "Ostry skurcz oskrzeli",
+    "xgb_label": "acute_bronchospasm"
+  },
+  {
+    "en": "Acute fatty liver of pregnancy aflp",
+    "pl": "Ostre stłuszczenie wątroby ciężarnych (AFLP)",
+    "xgb_label": "acute_fatty_liver_of_pregnancy_aflp"
+  },
+  {
+    "en": "Acute glaucoma",
+    "pl": "Ostry atak jaskry",
+    "xgb_label": "acute_glaucoma"
+  },
+  {
+    "en": "Acute kidney injury",
+    "pl": "Ostre uszkodzenie nerek (AKI)",
+    "xgb_label": "acute_kidney_injury"
+  },
+  {
+    "en": "Acute otitis media",
+    "pl": "Ostre zapalenie ucha środkowego",
+    "xgb_label": "acute_otitis_media"
+  },
+  {
+    "en": "Acute pancreatitis",
+    "pl": "Ostre zapalenie trzustki",
+    "xgb_label": "acute_pancreatitis"
+  },
+  {
+    "en": "Acute respiratory distress syndrome ards",
+    "pl": "Zespół ostrej niewydolności oddechowej (ARDS)",
+    "xgb_label": "acute_respiratory_distress_syndrome_ards"
+  },
+  {
+    "en": "Acute sinusitis",
+    "pl": "Ostre zapalenie zatok przynosowych",
+    "xgb_label": "acute_sinusitis"
+  },
+  {
+    "en": "Acute stress reaction",
+    "pl": "Ostra reakcja na stres",
+    "xgb_label": "acute_stress_reaction"
+  },
+  {
+    "en": "Adhesive capsulitis of the shoulder",
+    "pl": "Zamrożony bark (adhezyjne zapalenie torebki)",
+    "xgb_label": "adhesive_capsulitis_of_the_shoulder"
+  },
+  {
+    "en": "Adjustment reaction",
+    "pl": "Reakcja adaptacyjna",
+    "xgb_label": "adjustment_reaction"
+  },
+  {
+    "en": "Adrenal adenoma",
+    "pl": "Gruczolak nadnercza",
+    "xgb_label": "adrenal_adenoma"
+  },
+  {
+    "en": "Adrenal cancer",
+    "pl": "Rak nadnercza",
+    "xgb_label": "adrenal_cancer"
+  },
+  {
+    "en": "Aids",
+    "pl": "AIDS (zespół nabytego niedoboru odporności)",
+    "xgb_label": "aids"
+  },
+  {
+    "en": "Alcohol abuse",
+    "pl": "Nadużywanie alkoholu",
+    "xgb_label": "alcohol_abuse"
+  },
+  {
+    "en": "Alcohol intoxication",
+    "pl": "Ostre zatrucie alkoholem",
+    "xgb_label": "alcohol_intoxication"
+  },
+  {
+    "en": "Alcohol withdrawal",
+    "pl": "Zespół odstawienny (abstynencyjny) alkoholu",
+    "xgb_label": "alcohol_withdrawal"
+  },
+  {
+    "en": "Alcoholic hepatitis",
+    "pl": "Alkoholowe zapalenie wątroby",
+    "xgb_label": "alcoholic_hepatitis"
+  },
+  {
+    "en": "Alcoholic liver disease",
+    "pl": "Alkoholowa choroba wątroby",
+    "xgb_label": "alcoholic_liver_disease"
+  },
+  {
+    "en": "Allergy",
+    "pl": "Alergia",
+    "xgb_label": "allergy"
+  },
+  {
+    "en": "Allergy to animals",
+    "pl": "Alergia na zwierzęta (na sierść)",
+    "xgb_label": "allergy_to_animals"
+  },
+  {
+    "en": "Alopecia",
+    "pl": "Łysienie",
+    "xgb_label": "alopecia"
+  },
+  {
+    "en": "Alzheimer disease",
+    "pl": "Choroba Alzheimera",
+    "xgb_label": "alzheimer_disease"
+  },
+  {
+    "en": "Amblyopia",
+    "pl": "Niedowidzenie (amblyopia)",
+    "xgb_label": "amblyopia"
+  },
+  {
+    "en": "Amyloidosis",
+    "pl": "Amyloidoza",
+    "xgb_label": "amyloidosis"
+  },
+  {
+    "en": "Amyotrophic lateral sclerosis als",
+    "pl": "Stwardnienie zanikowe boczne (SLA/ALS)",
+    "xgb_label": "amyotrophic_lateral_sclerosis_als"
+  },
+  {
+    "en": "Anal fissure",
+    "pl": "Szczelina odbytu",
+    "xgb_label": "anal_fissure"
+  },
+  {
+    "en": "Anal fistula",
+    "pl": "Przetoka okołoodbytnicza/odbytu",
+    "xgb_label": "anal_fistula"
+  },
+  {
+    "en": "Anemia",
+    "pl": "Niedokrwistość (anemia)",
+    "xgb_label": "anemia"
+  },
+  {
+    "en": "Anemia due to chronic kidney disease",
+    "pl": "Niedokrwistość w przebiegu przewlekłej choroby nerek",
+    "xgb_label": "anemia_due_to_chronic_kidney_disease"
+  },
+  {
+    "en": "Anemia due to malignancy",
+    "pl": "Niedokrwistość w przebiegu nowotworu złośliwego",
+    "xgb_label": "anemia_due_to_malignancy"
+  },
+  {
+    "en": "Anemia of chronic disease",
+    "pl": "Niedokrwistość chorób przewlekłych",
+    "xgb_label": "anemia_of_chronic_disease"
+  },
+  {
+    "en": "Angina",
+    "pl": "Dławica piersiowa",
+    "xgb_label": "angina"
+  },
+  {
+    "en": "Ankylosing spondylitis",
+    "pl": "Zesztywniające zapalenie stawów kręgosłupa (ZZSK)",
+    "xgb_label": "ankylosing_spondylitis"
+  },
+  {
+    "en": "Anxiety",
+    "pl": "Zaburzenia lękowe (lęk)",
+    "xgb_label": "anxiety"
+  },
+  {
+    "en": "Aortic valve disease",
+    "pl": "Choroba zastawki aortalnej",
+    "xgb_label": "aortic_valve_disease"
+  },
+  {
+    "en": "Aphakia",
+    "pl": "Afakia",
+    "xgb_label": "aphakia"
+  },
+  {
+    "en": "Aphthous ulcer",
+    "pl": "Nawrotowe owrzodzenia aftowe (afty)",
+    "xgb_label": "aphthous_ulcer"
+  },
+  {
+    "en": "Aplastic anemia",
+    "pl": "Niedokrwistość aplastyczna",
+    "xgb_label": "aplastic_anemia"
+  },
+  {
+    "en": "Appendicitis",
+    "pl": "Zapalenie wyrostka robaczkowego",
+    "xgb_label": "appendicitis"
+  },
+  {
+    "en": "Arrhythmia",
+    "pl": "Arytmia",
+    "xgb_label": "arrhythmia"
+  },
+  {
+    "en": "Arthritis",
+    "pl": "Zapalenie stawów (arthritis)",
+    "xgb_label": "arthritis"
+  },
+  {
+    "en": "Arthritis of the hip",
+    "pl": "Zapalenie stawu biodrowego",
+    "xgb_label": "arthritis_of_the_hip"
+  },
+  {
+    "en": "Ascending cholangitis",
+    "pl": "Ostre wstępujące zapalenie dróg żółciowych",
+    "xgb_label": "ascending_cholangitis"
+  },
+  {
+    "en": "Asperger syndrome",
+    "pl": "Zespół Aspergera",
+    "xgb_label": "asperger_syndrome"
+  },
+  {
+    "en": "Aspergillosis",
+    "pl": "Aspergiloza",
+    "xgb_label": "aspergillosis"
+  },
+  {
+    "en": "Asthma",
+    "pl": "Astma",
+    "xgb_label": "asthma"
+  },
+  {
+    "en": "Astigmatism",
+    "pl": "Astygmatyzm",
+    "xgb_label": "astigmatism"
+  },
+  {
+    "en": "Atelectasis",
+    "pl": "Niedodma",
+    "xgb_label": "atelectasis"
+  },
+  {
+    "en": "Athlete s foot",
+    "pl": "Grzybica stóp (stopa atlety)",
+    "xgb_label": "athlete_s_foot"
+  },
+  {
+    "en": "Atonic bladder",
+    "pl": "Pęcherz atoniczny",
+    "xgb_label": "atonic_bladder"
+  },
+  {
+    "en": "Atrial fibrillation",
+    "pl": "Migotanie przedsionków",
+    "xgb_label": "atrial_fibrillation"
+  },
+  {
+    "en": "Atrial flutter",
+    "pl": "Trzepotanie przedsionków",
+    "xgb_label": "atrial_flutter"
+  },
+  {
+    "en": "Atrophic skin condition",
+    "pl": "Zanikowe zmiany skóry",
+    "xgb_label": "atrophic_skin_condition"
+  },
+  {
+    "en": "Atrophic vaginitis",
+    "pl": "Zanikowe zapalenie pochwy",
+    "xgb_label": "atrophic_vaginitis"
+  },
+  {
+    "en": "Atrophy of the corpus cavernosum",
+    "pl": "Zanik ciał jamistych",
+    "xgb_label": "atrophy_of_the_corpus_cavernosum"
+  },
+  {
+    "en": "Attention deficit hyperactivity disorder adhd",
+    "pl": "Zespół nadpobudliwości psychoruchowej z deficytem uwagi (ADHD)",
+    "xgb_label": "attention_deficit_hyperactivity_disorder_adhd"
+  },
+  {
+    "en": "Autism",
+    "pl": "Zaburzenia ze spektrum autyzmu (ASD) / autyzm",
+    "xgb_label": "autism"
+  },
+  {
+    "en": "Autonomic nervous system disorder",
+    "pl": "Zaburzenia autonomicznego układu nerwowego (dysautonomia)",
+    "xgb_label": "autonomic_nervous_system_disorder"
+  },
+  {
+    "en": "Avascular necrosis",
+    "pl": "Martwica aseptyczna kości",
+    "xgb_label": "avascular_necrosis"
+  },
+  {
+    "en": "Balanitis",
+    "pl": "Zapalenie żołędzi (balanitis)",
+    "xgb_label": "balanitis"
+  },
+  {
+    "en": "Bell palsy",
+    "pl": "Porażenie Bella",
+    "xgb_label": "bell_palsy"
+  },
+  {
+    "en": "Benign kidney cyst",
+    "pl": "Prosta torbiel nerki",
+    "xgb_label": "benign_kidney_cyst"
+  },
+  {
+    "en": "Benign paroxysmal positional vertical bppv",
+    "pl": "Łagodne napadowe położeniowe zawroty głowy (BPPV)",
+    "xgb_label": "benign_paroxysmal_positional_vertical_bppv"
+  },
+  {
+    "en": "Benign prostatic hyperplasia bph",
+    "pl": "Łagodny rozrost gruczołu krokowego (BPH)",
+    "xgb_label": "benign_prostatic_hyperplasia_bph"
+  },
+  {
+    "en": "Benign vaginal discharge leukorrhea",
+    "pl": "Nieinfekcyjna/prawidłowa wydzielina pochwowa (leukorrhea)",
+    "xgb_label": "benign_vaginal_discharge_leukorrhea"
+  },
+  {
+    "en": "Bipolar disorder",
+    "pl": "Choroba afektywna dwubiegunowa (ChAD)",
+    "xgb_label": "bipolar_disorder"
+  },
+  {
+    "en": "Birth trauma",
+    "pl": "Uraz okołoporodowy",
+    "xgb_label": "birth_trauma"
+  },
+  {
+    "en": "Bladder cancer",
+    "pl": "Rak pęcherza moczowego",
+    "xgb_label": "bladder_cancer"
+  },
+  {
+    "en": "Bladder disorder",
+    "pl": "Choroba pęcherza moczowego",
+    "xgb_label": "bladder_disorder"
+  },
+  {
+    "en": "Bladder obstruction",
+    "pl": "Przeszkoda podpęcherzowa (utrudniony odpływ moczu)",
+    "xgb_label": "bladder_obstruction"
+  },
+  {
+    "en": "Blepharitis",
+    "pl": "Zapalenie brzegów powiek (blepharitis)",
+    "xgb_label": "blepharitis"
+  },
+  {
+    "en": "Blepharospasm",
+    "pl": "Kurcz powiek (blepharospasm)",
+    "xgb_label": "blepharospasm"
+  },
+  {
+    "en": "Bone cancer",
+    "pl": "Nowotwór kości",
+    "xgb_label": "bone_cancer"
+  },
+  {
+    "en": "Bone disorder",
+    "pl": "Choroba kości",
+    "xgb_label": "bone_disorder"
+  },
+  {
+    "en": "Bone spur of the calcaneous",
+    "pl": "Ostroga piętowa",
+    "xgb_label": "bone_spur_of_the_calcaneous"
+  },
+  {
+    "en": "Brachial neuritis",
+    "pl": "Zapalenie splotu barkowego (neuritis)",
+    "xgb_label": "brachial_neuritis"
+  },
+  {
+    "en": "Brain cancer",
+    "pl": "Nowotwór mózgu",
+    "xgb_label": "brain_cancer"
+  },
+  {
+    "en": "Breast cancer",
+    "pl": "Rak piersi",
+    "xgb_label": "breast_cancer"
+  },
+  {
+    "en": "Breast cyst",
+    "pl": "Torbiel piersi",
+    "xgb_label": "breast_cyst"
+  },
+  {
+    "en": "Breast infection mastitis",
+    "pl": "Zapalenie gruczołu piersiowego (mastitis)",
+    "xgb_label": "breast_infection_mastitis"
+  },
+  {
+    "en": "Broken tooth",
+    "pl": "Złamany ząb",
+    "xgb_label": "broken_tooth"
+  },
+  {
+    "en": "Bronchial asthma",
+    "pl": "Astma oskrzelowa",
+    "xgb_label": "bronchial_asthma"
+  },
+  {
+    "en": "Bunion",
+    "pl": "Paluch koślawy (hallux valgus)",
+    "xgb_label": "bunion"
+  },
+  {
+    "en": "Burn",
+    "pl": "Oparzenie",
+    "xgb_label": "burn"
+  },
+  {
+    "en": "Bursitis",
+    "pl": "Zapalenie kaletki maziowej",
+    "xgb_label": "bursitis"
+  },
+  {
+    "en": "Callus",
+    "pl": "Modzel (odcisk)",
+    "xgb_label": "callus"
+  },
+  {
+    "en": "Carbon monoxide poisoning",
+    "pl": "Zatrucie tlenkiem węgla",
+    "xgb_label": "carbon_monoxide_poisoning"
+  },
+  {
+    "en": "Carcinoid syndrome",
+    "pl": "Zespół rakowiaka",
+    "xgb_label": "carcinoid_syndrome"
+  },
+  {
+    "en": "Cardiac arrest",
+    "pl": "Zatrzymanie krążenia",
+    "xgb_label": "cardiac_arrest"
+  },
+  {
+    "en": "Cardiomyopathy",
+    "pl": "Kardiomiopatia",
+    "xgb_label": "cardiomyopathy"
+  },
+  {
+    "en": "Carpal tunnel syndrome",
+    "pl": "Zespół cieśni nadgarstka",
+    "xgb_label": "carpal_tunnel_syndrome"
+  },
+  {
+    "en": "Cat scratch disease",
+    "pl": "Choroba kociego pazura",
+    "xgb_label": "cat_scratch_disease"
+  },
+  {
+    "en": "Cataract",
+    "pl": "Zaćma",
+    "xgb_label": "cataract"
+  },
+  {
+    "en": "Celiac disease",
+    "pl": "Celiakia",
+    "xgb_label": "celiac_disease"
+  },
+  {
+    "en": "Cellulitis or abscess of mouth",
+    "pl": "Zapalenie tkanki łącznej lub ropień w obrębie jamy ustnej",
+    "xgb_label": "cellulitis_or_abscess_of_mouth"
+  },
+  {
+    "en": "Central atherosclerosis",
+    "pl": "Miażdżyca naczyń centralnych (uogólniona)",
+    "xgb_label": "central_atherosclerosis"
+  },
+  {
+    "en": "Central retinal artery or vein occlusion",
+    "pl": "Zamknięcie centralnej tętnicy lub żyły siatkówki",
+    "xgb_label": "central_retinal_artery_or_vein_occlusion"
+  },
+  {
+    "en": "Cerebral edema",
+    "pl": "Obrzęk mózgu",
+    "xgb_label": "cerebral_edema"
+  },
+  {
+    "en": "Cerebral palsy",
+    "pl": "Mózgowe porażenie dziecięce",
+    "xgb_label": "cerebral_palsy"
+  },
+  {
+    "en": "Cervical cancer",
+    "pl": "Rak szyjki macicy",
+    "xgb_label": "cervical_cancer"
+  },
+  {
+    "en": "Cervical disorder",
+    "pl": "Choroba szyjki macicy",
+    "xgb_label": "cervical_disorder"
+  },
+  {
+    "en": "Cervical spondylosis",
+    "pl": "Spondyloza szyjna",
+    "xgb_label": "cervical_spondylosis"
+  },
+  {
+    "en": "Cervicitis",
+    "pl": "Zapalenie szyjki macicy",
+    "xgb_label": "cervicitis"
+  },
+  {
+    "en": "Chalazion",
+    "pl": "Gradówka",
+    "xgb_label": "chalazion"
+  },
+  {
+    "en": "Chicken pox",
+    "pl": "Ospa wietrzna",
+    "xgb_label": "chicken_pox"
+  },
+  {
+    "en": "Chickenpox",
+    "pl": "Ospa wietrzna",
+    "xgb_label": "chickenpox"
+  },
+  {
+    "en": "Chlamydia",
+    "pl": "Chlamydioza",
+    "xgb_label": "chlamydia"
+  },
+  {
+    "en": "Cholecystitis",
+    "pl": "Zapalenie pęcherzyka żółciowego",
+    "xgb_label": "cholecystitis"
+  },
+  {
+    "en": "Choledocholithiasis",
+    "pl": "Kamica przewodu żółciowego wspólnego",
+    "xgb_label": "choledocholithiasis"
+  },
+  {
+    "en": "Cholesteatoma",
+    "pl": "Perlak ucha środkowego",
+    "xgb_label": "cholesteatoma"
+  },
+  {
+    "en": "Chondromalacia of the patella",
+    "pl": "Chondromalacja rzepki",
+    "xgb_label": "chondromalacia_of_the_patella"
+  },
+  {
+    "en": "Chorioretinitis",
+    "pl": "Zapalenie naczyniówki i siatkówki",
+    "xgb_label": "chorioretinitis"
+  },
+  {
+    "en": "Chronic back pain",
+    "pl": "Przewlekły ból pleców",
+    "xgb_label": "chronic_back_pain"
+  },
+  {
+    "en": "Chronic cholestasis",
+    "pl": "Przewlekła cholestaza",
+    "xgb_label": "chronic_cholestasis"
+  },
+  {
+    "en": "Chronic constipation",
+    "pl": "Przewlekłe zaparcia",
+    "xgb_label": "chronic_constipation"
+  },
+  {
+    "en": "Chronic glaucoma",
+    "pl": "Przewlekła jaskra",
+    "xgb_label": "chronic_glaucoma"
+  },
+  {
+    "en": "Chronic inflammatory demyelinating polyneuropathy cidp",
+    "pl": "Przewlekła zapalna polineuropatia demielinizacyjna (CIDP)",
+    "xgb_label": "chronic_inflammatory_demyelinating_polyneuropathy_cidp"
+  },
+  {
+    "en": "Chronic kidney disease",
+    "pl": "Przewlekła choroba nerek (PChN)",
+    "xgb_label": "chronic_kidney_disease"
+  },
+  {
+    "en": "Chronic knee pain",
+    "pl": "Przewlekły ból kolana",
+    "xgb_label": "chronic_knee_pain"
+  },
+  {
+    "en": "Chronic obstructive pulmonary disease copd",
+    "pl": "Przewlekła obturacyjna choroba płuc (POChP/COPD)",
+    "xgb_label": "chronic_obstructive_pulmonary_disease_copd"
+  },
+  {
+    "en": "Chronic otitis media",
+    "pl": "Przewlekłe zapalenie ucha środkowego",
+    "xgb_label": "chronic_otitis_media"
+  },
+  {
+    "en": "Chronic pain disorder",
+    "pl": "Przewlekły zespół bólowy",
+    "xgb_label": "chronic_pain_disorder"
+  },
+  {
+    "en": "Chronic pancreatitis",
+    "pl": "Przewlekłe zapalenie trzustki",
+    "xgb_label": "chronic_pancreatitis"
+  },
+  {
+    "en": "Chronic rheumatic fever",
+    "pl": "Przewlekła gorączka reumatyczna",
+    "xgb_label": "chronic_rheumatic_fever"
+  },
+  {
+    "en": "Chronic sinusitis",
+    "pl": "Przewlekłe zapalenie zatok przynosowych",
+    "xgb_label": "chronic_sinusitis"
+  },
+  {
+    "en": "Cirrhosis",
+    "pl": "Marskość wątroby",
+    "xgb_label": "cirrhosis"
+  },
+  {
+    "en": "Coagulation bleeding disorder",
+    "pl": "Zaburzenia krzepnięcia krwi",
+    "xgb_label": "coagulation_bleeding_disorder"
+  },
+  {
+    "en": "Cold sore",
+    "pl": "Opryszczka wargowa",
+    "xgb_label": "cold_sore"
+  },
+  {
+    "en": "Colonic polyp",
+    "pl": "Polip okrężnicy",
+    "xgb_label": "colonic_polyp"
+  },
+  {
+    "en": "Colorectal cancer",
+    "pl": "Rak jelita grubego",
+    "xgb_label": "colorectal_cancer"
+  },
+  {
+    "en": "Common cold",
+    "pl": "Przeziębienie",
+    "xgb_label": "common_cold"
+  },
+  {
+    "en": "Complex regional pain syndrome",
+    "pl": "Zespół bólu o charakterze regionalnym (CRPS)",
+    "xgb_label": "complex_regional_pain_syndrome"
+  },
+  {
+    "en": "Concussion",
+    "pl": "Wstrząśnienie mózgu",
+    "xgb_label": "concussion"
+  },
+  {
+    "en": "Conduct disorder",
+    "pl": "Zaburzenia zachowania",
+    "xgb_label": "conduct_disorder"
+  },
+  {
+    "en": "Conductive hearing loss",
+    "pl": "Niedosłuch przewodzeniowy",
+    "xgb_label": "conductive_hearing_loss"
+  },
+  {
+    "en": "Congenital heart defect",
+    "pl": "Wrodzona wada serca",
+    "xgb_label": "congenital_heart_defect"
+  },
+  {
+    "en": "Congenital malformation syndrome",
+    "pl": "Zespół wad wrodzonych",
+    "xgb_label": "congenital_malformation_syndrome"
+  },
+  {
+    "en": "Conjunctivitis",
+    "pl": "Zapalenie spojówek",
+    "xgb_label": "conjunctivitis"
+  },
+  {
+    "en": "Conjunctivitis due to allergy",
+    "pl": "Alergiczne zapalenie spojówek",
+    "xgb_label": "conjunctivitis_due_to_allergy"
+  },
+  {
+    "en": "Conjunctivitis due to bacteria",
+    "pl": "Bakteryjne zapalenie spojówek",
+    "xgb_label": "conjunctivitis_due_to_bacteria"
+  },
+  {
+    "en": "Conjunctivitis due to virus",
+    "pl": "Wirusowe zapalenie spojówek",
+    "xgb_label": "conjunctivitis_due_to_virus"
+  },
+  {
+    "en": "Connective tissue disorder",
+    "pl": "Choroba tkanki łącznej",
+    "xgb_label": "connective_tissue_disorder"
+  },
+  {
+    "en": "Contact dermatitis",
+    "pl": "Wyprysk kontaktowy (kontaktowe zapalenie skóry)",
+    "xgb_label": "contact_dermatitis"
+  },
+  {
+    "en": "Conversion disorder",
+    "pl": "Zaburzenie konwersyjne",
+    "xgb_label": "conversion_disorder"
+  },
+  {
+    "en": "Cornea infection",
+    "pl": "Zapalenie rogówki (keratitis)",
+    "xgb_label": "cornea_infection"
+  },
+  {
+    "en": "Corneal abrasion",
+    "pl": "Nadżerka/otarcie rogówki",
+    "xgb_label": "corneal_abrasion"
+  },
+  {
+    "en": "Corneal disorder",
+    "pl": "Choroba rogówki",
+    "xgb_label": "corneal_disorder"
+  },
+  {
+    "en": "Coronary atherosclerosis",
+    "pl": "Miażdżyca tętnic wieńcowych",
+    "xgb_label": "coronary_atherosclerosis"
+  },
+  {
+    "en": "Cranial nerve palsy",
+    "pl": "Porażenie nerwu/nerwów czaszkowych",
+    "xgb_label": "cranial_nerve_palsy"
+  },
+  {
+    "en": "Crohn disease",
+    "pl": "Choroba Leśniowskiego‑Crohna",
+    "xgb_label": "crohn_disease"
+  },
+  {
+    "en": "Croup",
+    "pl": "Krup",
+    "xgb_label": "croup"
+  },
+  {
+    "en": "Crushing injury",
+    "pl": "Uraz zmiażdżeniowy",
+    "xgb_label": "crushing_injury"
+  },
+  {
+    "en": "Cryptococcosis",
+    "pl": "Kryptokokoza",
+    "xgb_label": "cryptococcosis"
+  },
+  {
+    "en": "Cryptorchidism",
+    "pl": "Wnętrostwo",
+    "xgb_label": "cryptorchidism"
+  },
+  {
+    "en": "Cushing syndrome",
+    "pl": "Zespół Cushinga",
+    "xgb_label": "cushing_syndrome"
+  },
+  {
+    "en": "Cyst of the eyelid",
+    "pl": "Torbiel powieki",
+    "xgb_label": "cyst_of_the_eyelid"
+  },
+  {
+    "en": "Cystic fibrosis",
+    "pl": "Mukowiscydoza",
+    "xgb_label": "cystic_fibrosis"
+  },
+  {
+    "en": "Cysticercosis",
+    "pl": "Wągrzyca",
+    "xgb_label": "cysticercosis"
+  },
+  {
+    "en": "Cystitis",
+    "pl": "Zapalenie pęcherza moczowego",
+    "xgb_label": "cystitis"
+  },
+  {
+    "en": "De quervain disease",
+    "pl": "Choroba de Quervaina",
+    "xgb_label": "de_quervain_disease"
+  },
+  {
+    "en": "Decubitus ulcer",
+    "pl": "Odleżyna",
+    "xgb_label": "decubitus_ulcer"
+  },
+  {
+    "en": "Deep vein thrombosis dvt",
+    "pl": "Zakrzepica żył głębokich (ZŻG)",
+    "xgb_label": "deep_vein_thrombosis_dvt"
+  },
+  {
+    "en": "Degenerative disc disease",
+    "pl": "Choroba zwyrodnieniowa krążka międzykręgowego",
+    "xgb_label": "degenerative_disc_disease"
+  },
+  {
+    "en": "Delirium",
+    "pl": "Majaczenie (delirium)",
+    "xgb_label": "delirium"
+  },
+  {
+    "en": "Dementia",
+    "pl": "Otępienie",
+    "xgb_label": "dementia"
+  },
+  {
+    "en": "Dengue",
+    "pl": "Denga",
+    "xgb_label": "dengue"
+  },
+  {
+    "en": "Dengue fever",
+    "pl": "Gorączka denga",
+    "xgb_label": "dengue_fever"
+  },
+  {
+    "en": "Dental caries",
+    "pl": "Próchnica zębów",
+    "xgb_label": "dental_caries"
+  },
+  {
+    "en": "Depression",
+    "pl": "Depresja",
+    "xgb_label": "depression"
+  },
+  {
+    "en": "Dermatitis due to sun exposure",
+    "pl": "Zapalenie skóry po ekspozycji na słońce (fotodermatoza)",
+    "xgb_label": "dermatitis_due_to_sun_exposure"
+  },
+  {
+    "en": "Developmental disability",
+    "pl": "Niepełnosprawność rozwojowa",
+    "xgb_label": "developmental_disability"
+  },
+  {
+    "en": "Deviated nasal septum",
+    "pl": "Skrzywienie przegrody nosa",
+    "xgb_label": "deviated_nasal_septum"
+  },
+  {
+    "en": "Diabetes",
+    "pl": "Cukrzyca",
+    "xgb_label": "diabetes"
+  },
+  {
+    "en": "Diabetes insipidus",
+    "pl": "Moczówka prosta",
+    "xgb_label": "diabetes_insipidus"
+  },
+  {
+    "en": "Diabetic ketoacidosis",
+    "pl": "Kwasica ketonowa w przebiegu cukrzycy",
+    "xgb_label": "diabetic_ketoacidosis"
+  },
+  {
+    "en": "Diabetic kidney disease",
+    "pl": "Cukrzycowa choroba nerek",
+    "xgb_label": "diabetic_kidney_disease"
+  },
+  {
+    "en": "Diabetic peripheral neuropathy",
+    "pl": "Cukrzycowa neuropatia obwodowa",
+    "xgb_label": "diabetic_peripheral_neuropathy"
+  },
+  {
+    "en": "Diabetic retinopathy",
+    "pl": "Retinopatia cukrzycowa",
+    "xgb_label": "diabetic_retinopathy"
+  },
+  {
+    "en": "Diaper rash",
+    "pl": "Pieluszkowe zapalenie skóry",
+    "xgb_label": "diaper_rash"
+  },
+  {
+    "en": "Dimorphic hemmorhoids piles",
+    "pl": "Hemoroidy (guzki krwawnicze)",
+    "xgb_label": "dimorphic_hemmorhoids_piles"
+  },
+  {
+    "en": "Dislocation of the ankle",
+    "pl": "Zwichnięcie stawu skokowego",
+    "xgb_label": "dislocation_of_the_ankle"
+  },
+  {
+    "en": "Dislocation of the elbow",
+    "pl": "Zwichnięcie stawu łokciowego",
+    "xgb_label": "dislocation_of_the_elbow"
+  },
+  {
+    "en": "Dislocation of the finger",
+    "pl": "Zwichnięcie palca",
+    "xgb_label": "dislocation_of_the_finger"
+  },
+  {
+    "en": "Dislocation of the foot",
+    "pl": "Zwichnięcie stopy",
+    "xgb_label": "dislocation_of_the_foot"
+  },
+  {
+    "en": "Dislocation of the hip",
+    "pl": "Zwichnięcie stawu biodrowego",
+    "xgb_label": "dislocation_of_the_hip"
+  },
+  {
+    "en": "Dislocation of the knee",
+    "pl": "Zwichnięcie stawu kolanowego",
+    "xgb_label": "dislocation_of_the_knee"
+  },
+  {
+    "en": "Dislocation of the patella",
+    "pl": "Zwichnięcie rzepki",
+    "xgb_label": "dislocation_of_the_patella"
+  },
+  {
+    "en": "Dislocation of the shoulder",
+    "pl": "Zwichnięcie stawu ramiennego",
+    "xgb_label": "dislocation_of_the_shoulder"
+  },
+  {
+    "en": "Dislocation of the vertebra",
+    "pl": "Przemieszczenie/zwichnięcie kręgu",
+    "xgb_label": "dislocation_of_the_vertebra"
+  },
+  {
+    "en": "Dislocation of the wrist",
+    "pl": "Zwichnięcie nadgarstka",
+    "xgb_label": "dislocation_of_the_wrist"
+  },
+  {
+    "en": "Dissociative disorder",
+    "pl": "Zaburzenie dysocjacyjne",
+    "xgb_label": "dissociative_disorder"
+  },
+  {
+    "en": "Diverticulitis",
+    "pl": "Zapalenie uchyłków jelita grubego",
+    "xgb_label": "diverticulitis"
+  },
+  {
+    "en": "Diverticulosis",
+    "pl": "Uchyłkowatość jelita grubego",
+    "xgb_label": "diverticulosis"
+  },
+  {
+    "en": "Down syndrome",
+    "pl": "Zespół Downa",
+    "xgb_label": "down_syndrome"
+  },
+  {
+    "en": "Drug abuse",
+    "pl": "Nadużywanie substancji psychoaktywnych",
+    "xgb_label": "drug_abuse"
+  },
+  {
+    "en": "Drug abuse barbiturates",
+    "pl": "Nadużywanie barbituranów",
+    "xgb_label": "drug_abuse_barbiturates"
+  },
+  {
+    "en": "Drug abuse cocaine",
+    "pl": "Nadużywanie kokainy",
+    "xgb_label": "drug_abuse_cocaine"
+  },
+  {
+    "en": "Drug abuse methamphetamine",
+    "pl": "Nadużywanie metamfetaminy",
+    "xgb_label": "drug_abuse_methamphetamine"
+  },
+  {
+    "en": "Drug abuse opioids",
+    "pl": "Nadużywanie opioidów",
+    "xgb_label": "drug_abuse_opioids"
+  },
+  {
+    "en": "Drug poisoning due to medication",
+    "pl": "Zatrucie polekowe",
+    "xgb_label": "drug_poisoning_due_to_medication"
+  },
+  {
+    "en": "Drug reaction",
+    "pl": "Reakcja polekowa",
+    "xgb_label": "drug_reaction"
+  },
+  {
+    "en": "Drug withdrawal",
+    "pl": "Zespół odstawienny po substancjach",
+    "xgb_label": "drug_withdrawal"
+  },
+  {
+    "en": "Dry eye of unknown cause",
+    "pl": "Zespół suchego oka o nieznanej etiologii",
+    "xgb_label": "dry_eye_of_unknown_cause"
+  },
+  {
+    "en": "Dumping syndrome",
+    "pl": "Zespół poposiłkowy (dumping syndrome)",
+    "xgb_label": "dumping_syndrome"
+  },
+  {
+    "en": "Dyshidrosis",
+    "pl": "Dyshydroza",
+    "xgb_label": "dyshidrosis"
+  },
+  {
+    "en": "Dysthymic disorder",
+    "pl": "Dystymia",
+    "xgb_label": "dysthymic_disorder"
+  },
+  {
+    "en": "Ear drum damage",
+    "pl": "Uszkodzenie błony bębenkowej",
+    "xgb_label": "ear_drum_damage"
+  },
+  {
+    "en": "Ear wax impaction",
+    "pl": "Czop woskowinowy",
+    "xgb_label": "ear_wax_impaction"
+  },
+  {
+    "en": "Eating disorder",
+    "pl": "Zaburzenia odżywiania",
+    "xgb_label": "eating_disorder"
+  },
+  {
+    "en": "Ectopic pregnancy",
+    "pl": "Ciąża pozamaciczna",
+    "xgb_label": "ectopic_pregnancy"
+  },
+  {
+    "en": "Ectropion",
+    "pl": "Ektropion (wywinięcie powieki)",
+    "xgb_label": "ectropion"
+  },
+  {
+    "en": "Eczema",
+    "pl": "Egzema / atopowe zapalenie skóry (AZS)",
+    "xgb_label": "eczema"
+  },
+  {
+    "en": "Edward syndrome",
+    "pl": "Zespół Edwardsa (trisomia 18)",
+    "xgb_label": "edward_syndrome"
+  },
+  {
+    "en": "Emphysema",
+    "pl": "Rozedma płuc",
+    "xgb_label": "emphysema"
+  },
+  {
+    "en": "Empyema",
+    "pl": "Ropniak (np. opłucnej)",
+    "xgb_label": "empyema"
+  },
+  {
+    "en": "Encephalitis",
+    "pl": "Zapalenie mózgu",
+    "xgb_label": "encephalitis"
+  },
+  {
+    "en": "Endocarditis",
+    "pl": "Zapalenie wsierdzia",
+    "xgb_label": "endocarditis"
+  },
+  {
+    "en": "Endometrial cancer",
+    "pl": "Rak endometrium",
+    "xgb_label": "endometrial_cancer"
+  },
+  {
+    "en": "Endometrial hyperplasia",
+    "pl": "Rozrost endometrium",
+    "xgb_label": "endometrial_hyperplasia"
+  },
+  {
+    "en": "Endometriosis",
+    "pl": "Endometrioza",
+    "xgb_label": "endometriosis"
+  },
+  {
+    "en": "Endophthalmitis",
+    "pl": "Zapalenie wnętrza gałki ocznej (endophthalmitis)",
+    "xgb_label": "endophthalmitis"
+  },
+  {
+    "en": "Envenomation from spider or animal bite",
+    "pl": "Zatrucie jadem po ukąszeniu pajęczaka/zwierzęcia",
+    "xgb_label": "envenomation_from_spider_or_animal_bite"
+  },
+  {
+    "en": "Ependymoma",
+    "pl": "Wyściółczak",
+    "xgb_label": "ependymoma"
+  },
+  {
+    "en": "Epididymitis",
+    "pl": "Zapalenie najądrza",
+    "xgb_label": "epididymitis"
+  },
+  {
+    "en": "Epidural hemorrhage",
+    "pl": "Krwiak nadtwardówkowy",
+    "xgb_label": "epidural_hemorrhage"
+  },
+  {
+    "en": "Epilepsy",
+    "pl": "Padaczka (epilepsja)",
+    "xgb_label": "epilepsy"
+  },
+  {
+    "en": "Erectile dysfunction",
+    "pl": "Zaburzenia erekcji",
+    "xgb_label": "erectile_dysfunction"
+  },
+  {
+    "en": "Erythema multiforme",
+    "pl": "Rumień wielopostaciowy",
+    "xgb_label": "erythema_multiforme"
+  },
+  {
+    "en": "Esophageal cancer",
+    "pl": "Rak przełyku",
+    "xgb_label": "esophageal_cancer"
+  },
+  {
+    "en": "Esophageal varices",
+    "pl": "Żylaki przełyku",
+    "xgb_label": "esophageal_varices"
+  },
+  {
+    "en": "Esophagitis",
+    "pl": "Zapalenie przełyku",
+    "xgb_label": "esophagitis"
+  },
+  {
+    "en": "Essential tremor",
+    "pl": "Drżenie samoistne",
+    "xgb_label": "essential_tremor"
+  },
+  {
+    "en": "Eustachian tube dysfunction ear disorder",
+    "pl": "Dysfunkcja trąbki słuchowej (Eustachiusza)",
+    "xgb_label": "eustachian_tube_dysfunction_ear_disorder"
+  },
+  {
+    "en": "Extrapyramidal effect of drugs",
+    "pl": "Polekowe objawy pozapiramidowe",
+    "xgb_label": "extrapyramidal_effect_of_drugs"
+  },
+  {
+    "en": "Eye alignment disorder",
+    "pl": "Zaburzenia ustawienia gałek ocznych (zez)",
+    "xgb_label": "eye_alignment_disorder"
+  },
+  {
+    "en": "Factitious disorder",
+    "pl": "Zaburzenie pozorowane (factitious disorder)",
+    "xgb_label": "factitious_disorder"
+  },
+  {
+    "en": "Female genitalia infection",
+    "pl": "Zakażenie żeńskich narządów płciowych",
+    "xgb_label": "female_genitalia_infection"
+  },
+  {
+    "en": "Female infertility of unknown cause",
+    "pl": "Niepłodność żeńska o nieznanej przyczynie",
+    "xgb_label": "female_infertility_of_unknown_cause"
+  },
+  {
+    "en": "Fetal alcohol syndrome",
+    "pl": "Płodowy zespół alkoholowy (FAS)",
+    "xgb_label": "fetal_alcohol_syndrome"
+  },
+  {
+    "en": "Fibroadenoma",
+    "pl": "Gruczolakowłókniak",
+    "xgb_label": "fibroadenoma"
+  },
+  {
+    "en": "Fibrocystic breast disease",
+    "pl": "Mastopatia włóknisto‑torbielowata",
+    "xgb_label": "fibrocystic_breast_disease"
+  },
+  {
+    "en": "Fibromyalgia",
+    "pl": "Fibromialgia",
+    "xgb_label": "fibromyalgia"
+  },
+  {
+    "en": "Flat feet",
+    "pl": "Płaskostopie",
+    "xgb_label": "flat_feet"
+  },
+  {
+    "en": "Floaters",
+    "pl": "Męty ciała szklistego",
+    "xgb_label": "floaters"
+  },
+  {
+    "en": "Flu",
+    "pl": "Grypa",
+    "xgb_label": "flu"
+  },
+  {
+    "en": "Fluid overload",
+    "pl": "Przewodnienie",
+    "xgb_label": "fluid_overload"
+  },
+  {
+    "en": "Folate deficiency",
+    "pl": "Niedobór kwasu foliowego",
+    "xgb_label": "folate_deficiency"
+  },
+  {
+    "en": "Food allergy",
+    "pl": "Alergia pokarmowa",
+    "xgb_label": "food_allergy"
+  },
+  {
+    "en": "Foreign body in the ear",
+    "pl": "Ciało obce w uchu",
+    "xgb_label": "foreign_body_in_the_ear"
+  },
+  {
+    "en": "Foreign body in the eye",
+    "pl": "Ciało obce w oku",
+    "xgb_label": "foreign_body_in_the_eye"
+  },
+  {
+    "en": "Foreign body in the gastrointestinal tract",
+    "pl": "Ciało obce w przewodzie pokarmowym",
+    "xgb_label": "foreign_body_in_the_gastrointestinal_tract"
+  },
+  {
+    "en": "Foreign body in the throat",
+    "pl": "Ciało obce w gardle",
+    "xgb_label": "foreign_body_in_the_throat"
+  },
+  {
+    "en": "Foreign body in the vagina",
+    "pl": "Ciało obce w pochwie",
+    "xgb_label": "foreign_body_in_the_vagina"
+  },
+  {
+    "en": "Fracture of the ankle",
+    "pl": "Złamanie stawu skokowego/kostek",
+    "xgb_label": "fracture_of_the_ankle"
+  },
+  {
+    "en": "Fracture of the arm",
+    "pl": "Złamanie kości ramiennej / kończyny górnej",
+    "xgb_label": "fracture_of_the_arm"
+  },
+  {
+    "en": "Fracture of the facial bones",
+    "pl": "Złamanie kości twarzoczaszki",
+    "xgb_label": "fracture_of_the_facial_bones"
+  },
+  {
+    "en": "Fracture of the finger",
+    "pl": "Złamanie palca",
+    "xgb_label": "fracture_of_the_finger"
+  },
+  {
+    "en": "Fracture of the foot",
+    "pl": "Złamanie stopy",
+    "xgb_label": "fracture_of_the_foot"
+  },
+  {
+    "en": "Fracture of the hand",
+    "pl": "Złamanie ręki",
+    "xgb_label": "fracture_of_the_hand"
+  },
+  {
+    "en": "Fracture of the jaw",
+    "pl": "Złamanie żuchwy",
+    "xgb_label": "fracture_of_the_jaw"
+  },
+  {
+    "en": "Fracture of the leg",
+    "pl": "Złamanie kończyny dolnej",
+    "xgb_label": "fracture_of_the_leg"
+  },
+  {
+    "en": "Fracture of the neck",
+    "pl": "Złamanie kręgów szyjnych",
+    "xgb_label": "fracture_of_the_neck"
+  },
+  {
+    "en": "Fracture of the patella",
+    "pl": "Złamanie rzepki",
+    "xgb_label": "fracture_of_the_patella"
+  },
+  {
+    "en": "Fracture of the pelvis",
+    "pl": "Złamanie miednicy",
+    "xgb_label": "fracture_of_the_pelvis"
+  },
+  {
+    "en": "Fracture of the rib",
+    "pl": "Złamanie żebra",
+    "xgb_label": "fracture_of_the_rib"
+  },
+  {
+    "en": "Fracture of the shoulder",
+    "pl": "Złamanie obręczy barkowej",
+    "xgb_label": "fracture_of_the_shoulder"
+  },
+  {
+    "en": "Fracture of the skull",
+    "pl": "Złamanie kości czaszki",
+    "xgb_label": "fracture_of_the_skull"
+  },
+  {
+    "en": "Fracture of the vertebra",
+    "pl": "Złamanie kręgu",
+    "xgb_label": "fracture_of_the_vertebra"
+  },
+  {
+    "en": "Friedrich ataxia",
+    "pl": "Ataksja Friedreicha",
+    "xgb_label": "friedrich_ataxia"
+  },
+  {
+    "en": "Frostbite",
+    "pl": "Odmrożenie",
+    "xgb_label": "frostbite"
+  },
+  {
+    "en": "Fungal infection",
+    "pl": "Grzybica",
+    "xgb_label": "fungal_infection"
+  },
+  {
+    "en": "Fungal infection of the hair",
+    "pl": "Grzybica skóry owłosionej",
+    "xgb_label": "fungal_infection_of_the_hair"
+  },
+  {
+    "en": "Fungal infection of the skin",
+    "pl": "Grzybica skóry",
+    "xgb_label": "fungal_infection_of_the_skin"
+  },
+  {
+    "en": "G6pd enzyme deficiency",
+    "pl": "Niedobór dehydrogenazy glukozo‑6‑fosforanowej (G6PD)",
+    "xgb_label": "g6pd_enzyme_deficiency"
+  },
+  {
+    "en": "Galactorrhea of unknown cause",
+    "pl": "Mlekotok o nieznanej etiologii",
+    "xgb_label": "galactorrhea_of_unknown_cause"
+  },
+  {
+    "en": "Gallstone",
+    "pl": "Kamica żółciowa",
+    "xgb_label": "gallstone"
+  },
+  {
+    "en": "Ganglion cyst",
+    "pl": "Torbiel galaretowata (ganglion)",
+    "xgb_label": "ganglion_cyst"
+  },
+  {
+    "en": "Gastritis",
+    "pl": "Zapalenie błony śluzowej żołądka",
+    "xgb_label": "gastritis"
+  },
+  {
+    "en": "Gastroduodenal ulcer",
+    "pl": "Wrzód żołądka i/lub dwunastnicy",
+    "xgb_label": "gastroduodenal_ulcer"
+  },
+  {
+    "en": "Gastroenteritis",
+    "pl": "Nieżyt żołądkowo‑jelitowy (gastroenteritis)",
+    "xgb_label": "gastroenteritis"
+  },
+  {
+    "en": "Gastroesophageal reflux disease gerd",
+    "pl": "Choroba refluksowa przełyku (GERD)",
+    "xgb_label": "gastroesophageal_reflux_disease_gerd"
+  },
+  {
+    "en": "Gastrointestinal hemorrhage",
+    "pl": "Krwawienie z przewodu pokarmowego",
+    "xgb_label": "gastrointestinal_hemorrhage"
+  },
+  {
+    "en": "Gastroparesis",
+    "pl": "Gastropareza (opóźnione opróżnianie żołądka)",
+    "xgb_label": "gastroparesis"
+  },
+  {
+    "en": "Genital herpes",
+    "pl": "Opryszczka narządów płciowych",
+    "xgb_label": "genital_herpes"
+  },
+  {
+    "en": "Gerd",
+    "pl": "Choroba refluksowa przełyku (GERD)",
+    "xgb_label": "gerd"
+  },
+  {
+    "en": "Gestational diabetes",
+    "pl": "Cukrzyca ciążowa",
+    "xgb_label": "gestational_diabetes"
+  },
+  {
+    "en": "Glaucoma",
+    "pl": "Jaskra",
+    "xgb_label": "glaucoma"
+  },
+  {
+    "en": "Glucocorticoid deficiency",
+    "pl": "Niedobór glikokortykoidów",
+    "xgb_label": "glucocorticoid_deficiency"
+  },
+  {
+    "en": "Goiter",
+    "pl": "Wole tarczycy",
+    "xgb_label": "goiter"
+  },
+  {
+    "en": "Gonorrhea",
+    "pl": "Rzeżączka",
+    "xgb_label": "gonorrhea"
+  },
+  {
+    "en": "Gout",
+    "pl": "Dna moczanowa",
+    "xgb_label": "gout"
+  },
+  {
+    "en": "Granuloma inguinale",
+    "pl": "Ziarniniak pachwinowy",
+    "xgb_label": "granuloma_inguinale"
+  },
+  {
+    "en": "Graves disease",
+    "pl": "Choroba Gravesa‑Basedowa",
+    "xgb_label": "graves_disease"
+  },
+  {
+    "en": "Guillain barre syndrome",
+    "pl": "Zespół Guillaina‑Barrégo",
+    "xgb_label": "guillain_barre_syndrome"
+  },
+  {
+    "en": "Gum disease",
+    "pl": "Choroba przyzębia",
+    "xgb_label": "gum_disease"
+  },
+  {
+    "en": "Gynecomastia",
+    "pl": "Ginekomastia",
+    "xgb_label": "gynecomastia"
+  },
+  {
+    "en": "Hammer toe",
+    "pl": "Palec młotkowaty",
+    "xgb_label": "hammer_toe"
+  },
+  {
+    "en": "Hashimoto thyroiditis",
+    "pl": "Autoimmunologiczne zapalenie tarczycy Hashimoto",
+    "xgb_label": "hashimoto_thyroiditis"
+  },
+  {
+    "en": "Head and neck cancer",
+    "pl": "Nowotwór regionu głowy i szyi",
+    "xgb_label": "head_and_neck_cancer"
+  },
+  {
+    "en": "Head injury",
+    "pl": "Uraz głowy",
+    "xgb_label": "head_injury"
+  },
+  {
+    "en": "Headache after lumbar puncture",
+    "pl": "Ból głowy po punkcji lędźwiowej",
+    "xgb_label": "headache_after_lumbar_puncture"
+  },
+  {
+    "en": "Heart attack",
+    "pl": "Zawał mięśnia sercowego",
+    "xgb_label": "heart_attack"
+  },
+  {
+    "en": "Heart block",
+    "pl": "Blok przedsionkowo‑komorowy (blok serca)",
+    "xgb_label": "heart_block"
+  },
+  {
+    "en": "Heart contusion",
+    "pl": "Stłuczenie serca",
+    "xgb_label": "heart_contusion"
+  },
+  {
+    "en": "Heart failure",
+    "pl": "Niewydolność serca",
+    "xgb_label": "heart_failure"
+  },
+  {
+    "en": "Heat exhaustion",
+    "pl": "Wyczerpanie cieplne",
+    "xgb_label": "heat_exhaustion"
+  },
+  {
+    "en": "Hemangioma",
+    "pl": "Naczyniak",
+    "xgb_label": "hemangioma"
+  },
+  {
+    "en": "Hemarthrosis",
+    "pl": "Krwawienie do stawu (hemartroza)",
+    "xgb_label": "hemarthrosis"
+  },
+  {
+    "en": "Hematoma",
+    "pl": "Krwiak",
+    "xgb_label": "hematoma"
+  },
+  {
+    "en": "Hemiplegia",
+    "pl": "Porażenie połowicze",
+    "xgb_label": "hemiplegia"
+  },
+  {
+    "en": "Hemochromatosis",
+    "pl": "Hemochromatoza",
+    "xgb_label": "hemochromatosis"
+  },
+  {
+    "en": "Hemolytic anemia",
+    "pl": "Niedokrwistość hemolityczna",
+    "xgb_label": "hemolytic_anemia"
+  },
+  {
+    "en": "Hemophilia",
+    "pl": "Hemofilia",
+    "xgb_label": "hemophilia"
+  },
+  {
+    "en": "Hemorrhoids",
+    "pl": "Hemoroidy (guzki krwawnicze)",
+    "xgb_label": "hemorrhoids"
+  },
+  {
+    "en": "Hepatic encephalopathy",
+    "pl": "Encefalopatia wątrobowa",
+    "xgb_label": "hepatic_encephalopathy"
+  },
+  {
+    "en": "Hepatitis a",
+    "pl": "Wirusowe zapalenie wątroby typu A",
+    "xgb_label": "hepatitis_a"
+  },
+  {
+    "en": "Hepatitis b",
+    "pl": "Wirusowe zapalenie wątroby typu B",
+    "xgb_label": "hepatitis_b"
+  },
+  {
+    "en": "Hepatitis c",
+    "pl": "Wirusowe zapalenie wątroby typu C",
+    "xgb_label": "hepatitis_c"
+  },
+  {
+    "en": "Hepatitis d",
+    "pl": "Wirusowe zapalenie wątroby typu D",
+    "xgb_label": "hepatitis_d"
+  },
+  {
+    "en": "Hepatitis due to a toxin",
+    "pl": "Zapalenie wątroby spowodowane toksynami",
+    "xgb_label": "hepatitis_due_to_a_toxin"
+  },
+  {
+    "en": "Hepatitis e",
+    "pl": "Wirusowe zapalenie wątroby typu E",
+    "xgb_label": "hepatitis_e"
+  },
+  {
+    "en": "Herniated disk",
+    "pl": "Przepuklina krążka międzykręgowego",
+    "xgb_label": "herniated_disk"
+  },
+  {
+    "en": "Herpangina",
+    "pl": "Herpangina",
+    "xgb_label": "herpangina"
+  },
+  {
+    "en": "Hiatal hernia",
+    "pl": "Przepuklina rozworu przełykowego",
+    "xgb_label": "hiatal_hernia"
+  },
+  {
+    "en": "Hidradenitis suppurativa",
+    "pl": "Hidradenitis suppurativa (ropnie mnogie gruczołów potowych)",
+    "xgb_label": "hidradenitis_suppurativa"
+  },
+  {
+    "en": "Hirschsprung disease",
+    "pl": "Choroba Hirschsprunga",
+    "xgb_label": "hirschsprung_disease"
+  },
+  {
+    "en": "Hirsutism",
+    "pl": "Hirsutyzm",
+    "xgb_label": "hirsutism"
+  },
+  {
+    "en": "Histoplasmosis",
+    "pl": "Histoplazmoza",
+    "xgb_label": "histoplasmosis"
+  },
+  {
+    "en": "Hormone disorder",
+    "pl": "Zaburzenia hormonalne",
+    "xgb_label": "hormone_disorder"
+  },
+  {
+    "en": "Hpv",
+    "pl": "Zakażenie wirusem brodawczaka ludzkiego (HPV)",
+    "xgb_label": "hpv"
+  },
+  {
+    "en": "Human immunodeficiency virus infection hiv",
+    "pl": "Zakażenie wirusem niedoboru odporności (HIV)",
+    "xgb_label": "human_immunodeficiency_virus_infection_hiv"
+  },
+  {
+    "en": "Hydatidiform mole",
+    "pl": "Zaśniad groniasty",
+    "xgb_label": "hydatidiform_mole"
+  },
+  {
+    "en": "Hydrocele of the testicle",
+    "pl": "Wodniak jądra",
+    "xgb_label": "hydrocele_of_the_testicle"
+  },
+  {
+    "en": "Hydrocephalus",
+    "pl": "Wodogłowie",
+    "xgb_label": "hydrocephalus"
+  },
+  {
+    "en": "Hydronephrosis",
+    "pl": "Wodonercze",
+    "xgb_label": "hydronephrosis"
+  },
+  {
+    "en": "Hypercalcemia",
+    "pl": "Hiperkalcemia",
+    "xgb_label": "hypercalcemia"
+  },
+  {
+    "en": "Hypercholesterolemia",
+    "pl": "Hipercholesterolemia",
+    "xgb_label": "hypercholesterolemia"
+  },
+  {
+    "en": "Hyperemesis gravidarum",
+    "pl": "Niepowściągliwe wymioty ciężarnych",
+    "xgb_label": "hyperemesis_gravidarum"
+  },
+  {
+    "en": "Hyperhidrosis",
+    "pl": "Nadpotliwość",
+    "xgb_label": "hyperhidrosis"
+  },
+  {
+    "en": "Hyperkalemia",
+    "pl": "Hiperkaliemia",
+    "xgb_label": "hyperkalemia"
+  },
+  {
+    "en": "Hyperlipidemia",
+    "pl": "Hiperlipidemia",
+    "xgb_label": "hyperlipidemia"
+  },
+  {
+    "en": "Hypernatremia",
+    "pl": "Hipernatremia",
+    "xgb_label": "hypernatremia"
+  },
+  {
+    "en": "Hyperopia",
+    "pl": "Nadwzroczność (hiperopia)",
+    "xgb_label": "hyperopia"
+  },
+  {
+    "en": "Hyperosmotic hyperketotic state",
+    "pl": "Hiperosmolarny stan hiperketotyczny",
+    "xgb_label": "hyperosmotic_hyperketotic_state"
+  },
+  {
+    "en": "Hypertension",
+    "pl": "Nadciśnienie tętnicze",
+    "xgb_label": "hypertension"
+  },
+  {
+    "en": "Hypertension of pregnancy",
+    "pl": "Nadciśnienie tętnicze w ciąży",
+    "xgb_label": "hypertension_of_pregnancy"
+  },
+  {
+    "en": "Hypertensive heart disease",
+    "pl": "Nadciśnieniowa choroba serca",
+    "xgb_label": "hypertensive_heart_disease"
+  },
+  {
+    "en": "Hyperthyroidism",
+    "pl": "Nadczynność tarczycy",
+    "xgb_label": "hyperthyroidism"
+  },
+  {
+    "en": "Hypertrophic obstructive cardiomyopathy hocm",
+    "pl": "Kardiomiopatia przerostowa z zawężeniem drogi odpływu (HOCM)",
+    "xgb_label": "hypertrophic_obstructive_cardiomyopathy_hocm"
+  },
+  {
+    "en": "Hypocalcemia",
+    "pl": "Hipokalcemia",
+    "xgb_label": "hypocalcemia"
+  },
+  {
+    "en": "Hypoglycemia",
+    "pl": "Hipoglikemia",
+    "xgb_label": "hypoglycemia"
+  },
+  {
+    "en": "Hypokalemia",
+    "pl": "Hipokaliemia",
+    "xgb_label": "hypokalemia"
+  },
+  {
+    "en": "Hyponatremia",
+    "pl": "Hiponatremia",
+    "xgb_label": "hyponatremia"
+  },
+  {
+    "en": "Hypothermia",
+    "pl": "Hipotermia",
+    "xgb_label": "hypothermia"
+  },
+  {
+    "en": "Hypothyroidism",
+    "pl": "Niedoczynność tarczycy",
+    "xgb_label": "hypothyroidism"
+  },
+  {
+    "en": "Hypovolemia",
+    "pl": "Hipowolemia",
+    "xgb_label": "hypovolemia"
+  },
+  {
+    "en": "Idiopathic absence of menstruation",
+    "pl": "Idiopatyczny brak miesiączki (amenorrhoea)",
+    "xgb_label": "idiopathic_absence_of_menstruation"
+  },
+  {
+    "en": "Idiopathic excessive menstruation",
+    "pl": "Idiopatyczne nadmierne krwawienia miesiączkowe (menorrhagia)",
+    "xgb_label": "idiopathic_excessive_menstruation"
+  },
+  {
+    "en": "Idiopathic infrequent menstruation",
+    "pl": "Idiopatyczne rzadkie miesiączki (oligomenorrhoea)",
+    "xgb_label": "idiopathic_infrequent_menstruation"
+  },
+  {
+    "en": "Idiopathic irregular menstrual cycle",
+    "pl": "Idiopatycznie nieregularny cykl miesiączkowy",
+    "xgb_label": "idiopathic_irregular_menstrual_cycle"
+  },
+  {
+    "en": "Idiopathic nonmenstrual bleeding",
+    "pl": "Idiopatyczne krwawienia międzymiesiączkowe",
+    "xgb_label": "idiopathic_nonmenstrual_bleeding"
+  },
+  {
+    "en": "Idiopathic painful menstruation",
+    "pl": "Idiopatyczne bolesne miesiączkowanie (dysmenorrhoea)",
+    "xgb_label": "idiopathic_painful_menstruation"
+  },
+  {
+    "en": "Ileus",
+    "pl": "Niedrożność porażenna jelit (ileus)",
+    "xgb_label": "ileus"
+  },
+  {
+    "en": "Impetigo",
+    "pl": "Liszajec zakaźny",
+    "xgb_label": "impetigo"
+  },
+  {
+    "en": "Impulse control disorder",
+    "pl": "Zaburzenia kontroli impulsów",
+    "xgb_label": "impulse_control_disorder"
+  },
+  {
+    "en": "Indigestion",
+    "pl": "Niestrawność (dyspepsja)",
+    "xgb_label": "indigestion"
+  },
+  {
+    "en": "Induced abortion",
+    "pl": "Przerwanie ciąży (aborcja indukowana)",
+    "xgb_label": "induced_abortion"
+  },
+  {
+    "en": "Infection of open wound",
+    "pl": "Zakażenie rany otwartej",
+    "xgb_label": "infection_of_open_wound"
+  },
+  {
+    "en": "Infectious gastroenteritis",
+    "pl": "Zakaźny nieżyt żołądkowo‑jelitowy",
+    "xgb_label": "infectious_gastroenteritis"
+  },
+  {
+    "en": "Ingrown toe nail",
+    "pl": "Wrastający paznokieć",
+    "xgb_label": "ingrown_toe_nail"
+  },
+  {
+    "en": "Inguinal hernia",
+    "pl": "Przepuklina pachwinowa",
+    "xgb_label": "inguinal_hernia"
+  },
+  {
+    "en": "Injury of the ankle",
+    "pl": "Uraz stawu skokowego",
+    "xgb_label": "injury_of_the_ankle"
+  },
+  {
+    "en": "Injury to internal organ",
+    "pl": "Uraz narządu wewnętrznego",
+    "xgb_label": "injury_to_internal_organ"
+  },
+  {
+    "en": "Injury to the abdomen",
+    "pl": "Uraz jamy brzusznej",
+    "xgb_label": "injury_to_the_abdomen"
+  },
+  {
+    "en": "Injury to the arm",
+    "pl": "Uraz kończyny górnej",
+    "xgb_label": "injury_to_the_arm"
+  },
+  {
+    "en": "Injury to the face",
+    "pl": "Uraz twarzy",
+    "xgb_label": "injury_to_the_face"
+  },
+  {
+    "en": "Injury to the finger",
+    "pl": "Uraz palca",
+    "xgb_label": "injury_to_the_finger"
+  },
+  {
+    "en": "Injury to the hand",
+    "pl": "Uraz ręki",
+    "xgb_label": "injury_to_the_hand"
+  },
+  {
+    "en": "Injury to the hip",
+    "pl": "Uraz stawu biodrowego",
+    "xgb_label": "injury_to_the_hip"
+  },
+  {
+    "en": "Injury to the knee",
+    "pl": "Uraz kolana",
+    "xgb_label": "injury_to_the_knee"
+  },
+  {
+    "en": "Injury to the leg",
+    "pl": "Uraz kończyny dolnej",
+    "xgb_label": "injury_to_the_leg"
+  },
+  {
+    "en": "Injury to the shoulder",
+    "pl": "Uraz barku",
+    "xgb_label": "injury_to_the_shoulder"
+  },
+  {
+    "en": "Injury to the spinal cord",
+    "pl": "Uraz rdzenia kręgowego",
+    "xgb_label": "injury_to_the_spinal_cord"
+  },
+  {
+    "en": "Injury to the trunk",
+    "pl": "Uraz tułowia",
+    "xgb_label": "injury_to_the_trunk"
+  },
+  {
+    "en": "Insect bite",
+    "pl": "Ugryzienie/ukąszenie przez owada",
+    "xgb_label": "insect_bite"
+  },
+  {
+    "en": "Insulin overdose",
+    "pl": "Przedawkowanie insuliny",
+    "xgb_label": "insulin_overdose"
+  },
+  {
+    "en": "Interstitial lung disease",
+    "pl": "Śródmiąższowa choroba płuc",
+    "xgb_label": "interstitial_lung_disease"
+  },
+  {
+    "en": "Intertrigo skin condition",
+    "pl": "Wyprzenie (intertrigo)",
+    "xgb_label": "intertrigo_skin_condition"
+  },
+  {
+    "en": "Intestinal cancer",
+    "pl": "Nowotwór jelita",
+    "xgb_label": "intestinal_cancer"
+  },
+  {
+    "en": "Intestinal disease",
+    "pl": "Choroba jelit",
+    "xgb_label": "intestinal_disease"
+  },
+  {
+    "en": "Intestinal malabsorption",
+    "pl": "Zespół złego wchłaniania (malabsorpcja)",
+    "xgb_label": "intestinal_malabsorption"
+  },
+  {
+    "en": "Intestinal obstruction",
+    "pl": "Niedrożność jelit",
+    "xgb_label": "intestinal_obstruction"
+  },
+  {
+    "en": "Intracerebral hemorrhage",
+    "pl": "Krwotok śródmózgowy",
+    "xgb_label": "intracerebral_hemorrhage"
+  },
+  {
+    "en": "Intracranial abscess",
+    "pl": "Ropień wewnątrzczaszkowy",
+    "xgb_label": "intracranial_abscess"
+  },
+  {
+    "en": "Intracranial hemorrhage",
+    "pl": "Krwawienie śródczaszkowe",
+    "xgb_label": "intracranial_hemorrhage"
+  },
+  {
+    "en": "Intussusception",
+    "pl": "Wgłobienie jelita",
+    "xgb_label": "intussusception"
+  },
+  {
+    "en": "Iridocyclitis",
+    "pl": "Zapalenie tęczówki i ciała rzęskowego (irydocyclitis)",
+    "xgb_label": "iridocyclitis"
+  },
+  {
+    "en": "Iron deficiency anemia",
+    "pl": "Niedokrwistość z niedoboru żelaza",
+    "xgb_label": "iron_deficiency_anemia"
+  },
+  {
+    "en": "Irritable bowel syndrome",
+    "pl": "Zespół jelita nadwrażliwego (IBS)",
+    "xgb_label": "irritable_bowel_syndrome"
+  },
+  {
+    "en": "Ischemia of the bowel",
+    "pl": "Niedokrwienie jelit",
+    "xgb_label": "ischemia_of_the_bowel"
+  },
+  {
+    "en": "Ischemic heart disease",
+    "pl": "Choroba niedokrwienna serca",
+    "xgb_label": "ischemic_heart_disease"
+  },
+  {
+    "en": "Itching of unknown cause",
+    "pl": "Świąd o nieznanej etiologii",
+    "xgb_label": "itching_of_unknown_cause"
+  },
+  {
+    "en": "Jaundice",
+    "pl": "Żółtaczka",
+    "xgb_label": "jaundice"
+  },
+  {
+    "en": "Jaw disorder",
+    "pl": "Zaburzenia żuchwy",
+    "xgb_label": "jaw_disorder"
+  },
+  {
+    "en": "Joint effusion",
+    "pl": "Wysięk w stawie",
+    "xgb_label": "joint_effusion"
+  },
+  {
+    "en": "Juvenile rheumatoid arthritis",
+    "pl": "Młodzieńcze idiopatyczne zapalenie stawów (d. JRA)",
+    "xgb_label": "juvenile_rheumatoid_arthritis"
+  },
+  {
+    "en": "Kidney cancer",
+    "pl": "Rak nerki",
+    "xgb_label": "kidney_cancer"
+  },
+  {
+    "en": "Kidney disease due to longstanding hypertension",
+    "pl": "Nefropatia nadciśnieniowa",
+    "xgb_label": "kidney_disease_due_to_longstanding_hypertension"
+  },
+  {
+    "en": "Kidney failure",
+    "pl": "Niewydolność nerek",
+    "xgb_label": "kidney_failure"
+  },
+  {
+    "en": "Kidney stone",
+    "pl": "Kamica nerkowa",
+    "xgb_label": "kidney_stone"
+  },
+  {
+    "en": "Knee ligament or meniscus tear",
+    "pl": "Uszkodzenie więzadeł lub łąkotki kolana",
+    "xgb_label": "knee_ligament_or_meniscus_tear"
+  },
+  {
+    "en": "Labyrinthitis",
+    "pl": "Zapalenie błędnika",
+    "xgb_label": "labyrinthitis"
+  },
+  {
+    "en": "Lactose intolerance",
+    "pl": "Nietolerancja laktozy",
+    "xgb_label": "lactose_intolerance"
+  },
+  {
+    "en": "Laryngitis",
+    "pl": "Zapalenie krtani",
+    "xgb_label": "laryngitis"
+  },
+  {
+    "en": "Lateral epicondylitis tennis elbow",
+    "pl": "Zapalenie nadkłykcia bocznego (łokieć tenisisty)",
+    "xgb_label": "lateral_epicondylitis_tennis_elbow"
+  },
+  {
+    "en": "Leukemia",
+    "pl": "Białaczka",
+    "xgb_label": "leukemia"
+  },
+  {
+    "en": "Lewy body dementia",
+    "pl": "Otępienie z ciałami Lewy’ego",
+    "xgb_label": "lewy_body_dementia"
+  },
+  {
+    "en": "Lice",
+    "pl": "Wszawica",
+    "xgb_label": "lice"
+  },
+  {
+    "en": "Lichen planus",
+    "pl": "Liszaj płaski",
+    "xgb_label": "lichen_planus"
+  },
+  {
+    "en": "Lichen simplex",
+    "pl": "Liszaj przewlekły prosty (lichen simplex)",
+    "xgb_label": "lichen_simplex"
+  },
+  {
+    "en": "Lipoma",
+    "pl": "Tłuszczak",
+    "xgb_label": "lipoma"
+  },
+  {
+    "en": "Liver cancer",
+    "pl": "Rak wątroby",
+    "xgb_label": "liver_cancer"
+  },
+  {
+    "en": "Liver disease",
+    "pl": "Choroba wątroby",
+    "xgb_label": "liver_disease"
+  },
+  {
+    "en": "Lumbago",
+    "pl": "Ból okolicy lędźwiowej (lumbago)",
+    "xgb_label": "lumbago"
+  },
+  {
+    "en": "Lung cancer",
+    "pl": "Rak płuca",
+    "xgb_label": "lung_cancer"
+  },
+  {
+    "en": "Lung contusion",
+    "pl": "Stłuczenie płuca",
+    "xgb_label": "lung_contusion"
+  },
+  {
+    "en": "Lyme disease",
+    "pl": "Borelioza z Lyme",
+    "xgb_label": "lyme_disease"
+  },
+  {
+    "en": "Lymphadenitis",
+    "pl": "Zapalenie węzłów chłonnych",
+    "xgb_label": "lymphadenitis"
+  },
+  {
+    "en": "Lymphangitis",
+    "pl": "Zapalenie naczyń chłonnych",
+    "xgb_label": "lymphangitis"
+  },
+  {
+    "en": "Lymphedema",
+    "pl": "Obrzęk limfatyczny",
+    "xgb_label": "lymphedema"
+  },
+  {
+    "en": "Lymphogranuloma venereum",
+    "pl": "Ziarniniak weneryczny",
+    "xgb_label": "lymphogranuloma_venereum"
+  },
+  {
+    "en": "Lymphoma",
+    "pl": "Chłoniak",
+    "xgb_label": "lymphoma"
+  },
+  {
+    "en": "Macular degeneration",
+    "pl": "Zwyrodnienie plamki (AMD)",
+    "xgb_label": "macular_degeneration"
+  },
+  {
+    "en": "Magnesium deficiency",
+    "pl": "Niedobór magnezu",
+    "xgb_label": "magnesium_deficiency"
+  },
+  {
+    "en": "Malaria",
+    "pl": "Malaria",
+    "xgb_label": "malaria"
+  },
+  {
+    "en": "Male genitalia infection",
+    "pl": "Zakażenie męskich narządów płciowych",
+    "xgb_label": "male_genitalia_infection"
+  },
+  {
+    "en": "Malignant hypertension",
+    "pl": "Złośliwe nadciśnienie tętnicze",
+    "xgb_label": "malignant_hypertension"
+  },
+  {
+    "en": "Marijuana abuse",
+    "pl": "Nadużywanie marihuany",
+    "xgb_label": "marijuana_abuse"
+  },
+  {
+    "en": "Mastectomy",
+    "pl": "Mastektomia",
+    "xgb_label": "mastectomy"
+  },
+  {
+    "en": "Mastoiditis",
+    "pl": "Zapalenie wyrostka sutkowatego",
+    "xgb_label": "mastoiditis"
+  },
+  {
+    "en": "Meckel diverticulum",
+    "pl": "Uchyłek Meckela",
+    "xgb_label": "meckel_diverticulum"
+  },
+  {
+    "en": "Melanoma",
+    "pl": "Czerniak",
+    "xgb_label": "melanoma"
+  },
+  {
+    "en": "Meniere disease",
+    "pl": "Choroba Ménière’a",
+    "xgb_label": "meniere_disease"
+  },
+  {
+    "en": "Meningioma",
+    "pl": "Oponiak",
+    "xgb_label": "meningioma"
+  },
+  {
+    "en": "Meningitis",
+    "pl": "Zapalenie opon mózgowo‑rdzeniowych",
+    "xgb_label": "meningitis"
+  },
+  {
+    "en": "Menopause",
+    "pl": "Menopauza",
+    "xgb_label": "menopause"
+  },
+  {
+    "en": "Metabolic disorder",
+    "pl": "Zaburzenia metaboliczne",
+    "xgb_label": "metabolic_disorder"
+  },
+  {
+    "en": "Metastatic cancer",
+    "pl": "Nowotwór przerzutowy",
+    "xgb_label": "metastatic_cancer"
+  },
+  {
+    "en": "Migraine",
+    "pl": "Migrena",
+    "xgb_label": "migraine"
+  },
+  {
+    "en": "Missed abortion",
+    "pl": "Poronienie zatrzymane",
+    "xgb_label": "missed_abortion"
+  },
+  {
+    "en": "Mitral valve disease",
+    "pl": "Choroba zastawki mitralnej",
+    "xgb_label": "mitral_valve_disease"
+  },
+  {
+    "en": "Mittelschmerz",
+    "pl": "Ból okołoowulacyjny (Mittelschmerz)",
+    "xgb_label": "mittelschmerz"
+  },
+  {
+    "en": "Molluscum contagiosum",
+    "pl": "Mięczak zakaźny",
+    "xgb_label": "molluscum_contagiosum"
+  },
+  {
+    "en": "Mononeuritis",
+    "pl": "Mononeuropatia",
+    "xgb_label": "mononeuritis"
+  },
+  {
+    "en": "Mononucleosis",
+    "pl": "Mononukleoza zakaźna",
+    "xgb_label": "mononucleosis"
+  },
+  {
+    "en": "Moyamoya disease",
+    "pl": "Choroba moyamoya",
+    "xgb_label": "moyamoya_disease"
+  },
+  {
+    "en": "Mucositis",
+    "pl": "Zapalenie błon śluzowych (mucositis)",
+    "xgb_label": "mucositis"
+  },
+  {
+    "en": "Multiple myeloma",
+    "pl": "Szpiczak plazmocytowy (mnogi)",
+    "xgb_label": "multiple_myeloma"
+  },
+  {
+    "en": "Multiple sclerosis",
+    "pl": "Stwardnienie rozsiane",
+    "xgb_label": "multiple_sclerosis"
+  },
+  {
+    "en": "Mumps",
+    "pl": "Świnka",
+    "xgb_label": "mumps"
+  },
+  {
+    "en": "Muscle spasm",
+    "pl": "Skurcz mięśni",
+    "xgb_label": "muscle_spasm"
+  },
+  {
+    "en": "Muscular dystrophy",
+    "pl": "Dystrofia mięśniowa",
+    "xgb_label": "muscular_dystrophy"
+  },
+  {
+    "en": "Myasthenia gravis",
+    "pl": "Miastenia",
+    "xgb_label": "myasthenia_gravis"
+  },
+  {
+    "en": "Myelodysplastic syndrome",
+    "pl": "Zespół mielodysplastyczny",
+    "xgb_label": "myelodysplastic_syndrome"
+  },
+  {
+    "en": "Myoclonus",
+    "pl": "Mioklonie",
+    "xgb_label": "myoclonus"
+  },
+  {
+    "en": "Myopia",
+    "pl": "Krótkowzroczność",
+    "xgb_label": "myopia"
+  },
+  {
+    "en": "Myositis",
+    "pl": "Zapalenie mięśni",
+    "xgb_label": "myositis"
+  },
+  {
+    "en": "Narcolepsy",
+    "pl": "Narkolepsja",
+    "xgb_label": "narcolepsy"
+  },
+  {
+    "en": "Nasal polyp",
+    "pl": "Polip nosa",
+    "xgb_label": "nasal_polyp"
+  },
+  {
+    "en": "Necrotizing fasciitis",
+    "pl": "Martwicze zapalenie powięzi",
+    "xgb_label": "necrotizing_fasciitis"
+  },
+  {
+    "en": "Neonatal jaundice",
+    "pl": "Żółtaczka noworodków",
+    "xgb_label": "neonatal_jaundice"
+  },
+  {
+    "en": "Nerve impingement near the shoulder",
+    "pl": "Ucisk nerwu w okolicy barku",
+    "xgb_label": "nerve_impingement_near_the_shoulder"
+  },
+  {
+    "en": "Neuralgia",
+    "pl": "Nerwoból (neuralgia)",
+    "xgb_label": "neuralgia"
+  },
+  {
+    "en": "Neurofibromatosis",
+    "pl": "Nerwiakowłókniakowatość",
+    "xgb_label": "neurofibromatosis"
+  },
+  {
+    "en": "Neuropathy due to drugs",
+    "pl": "Neuropatia polekowa",
+    "xgb_label": "neuropathy_due_to_drugs"
+  },
+  {
+    "en": "Neurosis",
+    "pl": "Nerwica",
+    "xgb_label": "neurosis"
+  },
+  {
+    "en": "Nonalcoholic liver disease nash",
+    "pl": "Niealkoholowe stłuszczeniowe zapalenie wątroby (NASH)",
+    "xgb_label": "nonalcoholic_liver_disease_nash"
+  },
+  {
+    "en": "Noninfectious gastroenteritis",
+    "pl": "Nieinfekcyjny nieżyt żołądkowo‑jelitowy",
+    "xgb_label": "noninfectious_gastroenteritis"
+  },
+  {
+    "en": "Normal pressure hydrocephalus",
+    "pl": "Wodogłowie normotensyjne",
+    "xgb_label": "normal_pressure_hydrocephalus"
+  },
+  {
+    "en": "Nose disorder",
+    "pl": "Choroba nosa",
+    "xgb_label": "nose_disorder"
+  },
+  {
+    "en": "Obesity",
+    "pl": "Otyłość",
+    "xgb_label": "obesity"
+  },
+  {
+    "en": "Obsessive compulsive disorder ocd",
+    "pl": "Zaburzenia obsesyjno‑kompulsyjne (OCD)",
+    "xgb_label": "obsessive_compulsive_disorder_ocd"
+  },
+  {
+    "en": "Obstructive sleep apnea osa",
+    "pl": "Obturacyjny bezdech senny (OSA)",
+    "xgb_label": "obstructive_sleep_apnea_osa"
+  },
+  {
+    "en": "Omphalitis",
+    "pl": "Zapalenie pępka (omphalitis)",
+    "xgb_label": "omphalitis"
+  },
+  {
+    "en": "Onychomycosis",
+    "pl": "Grzybica paznokci",
+    "xgb_label": "onychomycosis"
+  },
+  {
+    "en": "Open wound from surgical incision",
+    "pl": "Rana operacyjna (otwarta) po cięciu",
+    "xgb_label": "open_wound_from_surgical_incision"
+  },
+  {
+    "en": "Open wound of the abdomen",
+    "pl": "Rana otwarta jamy brzusznej",
+    "xgb_label": "open_wound_of_the_abdomen"
+  },
+  {
+    "en": "Open wound of the arm",
+    "pl": "Rana otwarta kończyny górnej",
+    "xgb_label": "open_wound_of_the_arm"
+  },
+  {
+    "en": "Open wound of the back",
+    "pl": "Rana otwarta pleców",
+    "xgb_label": "open_wound_of_the_back"
+  },
+  {
+    "en": "Open wound of the ear",
+    "pl": "Rana otwarta ucha",
+    "xgb_label": "open_wound_of_the_ear"
+  },
+  {
+    "en": "Open wound of the eye",
+    "pl": "Rana otwarta gałki ocznej",
+    "xgb_label": "open_wound_of_the_eye"
+  },
+  {
+    "en": "Open wound of the face",
+    "pl": "Rana otwarta twarzy",
+    "xgb_label": "open_wound_of_the_face"
+  },
+  {
+    "en": "Open wound of the finger",
+    "pl": "Rana otwarta palca",
+    "xgb_label": "open_wound_of_the_finger"
+  },
+  {
+    "en": "Open wound of the foot",
+    "pl": "Rana otwarta stopy",
+    "xgb_label": "open_wound_of_the_foot"
+  },
+  {
+    "en": "Open wound of the hand",
+    "pl": "Rana otwarta ręki",
+    "xgb_label": "open_wound_of_the_hand"
+  },
+  {
+    "en": "Open wound of the jaw",
+    "pl": "Rana otwarta żuchwy",
+    "xgb_label": "open_wound_of_the_jaw"
+  },
+  {
+    "en": "Open wound of the lip",
+    "pl": "Rana otwarta wargi",
+    "xgb_label": "open_wound_of_the_lip"
+  },
+  {
+    "en": "Open wound of the mouth",
+    "pl": "Rana otwarta jamy ustnej",
+    "xgb_label": "open_wound_of_the_mouth"
+  },
+  {
+    "en": "Open wound of the neck",
+    "pl": "Rana otwarta szyi",
+    "xgb_label": "open_wound_of_the_neck"
+  },
+  {
+    "en": "Open wound of the nose",
+    "pl": "Rana otwarta nosa",
+    "xgb_label": "open_wound_of_the_nose"
+  },
+  {
+    "en": "Open wound of the shoulder",
+    "pl": "Rana otwarta barku",
+    "xgb_label": "open_wound_of_the_shoulder"
+  },
+  {
+    "en": "Oppositional disorder",
+    "pl": "Zaburzenie opozycyjno‑buntownicze (ODD)",
+    "xgb_label": "oppositional_disorder"
+  },
+  {
+    "en": "Optic neuritis",
+    "pl": "Zapalenie nerwu wzrokowego",
+    "xgb_label": "optic_neuritis"
+  },
+  {
+    "en": "Oral leukoplakia",
+    "pl": "Leukoplakia jamy ustnej",
+    "xgb_label": "oral_leukoplakia"
+  },
+  {
+    "en": "Oral mucosal lesion",
+    "pl": "Zmiana błony śluzowej jamy ustnej",
+    "xgb_label": "oral_mucosal_lesion"
+  },
+  {
+    "en": "Oral thrush yeast infection",
+    "pl": "Kandydoza jamy ustnej (pleśniawki)",
+    "xgb_label": "oral_thrush_yeast_infection"
+  },
+  {
+    "en": "Orbital cellulitis",
+    "pl": "Zapalenie tkanek oczodołu",
+    "xgb_label": "orbital_cellulitis"
+  },
+  {
+    "en": "Orthostatic hypotension",
+    "pl": "Niedociśnienie ortostatyczne",
+    "xgb_label": "orthostatic_hypotension"
+  },
+  {
+    "en": "Osteoarthristis",
+    "pl": "Choroba zwyrodnieniowa stawów (osteoartroza)",
+    "xgb_label": "osteoarthristis"
+  },
+  {
+    "en": "Osteoarthritis",
+    "pl": "Choroba zwyrodnieniowa stawów (osteoartroza)",
+    "xgb_label": "osteoarthritis"
+  },
+  {
+    "en": "Osteochondroma",
+    "pl": "Kostniakochrzęstniak",
+    "xgb_label": "osteochondroma"
+  },
+  {
+    "en": "Osteochondrosis",
+    "pl": "Osteochondroza",
+    "xgb_label": "osteochondrosis"
+  },
+  {
+    "en": "Osteomyelitis",
+    "pl": "Zapalenie kości i szpiku",
+    "xgb_label": "osteomyelitis"
+  },
+  {
+    "en": "Osteoporosis",
+    "pl": "Osteoporoza",
+    "xgb_label": "osteoporosis"
+  },
+  {
+    "en": "Otitis externa swimmer s ear",
+    "pl": "Zapalenie ucha zewnętrznego („ucho pływaka”)",
+    "xgb_label": "otitis_externa_swimmer_s_ear"
+  },
+  {
+    "en": "Otitis media",
+    "pl": "Zapalenie ucha środkowego",
+    "xgb_label": "otitis_media"
+  },
+  {
+    "en": "Otosclerosis",
+    "pl": "Otoskleroza",
+    "xgb_label": "otosclerosis"
+  },
+  {
+    "en": "Ovarian cancer",
+    "pl": "Rak jajnika",
+    "xgb_label": "ovarian_cancer"
+  },
+  {
+    "en": "Ovarian cyst",
+    "pl": "Torbiel jajnika",
+    "xgb_label": "ovarian_cyst"
+  },
+  {
+    "en": "Ovarian torsion",
+    "pl": "Skręt jajnika",
+    "xgb_label": "ovarian_torsion"
+  },
+  {
+    "en": "Overflow incontinence",
+    "pl": "Nietrzymanie moczu z przepełnienia",
+    "xgb_label": "overflow_incontinence"
+  },
+  {
+    "en": "Pain after an operation",
+    "pl": "Ból pooperacyjny",
+    "xgb_label": "pain_after_an_operation"
+  },
+  {
+    "en": "Pain disorder affecting the neck",
+    "pl": "Zespół bólowy szyi",
+    "xgb_label": "pain_disorder_affecting_the_neck"
+  },
+  {
+    "en": "Pancreatic cancer",
+    "pl": "Rak trzustki",
+    "xgb_label": "pancreatic_cancer"
+  },
+  {
+    "en": "Panic attack",
+    "pl": "Atak paniki",
+    "xgb_label": "panic_attack"
+  },
+  {
+    "en": "Panic disorder",
+    "pl": "Zaburzenie lękowe z napadami paniki",
+    "xgb_label": "panic_disorder"
+  },
+  {
+    "en": "Paralysis brain hemorrhage",
+    "pl": "Porażenie po krwawieniu do mózgu",
+    "xgb_label": "paralysis_brain_hemorrhage"
+  },
+  {
+    "en": "Parasitic disease",
+    "pl": "Choroba pasożytnicza",
+    "xgb_label": "parasitic_disease"
+  },
+  {
+    "en": "Parathyroid adenoma",
+    "pl": "Gruczolak przytarczyc",
+    "xgb_label": "parathyroid_adenoma"
+  },
+  {
+    "en": "Parkinson disease",
+    "pl": "Choroba Parkinsona",
+    "xgb_label": "parkinson_disease"
+  },
+  {
+    "en": "Paronychia",
+    "pl": "Zanokcica",
+    "xgb_label": "paronychia"
+  },
+  {
+    "en": "Paroxysmal supraventricular tachycardia",
+    "pl": "Napadowy częstoskurcz nadkomorowy (PSVT)",
+    "xgb_label": "paroxysmal_supraventricular_tachycardia"
+  },
+  {
+    "en": "Paroxysmal ventricular tachycardia",
+    "pl": "Napadowy częstoskurcz komorowy",
+    "xgb_label": "paroxysmal_ventricular_tachycardia"
+  },
+  {
+    "en": "Pelvic fistula",
+    "pl": "Przetoka miednicy",
+    "xgb_label": "pelvic_fistula"
+  },
+  {
+    "en": "Pelvic inflammatory disease",
+    "pl": "Zapalenie narządów miednicy mniejszej (PID)",
+    "xgb_label": "pelvic_inflammatory_disease"
+  },
+  {
+    "en": "Pelvic organ prolapse",
+    "pl": "Wypadanie narządów miednicy mniejszej",
+    "xgb_label": "pelvic_organ_prolapse"
+  },
+  {
+    "en": "Pemphigus",
+    "pl": "Pęcherzyca",
+    "xgb_label": "pemphigus"
+  },
+  {
+    "en": "Peptic ulcer diseae",
+    "pl": "Choroba wrzodowa",
+    "xgb_label": "peptic_ulcer_diseae"
+  },
+  {
+    "en": "Pericarditis",
+    "pl": "Zapalenie osierdzia",
+    "xgb_label": "pericarditis"
+  },
+  {
+    "en": "Peripheral arterial disease",
+    "pl": "Choroba tętnic obwodowych",
+    "xgb_label": "peripheral_arterial_disease"
+  },
+  {
+    "en": "Peripheral arterial embolism",
+    "pl": "Zator tętnicy obwodowej",
+    "xgb_label": "peripheral_arterial_embolism"
+  },
+  {
+    "en": "Peripheral nerve disorder",
+    "pl": "Choroba nerwów obwodowych",
+    "xgb_label": "peripheral_nerve_disorder"
+  },
+  {
+    "en": "Perirectal infection",
+    "pl": "Zakażenie okołoodbytnicze",
+    "xgb_label": "perirectal_infection"
+  },
+  {
+    "en": "Peritonitis",
+    "pl": "Zapalenie otrzewnej",
+    "xgb_label": "peritonitis"
+  },
+  {
+    "en": "Peritonsillar abscess",
+    "pl": "Ropień okołomigdałkowy",
+    "xgb_label": "peritonsillar_abscess"
+  },
+  {
+    "en": "Persistent vomiting of unknown cause",
+    "pl": "Utrzymujące się wymioty o nieznanej przyczynie",
+    "xgb_label": "persistent_vomiting_of_unknown_cause"
+  },
+  {
+    "en": "Personality disorder",
+    "pl": "Zaburzenie osobowości",
+    "xgb_label": "personality_disorder"
+  },
+  {
+    "en": "Peyronie disease",
+    "pl": "Choroba Peyroniego",
+    "xgb_label": "peyronie_disease"
+  },
+  {
+    "en": "Pharyngitis",
+    "pl": "Zapalenie gardła",
+    "xgb_label": "pharyngitis"
+  },
+  {
+    "en": "Phimosis",
+    "pl": "Stulejka",
+    "xgb_label": "phimosis"
+  },
+  {
+    "en": "Pilonidal cyst",
+    "pl": "Torbiel pilonidalna (torbiel włosowa)",
+    "xgb_label": "pilonidal_cyst"
+  },
+  {
+    "en": "Pinguecula",
+    "pl": "Pingwekula (pinguecula)",
+    "xgb_label": "pinguecula"
+  },
+  {
+    "en": "Pinworm infection",
+    "pl": "Owsica",
+    "xgb_label": "pinworm_infection"
+  },
+  {
+    "en": "Pituitary adenoma",
+    "pl": "Gruczolak przysadki",
+    "xgb_label": "pituitary_adenoma"
+  },
+  {
+    "en": "Pituitary disorder",
+    "pl": "Choroba przysadki mózgowej",
+    "xgb_label": "pituitary_disorder"
+  },
+  {
+    "en": "Pityriasis rosea",
+    "pl": "Łupież różowy Giberta",
+    "xgb_label": "pityriasis_rosea"
+  },
+  {
+    "en": "Placenta previa",
+    "pl": "Łożysko przodujące",
+    "xgb_label": "placenta_previa"
+  },
+  {
+    "en": "Placental abruption",
+    "pl": "Przedwczesne oddzielenie łożyska",
+    "xgb_label": "placental_abruption"
+  },
+  {
+    "en": "Plantar fasciitis",
+    "pl": "Zapalenie rozcięgna podeszwowego",
+    "xgb_label": "plantar_fasciitis"
+  },
+  {
+    "en": "Pleural effusion",
+    "pl": "Wysięk w jamie opłucnej",
+    "xgb_label": "pleural_effusion"
+  },
+  {
+    "en": "Pneumoconiosis",
+    "pl": "Pylica płuc",
+    "xgb_label": "pneumoconiosis"
+  },
+  {
+    "en": "Pneumonia",
+    "pl": "Zapalenie płuc",
+    "xgb_label": "pneumonia"
+  },
+  {
+    "en": "Pneumothorax",
+    "pl": "Odma opłucnowa",
+    "xgb_label": "pneumothorax"
+  },
+  {
+    "en": "Poisoning due to analgesics",
+    "pl": "Zatrucie lekami przeciwbólowymi",
+    "xgb_label": "poisoning_due_to_analgesics"
+  },
+  {
+    "en": "Poisoning due to anticonvulsants",
+    "pl": "Zatrucie lekami przeciwpadaczkowymi",
+    "xgb_label": "poisoning_due_to_anticonvulsants"
+  },
+  {
+    "en": "Poisoning due to antidepressants",
+    "pl": "Zatrucie lekami przeciwdepresyjnymi",
+    "xgb_label": "poisoning_due_to_antidepressants"
+  },
+  {
+    "en": "Poisoning due to antihypertensives",
+    "pl": "Zatrucie lekami hipotensyjnymi",
+    "xgb_label": "poisoning_due_to_antihypertensives"
+  },
+  {
+    "en": "Poisoning due to antimicrobial drugs",
+    "pl": "Zatrucie lekami przeciwdrobnoustrojowymi",
+    "xgb_label": "poisoning_due_to_antimicrobial_drugs"
+  },
+  {
+    "en": "Poisoning due to antipsychotics",
+    "pl": "Zatrucie lekami przeciwpsychotycznymi",
+    "xgb_label": "poisoning_due_to_antipsychotics"
+  },
+  {
+    "en": "Poisoning due to ethylene glycol",
+    "pl": "Zatrucie glikolem etylenowym",
+    "xgb_label": "poisoning_due_to_ethylene_glycol"
+  },
+  {
+    "en": "Poisoning due to gas",
+    "pl": "Zatrucie gazem",
+    "xgb_label": "poisoning_due_to_gas"
+  },
+  {
+    "en": "Poisoning due to opioids",
+    "pl": "Zatrucie opioidami",
+    "xgb_label": "poisoning_due_to_opioids"
+  },
+  {
+    "en": "Poisoning due to sedatives",
+    "pl": "Zatrucie lekami uspokajającymi/nasennymi",
+    "xgb_label": "poisoning_due_to_sedatives"
+  },
+  {
+    "en": "Polycystic kidney disease",
+    "pl": "Wielotorbielowatość nerek",
+    "xgb_label": "polycystic_kidney_disease"
+  },
+  {
+    "en": "Polycystic ovarian syndrome pcos",
+    "pl": "Zespół policystycznych jajników (PCOS)",
+    "xgb_label": "polycystic_ovarian_syndrome_pcos"
+  },
+  {
+    "en": "Polycythemia vera",
+    "pl": "Czerwienica prawdziwa",
+    "xgb_label": "polycythemia_vera"
+  },
+  {
+    "en": "Polymyalgia rheumatica",
+    "pl": "Polimialgia reumatyczna",
+    "xgb_label": "polymyalgia_rheumatica"
+  },
+  {
+    "en": "Post traumatic stress disorder ptsd",
+    "pl": "Zespół stresu pourazowego (PTSD)",
+    "xgb_label": "post_traumatic_stress_disorder_ptsd"
+  },
+  {
+    "en": "Postoperative infection",
+    "pl": "Zakażenie pooperacyjne",
+    "xgb_label": "postoperative_infection"
+  },
+  {
+    "en": "Postpartum depression",
+    "pl": "Depresja poporodowa",
+    "xgb_label": "postpartum_depression"
+  },
+  {
+    "en": "Preeclampsia",
+    "pl": "Stan przedrzucawkowy",
+    "xgb_label": "preeclampsia"
+  },
+  {
+    "en": "Pregnancy",
+    "pl": "Ciąża",
+    "xgb_label": "pregnancy"
+  },
+  {
+    "en": "Premature atrial contractions pacs",
+    "pl": "Przedwczesne pobudzenia przedsionkowe (PACs)",
+    "xgb_label": "premature_atrial_contractions_pacs"
+  },
+  {
+    "en": "Premature ovarian failure",
+    "pl": "Przedwczesna niewydolność jajników",
+    "xgb_label": "premature_ovarian_failure"
+  },
+  {
+    "en": "Premature rupture of amniotic membrane",
+    "pl": "Przedwczesne pęknięcie błon płodowych",
+    "xgb_label": "premature_rupture_of_amniotic_membrane"
+  },
+  {
+    "en": "Premature ventricular contractions pvcs",
+    "pl": "Przedwczesne pobudzenia komorowe (PVCs)",
+    "xgb_label": "premature_ventricular_contractions_pvcs"
+  },
+  {
+    "en": "Premenstrual tension syndrome",
+    "pl": "Zespół napięcia przedmiesiączkowego (PMS)",
+    "xgb_label": "premenstrual_tension_syndrome"
+  },
+  {
+    "en": "Presbyacusis",
+    "pl": "Starcze niedosłyszenie (presbyacusis)",
+    "xgb_label": "presbyacusis"
+  },
+  {
+    "en": "Presbyopia",
+    "pl": "Prezbiopia (starczowzroczność)",
+    "xgb_label": "presbyopia"
+  },
+  {
+    "en": "Priapism",
+    "pl": "Priapizm",
+    "xgb_label": "priapism"
+  },
+  {
+    "en": "Primary immunodeficiency",
+    "pl": "Pierwotny niedobór odporności",
+    "xgb_label": "primary_immunodeficiency"
+  },
+  {
+    "en": "Primary insomnia",
+    "pl": "Bezsenność pierwotna",
+    "xgb_label": "primary_insomnia"
+  },
+  {
+    "en": "Primary kidney disease",
+    "pl": "Pierwotna choroba nerek",
+    "xgb_label": "primary_kidney_disease"
+  },
+  {
+    "en": "Primary thrombocythemia",
+    "pl": "Nadpłytkowość samoistna",
+    "xgb_label": "primary_thrombocythemia"
+  },
+  {
+    "en": "Problem during pregnancy",
+    "pl": "Powikłania w ciąży",
+    "xgb_label": "problem_during_pregnancy"
+  },
+  {
+    "en": "Prostate cancer",
+    "pl": "Rak gruczołu krokowego (prostaty)",
+    "xgb_label": "prostate_cancer"
+  },
+  {
+    "en": "Prostatitis",
+    "pl": "Zapalenie gruczołu krokowego (prostatitis)",
+    "xgb_label": "prostatitis"
+  },
+  {
+    "en": "Protein deficiency",
+    "pl": "Niedobór białka",
+    "xgb_label": "protein_deficiency"
+  },
+  {
+    "en": "Pseudohypoparathyroidism",
+    "pl": "Rzekoma niedoczynność przytarczyc",
+    "xgb_label": "pseudohypoparathyroidism"
+  },
+  {
+    "en": "Pseudotumor cerebri",
+    "pl": "Idiopatyczne nadciśnienie śródczaszkowe (pseudotumor cerebri)",
+    "xgb_label": "pseudotumor_cerebri"
+  },
+  {
+    "en": "Psoriasis",
+    "pl": "Łuszczyca",
+    "xgb_label": "psoriasis"
+  },
+  {
+    "en": "Psychosexual disorder",
+    "pl": "Zaburzenia psychoseksualne",
+    "xgb_label": "psychosexual_disorder"
+  },
+  {
+    "en": "Psychotic disorder",
+    "pl": "Zaburzenia psychotyczne",
+    "xgb_label": "psychotic_disorder"
+  },
+  {
+    "en": "Pterygium",
+    "pl": "Skrzydlik",
+    "xgb_label": "pterygium"
+  },
+  {
+    "en": "Pulmonary congestion",
+    "pl": "Zastój w krążeniu płucnym",
+    "xgb_label": "pulmonary_congestion"
+  },
+  {
+    "en": "Pulmonary embolism",
+    "pl": "Zatorowość płucna",
+    "xgb_label": "pulmonary_embolism"
+  },
+  {
+    "en": "Pulmonary eosinophilia",
+    "pl": "Eozynofilia płucna",
+    "xgb_label": "pulmonary_eosinophilia"
+  },
+  {
+    "en": "Pulmonary fibrosis",
+    "pl": "Zwłóknienie płuc",
+    "xgb_label": "pulmonary_fibrosis"
+  },
+  {
+    "en": "Pulmonary hypertension",
+    "pl": "Nadciśnienie płucne",
+    "xgb_label": "pulmonary_hypertension"
+  },
+  {
+    "en": "Pulmonic valve disease",
+    "pl": "Choroba zastawki płucnej",
+    "xgb_label": "pulmonic_valve_disease"
+  },
+  {
+    "en": "Pyelonephritis",
+    "pl": "Odmiedniczkowe zapalenie nerek",
+    "xgb_label": "pyelonephritis"
+  },
+  {
+    "en": "Pyloric stenosis",
+    "pl": "Zwężenie odźwiernika",
+    "xgb_label": "pyloric_stenosis"
+  },
+  {
+    "en": "Pyogenic skin infection",
+    "pl": "Ropne zakażenie skóry",
+    "xgb_label": "pyogenic_skin_infection"
+  },
+  {
+    "en": "Raynaud disease",
+    "pl": "Choroba Raynauda",
+    "xgb_label": "raynaud_disease"
+  },
+  {
+    "en": "Reactive arthritis",
+    "pl": "Reaktywne zapalenie stawów",
+    "xgb_label": "reactive_arthritis"
+  },
+  {
+    "en": "Rectal disorder",
+    "pl": "Choroba odbytnicy",
+    "xgb_label": "rectal_disorder"
+  },
+  {
+    "en": "Restless leg syndrome",
+    "pl": "Zespół niespokojnych nóg",
+    "xgb_label": "restless_leg_syndrome"
+  },
+  {
+    "en": "Retinal detachment",
+    "pl": "Odwarstwienie siatkówki",
+    "xgb_label": "retinal_detachment"
+  },
+  {
+    "en": "Retinopathy due to high blood pressure",
+    "pl": "Retinopatia nadciśnieniowa",
+    "xgb_label": "retinopathy_due_to_high_blood_pressure"
+  },
+  {
+    "en": "Rhabdomyolysis",
+    "pl": "Rabdomioliza",
+    "xgb_label": "rhabdomyolysis"
+  },
+  {
+    "en": "Rheumatic fever",
+    "pl": "Gorączka reumatyczna",
+    "xgb_label": "rheumatic_fever"
+  },
+  {
+    "en": "Rheumatoid arthritis",
+    "pl": "Reumatoidalne zapalenie stawów (RZS)",
+    "xgb_label": "rheumatoid_arthritis"
+  },
+  {
+    "en": "Rosacea",
+    "pl": "Trądzik różowaty (rosacea)",
+    "xgb_label": "rosacea"
+  },
+  {
+    "en": "Rotator cuff injury",
+    "pl": "Uszkodzenie stożka rotatorów",
+    "xgb_label": "rotator_cuff_injury"
+  },
+  {
+    "en": "Salivary gland disorder",
+    "pl": "Choroba gruczołów ślinowych",
+    "xgb_label": "salivary_gland_disorder"
+  },
+  {
+    "en": "Sarcoidosis",
+    "pl": "Sarkoidoza",
+    "xgb_label": "sarcoidosis"
+  },
+  {
+    "en": "Scabies",
+    "pl": "Świerzb",
+    "xgb_label": "scabies"
+  },
+  {
+    "en": "Scar",
+    "pl": "Blizna",
+    "xgb_label": "scar"
+  },
+  {
+    "en": "Scarlet fever",
+    "pl": "Szkarlatyna (płonica)",
+    "xgb_label": "scarlet_fever"
+  },
+  {
+    "en": "Schizophrenia",
+    "pl": "Schizofrenia",
+    "xgb_label": "schizophrenia"
+  },
+  {
+    "en": "Sciatica",
+    "pl": "Rwa kulszowa",
+    "xgb_label": "sciatica"
+  },
+  {
+    "en": "Scleritis",
+    "pl": "Zapalenie twardówki",
+    "xgb_label": "scleritis"
+  },
+  {
+    "en": "Scleroderma",
+    "pl": "Twardzina",
+    "xgb_label": "scleroderma"
+  },
+  {
+    "en": "Scoliosis",
+    "pl": "Skolioza",
+    "xgb_label": "scoliosis"
+  },
+  {
+    "en": "Scurvy",
+    "pl": "Szkorbut",
+    "xgb_label": "scurvy"
+  },
+  {
+    "en": "Seasonal allergies hay fever",
+    "pl": "Sezonowy alergiczny nieżyt nosa (katar sienny)",
+    "xgb_label": "seasonal_allergies_hay_fever"
+  },
+  {
+    "en": "Sebaceous cyst",
+    "pl": "Torbiel łojowa",
+    "xgb_label": "sebaceous_cyst"
+  },
+  {
+    "en": "Seborrheic dermatitis",
+    "pl": "Łojotokowe zapalenie skóry",
+    "xgb_label": "seborrheic_dermatitis"
+  },
+  {
+    "en": "Seborrheic keratosis",
+    "pl": "Rogowacenie łojotokowe",
+    "xgb_label": "seborrheic_keratosis"
+  },
+  {
+    "en": "Sensorineural hearing loss",
+    "pl": "Niedosłuch odbiorczy (ślimakowy/nerwowy)",
+    "xgb_label": "sensorineural_hearing_loss"
+  },
+  {
+    "en": "Sepsis",
+    "pl": "Sepsa (posocznica)",
+    "xgb_label": "sepsis"
+  },
+  {
+    "en": "Septic arthritis",
+    "pl": "Septyczne zapalenie stawu",
+    "xgb_label": "septic_arthritis"
+  },
+  {
+    "en": "Shingles herpes zoster",
+    "pl": "Półpasiec (Herpes zoster)",
+    "xgb_label": "shingles_herpes_zoster"
+  },
+  {
+    "en": "Sialoadenitis",
+    "pl": "Zapalenie ślinianek",
+    "xgb_label": "sialoadenitis"
+  },
+  {
+    "en": "Sick sinus syndrome",
+    "pl": "Zespół chorego węzła zatokowego",
+    "xgb_label": "sick_sinus_syndrome"
+  },
+  {
+    "en": "Sickle cell anemia",
+    "pl": "Niedokrwistość sierpowatokrwinkowa",
+    "xgb_label": "sickle_cell_anemia"
+  },
+  {
+    "en": "Sickle cell crisis",
+    "pl": "Przełom sierpowatokrwinkowy",
+    "xgb_label": "sickle_cell_crisis"
+  },
+  {
+    "en": "Sinus bradycardia",
+    "pl": "Bradykardia zatokowa",
+    "xgb_label": "sinus_bradycardia"
+  },
+  {
+    "en": "Sjogren syndrome",
+    "pl": "Zespół Sjögrena",
+    "xgb_label": "sjogren_syndrome"
+  },
+  {
+    "en": "Skin cancer",
+    "pl": "Rak skóry",
+    "xgb_label": "skin_cancer"
+  },
+  {
+    "en": "Skin disorder",
+    "pl": "Choroba skóry",
+    "xgb_label": "skin_disorder"
+  },
+  {
+    "en": "Skin pigmentation disorder",
+    "pl": "Zaburzenia pigmentacji skóry",
+    "xgb_label": "skin_pigmentation_disorder"
+  },
+  {
+    "en": "Skin polyp",
+    "pl": "Włókniak miękki (polip skóry)",
+    "xgb_label": "skin_polyp"
+  },
+  {
+    "en": "Smoking or tobacco addiction",
+    "pl": "Uzależnienie od tytoniu",
+    "xgb_label": "smoking_or_tobacco_addiction"
+  },
+  {
+    "en": "Social phobia",
+    "pl": "Fobia społeczna",
+    "xgb_label": "social_phobia"
+  },
+  {
+    "en": "Soft tissue sarcoma",
+    "pl": "Mięsak tkanek miękkich",
+    "xgb_label": "soft_tissue_sarcoma"
+  },
+  {
+    "en": "Somatization disorder",
+    "pl": "Zaburzenie somatyzacyjne",
+    "xgb_label": "somatization_disorder"
+  },
+  {
+    "en": "Spermatocele",
+    "pl": "Torbiel nasienna (spermatocela)",
+    "xgb_label": "spermatocele"
+  },
+  {
+    "en": "Spherocytosis",
+    "pl": "Sferocytoza",
+    "xgb_label": "spherocytosis"
+  },
+  {
+    "en": "Spina bifida",
+    "pl": "Rozszczep kręgosłupa",
+    "xgb_label": "spina_bifida"
+  },
+  {
+    "en": "Spinal stenosis",
+    "pl": "Zwężenie kanału kręgowego",
+    "xgb_label": "spinal_stenosis"
+  },
+  {
+    "en": "Spinocerebellar ataxia",
+    "pl": "Ataksja rdzeniowo‑móżdżkowa",
+    "xgb_label": "spinocerebellar_ataxia"
+  },
+  {
+    "en": "Spondylitis",
+    "pl": "Zapalenie kręgosłupa",
+    "xgb_label": "spondylitis"
+  },
+  {
+    "en": "Spondylolisthesis",
+    "pl": "Kręgozmyk",
+    "xgb_label": "spondylolisthesis"
+  },
+  {
+    "en": "Spondylosis",
+    "pl": "Spondyloza",
+    "xgb_label": "spondylosis"
+  },
+  {
+    "en": "Spontaneous abortion",
+    "pl": "Poronienie samoistne",
+    "xgb_label": "spontaneous_abortion"
+  },
+  {
+    "en": "Sporotrichosis",
+    "pl": "Sporotrychoza",
+    "xgb_label": "sporotrichosis"
+  },
+  {
+    "en": "Sprain or strain",
+    "pl": "Skręcenie lub naciągnięcie",
+    "xgb_label": "sprain_or_strain"
+  },
+  {
+    "en": "Stenosis of the tear duct",
+    "pl": "Zwężenie przewodu łzowego",
+    "xgb_label": "stenosis_of_the_tear_duct"
+  },
+  {
+    "en": "Stomach cancer",
+    "pl": "Rak żołądka",
+    "xgb_label": "stomach_cancer"
+  },
+  {
+    "en": "Strep throat",
+    "pl": "Angina paciorkowcowa",
+    "xgb_label": "strep_throat"
+  },
+  {
+    "en": "Stress incontinence",
+    "pl": "Wysiłkowe nietrzymanie moczu",
+    "xgb_label": "stress_incontinence"
+  },
+  {
+    "en": "Stricture of the esophagus",
+    "pl": "Zwężenie przełyku",
+    "xgb_label": "stricture_of_the_esophagus"
+  },
+  {
+    "en": "Stroke",
+    "pl": "Udar mózgu",
+    "xgb_label": "stroke"
+  },
+  {
+    "en": "Stye",
+    "pl": "Jęczmień",
+    "xgb_label": "stye"
+  },
+  {
+    "en": "Subacute thyroiditis",
+    "pl": "Podostre zapalenie tarczycy (de Quervain)",
+    "xgb_label": "subacute_thyroiditis"
+  },
+  {
+    "en": "Subarachnoid hemorrhage",
+    "pl": "Krwotok podpajęczynówkowy",
+    "xgb_label": "subarachnoid_hemorrhage"
+  },
+  {
+    "en": "Subconjunctival hemorrhage",
+    "pl": "Krwotok podspojówkowy",
+    "xgb_label": "subconjunctival_hemorrhage"
+  },
+  {
+    "en": "Subdural hemorrhage",
+    "pl": "Krwiak podtwardówkowy",
+    "xgb_label": "subdural_hemorrhage"
+  },
+  {
+    "en": "Substance related mental disorder",
+    "pl": "Zaburzenia psychiczne związane z używaniem substancji",
+    "xgb_label": "substance_related_mental_disorder"
+  },
+  {
+    "en": "Syndrome of inappropriate secretion of adh siadh",
+    "pl": "Zespół nieadekwatnego wydzielania ADH (SIADH)",
+    "xgb_label": "syndrome_of_inappropriate_secretion_of_adh_siadh"
+  },
+  {
+    "en": "Syphilis",
+    "pl": "Kiła",
+    "xgb_label": "syphilis"
+  },
+  {
+    "en": "Syringomyelia",
+    "pl": "Syringomielia",
+    "xgb_label": "syringomyelia"
+  },
+  {
+    "en": "Systemic lupus erythematosis sle",
+    "pl": "Toczeń rumieniowaty układowy (SLE)",
+    "xgb_label": "systemic_lupus_erythematosis_sle"
+  },
+  {
+    "en": "Teething syndrome",
+    "pl": "Ząbkowanie (zespół ząbkowania)",
+    "xgb_label": "teething_syndrome"
+  },
+  {
+    "en": "Temporary or benign blood in urine",
+    "pl": "Przemijający (łagodny) krwiomocz",
+    "xgb_label": "temporary_or_benign_blood_in_urine"
+  },
+  {
+    "en": "Temporomandibular joint disorder",
+    "pl": "Dysfunkcja stawu skroniowo‑żuchwowego (TMJ)",
+    "xgb_label": "temporomandibular_joint_disorder"
+  },
+  {
+    "en": "Tendinitis",
+    "pl": "Zapalenie ścięgna",
+    "xgb_label": "tendinitis"
+  },
+  {
+    "en": "Tension headache",
+    "pl": "Ból głowy typu napięciowego",
+    "xgb_label": "tension_headache"
+  },
+  {
+    "en": "Testicular cancer",
+    "pl": "Rak jądra",
+    "xgb_label": "testicular_cancer"
+  },
+  {
+    "en": "Testicular disorder",
+    "pl": "Choroba jądra",
+    "xgb_label": "testicular_disorder"
+  },
+  {
+    "en": "Testicular torsion",
+    "pl": "Skręt jądra",
+    "xgb_label": "testicular_torsion"
+  },
+  {
+    "en": "Thoracic aortic aneurysm",
+    "pl": "Tętniak aorty piersiowej",
+    "xgb_label": "thoracic_aortic_aneurysm"
+  },
+  {
+    "en": "Thoracic outlet syndrome",
+    "pl": "Zespół górnego otworu klatki piersiowej",
+    "xgb_label": "thoracic_outlet_syndrome"
+  },
+  {
+    "en": "Threatened pregnancy",
+    "pl": "Ciąża zagrożona (zagrażające poronienie)",
+    "xgb_label": "threatened_pregnancy"
+  },
+  {
+    "en": "Thrombocytopenia",
+    "pl": "Małopłytkowość (trombocytopenia)",
+    "xgb_label": "thrombocytopenia"
+  },
+  {
+    "en": "Thrombophlebitis",
+    "pl": "Zakrzepowe zapalenie żył",
+    "xgb_label": "thrombophlebitis"
+  },
+  {
+    "en": "Thyroid cancer",
+    "pl": "Rak tarczycy",
+    "xgb_label": "thyroid_cancer"
+  },
+  {
+    "en": "Thyroid disease",
+    "pl": "Choroba tarczycy",
+    "xgb_label": "thyroid_disease"
+  },
+  {
+    "en": "Thyroid nodule",
+    "pl": "Guzek tarczycy",
+    "xgb_label": "thyroid_nodule"
+  },
+  {
+    "en": "Tic movement disorder",
+    "pl": "Zaburzenie tikowe",
+    "xgb_label": "tic_movement_disorder"
+  },
+  {
+    "en": "Tietze syndrome",
+    "pl": "Zespół Tietzego",
+    "xgb_label": "tietze_syndrome"
+  },
+  {
+    "en": "Tinnitus of unknown cause",
+    "pl": "Szumy uszne o nieznanej etiologii",
+    "xgb_label": "tinnitus_of_unknown_cause"
+  },
+  {
+    "en": "Tonsillar hypertrophy",
+    "pl": "Przerost migdałków podniebiennych",
+    "xgb_label": "tonsillar_hypertrophy"
+  },
+  {
+    "en": "Tonsillitis",
+    "pl": "Zapalenie migdałków podniebiennych",
+    "xgb_label": "tonsillitis"
+  },
+  {
+    "en": "Tooth abscess",
+    "pl": "Ropień okołowierzchołkowy zęba",
+    "xgb_label": "tooth_abscess"
+  },
+  {
+    "en": "Tooth disorder",
+    "pl": "Choroba zęba",
+    "xgb_label": "tooth_disorder"
+  },
+  {
+    "en": "Torticollis",
+    "pl": "Kręcz szyi",
+    "xgb_label": "torticollis"
+  },
+  {
+    "en": "Tourette syndrome",
+    "pl": "Zespół Tourette’a",
+    "xgb_label": "tourette_syndrome"
+  },
+  {
+    "en": "Toxic multinodular goiter",
+    "pl": "Toksyczne wole guzkowe",
+    "xgb_label": "toxic_multinodular_goiter"
+  },
+  {
+    "en": "Toxoplasmosis",
+    "pl": "Toksoplazmoza",
+    "xgb_label": "toxoplasmosis"
+  },
+  {
+    "en": "Tracheitis",
+    "pl": "Zapalenie tchawicy",
+    "xgb_label": "tracheitis"
+  },
+  {
+    "en": "Transient ischemic attack",
+    "pl": "Przemijający atak niedokrwienny (TIA)",
+    "xgb_label": "transient_ischemic_attack"
+  },
+  {
+    "en": "Trichiasis",
+    "pl": "Rzęsy rosnące do wewnątrz (trichiasis)",
+    "xgb_label": "trichiasis"
+  },
+  {
+    "en": "Trichinosis",
+    "pl": "Włośnica",
+    "xgb_label": "trichinosis"
+  },
+  {
+    "en": "Trichomonas infection",
+    "pl": "Rzęsistkowica",
+    "xgb_label": "trichomonas_infection"
+  },
+  {
+    "en": "Tricuspid valve disease",
+    "pl": "Choroba zastawki trójdzielnej",
+    "xgb_label": "tricuspid_valve_disease"
+  },
+  {
+    "en": "Trigeminal neuralgia",
+    "pl": "Nerwoból nerwu trójdzielnego (neuralgia trójdzielna)",
+    "xgb_label": "trigeminal_neuralgia"
+  },
+  {
+    "en": "Trigger finger finger disorder",
+    "pl": "Palec zatrzaskujący (palec strzelający)",
+    "xgb_label": "trigger_finger_finger_disorder"
+  },
+  {
+    "en": "Tuberculosis",
+    "pl": "Gruźlica",
+    "xgb_label": "tuberculosis"
+  },
+  {
+    "en": "Tuberous sclerosis",
+    "pl": "Stwardnienie guzowate",
+    "xgb_label": "tuberous_sclerosis"
+  },
+  {
+    "en": "Typhoid",
+    "pl": "Dur brzuszny (tyfus)",
+    "xgb_label": "typhoid"
+  },
+  {
+    "en": "Ulcerative colitis",
+    "pl": "Wrzodziejące zapalenie jelita grubego",
+    "xgb_label": "ulcerative_colitis"
+  },
+  {
+    "en": "Urethral disorder",
+    "pl": "Choroba cewki moczowej",
+    "xgb_label": "urethral_disorder"
+  },
+  {
+    "en": "Urethral stricture",
+    "pl": "Zwężenie cewki moczowej",
+    "xgb_label": "urethral_stricture"
+  },
+  {
+    "en": "Urethral valves",
+    "pl": "Zastawki cewki moczowej",
+    "xgb_label": "urethral_valves"
+  },
+  {
+    "en": "Urethritis",
+    "pl": "Zapalenie cewki moczowej",
+    "xgb_label": "urethritis"
+  },
+  {
+    "en": "Urge incontinence",
+    "pl": "Nietrzymanie moczu z parć naglących",
+    "xgb_label": "urge_incontinence"
+  },
+  {
+    "en": "Urinary tract infection",
+    "pl": "Zakażenie dróg moczowych",
+    "xgb_label": "urinary_tract_infection"
+  },
+  {
+    "en": "Urinary tract obstruction",
+    "pl": "Utrudnienie odpływu moczu (obturacja dróg moczowych)",
+    "xgb_label": "urinary_tract_obstruction"
+  },
+  {
+    "en": "Uterine atony",
+    "pl": "Atonia macicy",
+    "xgb_label": "uterine_atony"
+  },
+  {
+    "en": "Uterine cancer",
+    "pl": "Rak macicy (trzonu)",
+    "xgb_label": "uterine_cancer"
+  },
+  {
+    "en": "Uterine fibroids",
+    "pl": "Mięśniaki macicy",
+    "xgb_label": "uterine_fibroids"
+  },
+  {
+    "en": "Uveitis",
+    "pl": "Zapalenie błony naczyniowej oka (uveitis)",
+    "xgb_label": "uveitis"
+  },
+  {
+    "en": "Vacterl syndrome",
+    "pl": "Zespół VACTERL",
+    "xgb_label": "vacterl_syndrome"
+  },
+  {
+    "en": "Vaginal cyst",
+    "pl": "Torbiel pochwy",
+    "xgb_label": "vaginal_cyst"
+  },
+  {
+    "en": "Vaginal yeast infection",
+    "pl": "Grzybica pochwy (kandydoza)",
+    "xgb_label": "vaginal_yeast_infection"
+  },
+  {
+    "en": "Vaginismus",
+    "pl": "Pochwica",
+    "xgb_label": "vaginismus"
+  },
+  {
+    "en": "Vaginitis",
+    "pl": "Zapalenie pochwy",
+    "xgb_label": "vaginitis"
+  },
+  {
+    "en": "Valley fever",
+    "pl": "Kokcydioidomykoza (gorączka Doliny)",
+    "xgb_label": "valley_fever"
+  },
+  {
+    "en": "Varicocele of the testicles",
+    "pl": "Żylaki powrózka nasiennego (varicocele)",
+    "xgb_label": "varicocele_of_the_testicles"
+  },
+  {
+    "en": "Varicose veins",
+    "pl": "Żylaki kończyn dolnych",
+    "xgb_label": "varicose_veins"
+  },
+  {
+    "en": "Vasculitis",
+    "pl": "Zapalenie naczyń (vasculitis)",
+    "xgb_label": "vasculitis"
+  },
+  {
+    "en": "Venous insufficiency",
+    "pl": "Niewydolność żylna",
+    "xgb_label": "venous_insufficiency"
+  },
+  {
+    "en": "Vertebrobasilar insufficiency",
+    "pl": "Niewydolność kręgowo‑podstawna",
+    "xgb_label": "vertebrobasilar_insufficiency"
+  },
+  {
+    "en": "Vertigo paroymsal positional vertigo",
+    "pl": "Napadowe położeniowe zawroty głowy (BPPV)",
+    "xgb_label": "vertigo_paroymsal_positional_vertigo"
+  },
+  {
+    "en": "Vesicoureteral reflux",
+    "pl": "Refluks pęcherzowo‑moczowodowy",
+    "xgb_label": "vesicoureteral_reflux"
+  },
+  {
+    "en": "Viral exanthem",
+    "pl": "Osutka wirusowa",
+    "xgb_label": "viral_exanthem"
+  },
+  {
+    "en": "Viral hepatitis",
+    "pl": "Wirusowe zapalenie wątroby",
+    "xgb_label": "viral_hepatitis"
+  },
+  {
+    "en": "Viral warts",
+    "pl": "Brodawki wirusowe (kurzajki)",
+    "xgb_label": "viral_warts"
+  },
+  {
+    "en": "Vitamin a deficiency",
+    "pl": "Niedobór witaminy A",
+    "xgb_label": "vitamin_a_deficiency"
+  },
+  {
+    "en": "Vitamin b12 deficiency",
+    "pl": "Niedobór witaminy B12",
+    "xgb_label": "vitamin_b12_deficiency"
+  },
+  {
+    "en": "Vitamin d deficiency",
+    "pl": "Niedobór witaminy D",
+    "xgb_label": "vitamin_d_deficiency"
+  },
+  {
+    "en": "Vitreous degeneration",
+    "pl": "Zwyrodnienie ciała szklistego",
+    "xgb_label": "vitreous_degeneration"
+  },
+  {
+    "en": "Vitreous hemorrhage",
+    "pl": "Krwotok do ciała szklistego",
+    "xgb_label": "vitreous_hemorrhage"
+  },
+  {
+    "en": "Vocal cord polyp",
+    "pl": "Polip struny głosowej",
+    "xgb_label": "vocal_cord_polyp"
+  },
+  {
+    "en": "Volvulus",
+    "pl": "Skręt jelit (volvulus)",
+    "xgb_label": "volvulus"
+  },
+  {
+    "en": "Von willebrand disease",
+    "pl": "Choroba von Willebranda",
+    "xgb_label": "von_willebrand_disease"
+  },
+  {
+    "en": "Vulvar cancer",
+    "pl": "Rak sromu",
+    "xgb_label": "vulvar_cancer"
+  },
+  {
+    "en": "Vulvar disorder",
+    "pl": "Choroba sromu",
+    "xgb_label": "vulvar_disorder"
+  },
+  {
+    "en": "Vulvodynia",
+    "pl": "Wulwodynia",
+    "xgb_label": "vulvodynia"
+  },
+  {
+    "en": "Wernicke korsakoff syndrome",
+    "pl": "Zespół Wernickego‑Korsakowa",
+    "xgb_label": "wernicke_korsakoff_syndrome"
+  },
+  {
+    "en": "White blood cell disease",
+    "pl": "Choroba białych krwinek (leukocytów)",
+    "xgb_label": "white_blood_cell_disease"
+  },
+  {
+    "en": "Whooping cough",
+    "pl": "Krztusiec",
+    "xgb_label": "whooping_cough"
+  },
+  {
+    "en": "Wilson disease",
+    "pl": "Choroba Wilsona",
+    "xgb_label": "wilson_disease"
+  },
+  {
+    "en": "Yeast infection",
+    "pl": "Zakażenie drożdżakowe (kandydoza)",
+    "xgb_label": "yeast_infection"
+  },
+  {
+    "en": "Zenker diverticulum",
+    "pl": "Uchyłek Zenkera",
+    "xgb_label": "zenker_diverticulum"
+  }
+]

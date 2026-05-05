@@ -1,0 +1,15 @@
+{
+  "objective": "multi:softprob",
+  "eval_metric": "mlogloss",
+  "num_class": 778,
+  "seed": 42,
+  "tree_method": "hist",
+  "device": "cuda",
+  "learning_rate": 0.039248074054160684,
+  "subsample": 0.9135102221059554,
+  "colsample_bytree": 0.9092322277263355,
+  "colsample_bylevel": 0.8940232262077057,
+  "gamma": 0.1988424040888052,
+  "alpha": 3.6033775109624446e-05,
+  "lambda": 2.58564931896835
+}

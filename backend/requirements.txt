@@ -1,0 +1,26 @@
+# --- Web framework ---
+fastapi
+uvicorn[standard]
+
+# --- Utils / data ---
+pydantic
+pandas
+numpy
+joblib
+
+# --- Machine learning ---
+scikit-learn
+xgboost
+scikit-optimize
+
+# --- PyTorch + Transformers ---
+torch
+transformers
+accelerate
+bitsandbytes       # 8-bit quantization (może być problematyczne na Windows → fallback do ctransformers)
+
+# --- Fallback LLM loader (GGUF) ---
+ctransformers
+
+# --- Embeddings (multi-lang) ---
+sentence-transformers

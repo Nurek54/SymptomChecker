@@ -1,0 +1,76 @@
+# ───── Secrets ─────
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+!.env.example
+
+# ───── IDE / systemowe ─────
+.idea/
+.vscode/
+.claude/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.DS_Store
+Thumbs.db
+
+# ───── Virtualenv ─────
+.venv/
+env/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# ───── Node / frontend ─────
+node_modules/
+.next/
+out/
+dist/
+build/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+
+# ───── Bazy danych (lokalne, testowe) ─────
+*.db
+*.sqlite
+database/*.db
+database/*.sqlite
+
+# ───── Modele i wagi AI ─────
+*.bin
+*.gguf
+*.onnx
+*.h5
+*.pkl
+*.pt
+*.ckpt
+*.joblib
+!backend/ml/river_ovr_ftrl.joblib
+weights/
+
+# ───── Duże pliki danych (>50MB) ─────
+backend/data/Dataset_1/
+backend/data/Final_Dataset_Diseases_and_Symptoms.csv
+backend/data/Final_Augmented_dataset_Diseases_and_Symptoms.csv
+backend/data/train_remainder.csv
+backend/data/calibration.csv
+backend/ml/Backup/
+
+# ───── Dane i cache ─────
+datasets/
+logs/
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.mp4
+*.wav
+*.avi

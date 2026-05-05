@@ -1,0 +1,1 @@
+{"model_file": "Bielik-11B-v2.3-Instruct.Q6_K.gguf", "persist_layers": 999, "session_layers_last": 999, "prefill_batch": 512, "supports_n_batch": false, "supports_batch_size": true, "threads": 1}

@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/* ── Motyw przez zmienne (light/dark) ── */
+:root {
+    color-scheme: light;
+
+    /* Word / Paper White */
+    --surface: 255 255 255;      /* #FFFFFF – czysta biel Worda */
+    --card:    255 255 255;      /* jednolite, zero różnic */
+    --input:   255 255 255;      /* textarea również biała */
+    --border:  220 220 220;      /* subtelna ramka jak w Word */
+    --text:    20 20 20;         /* ciemny tekst (Word-like) */
+    --muted:   120 120 120;
+
+    --chip-bg:   245 245 245;
+    --chip-text: 30 30 30;
+
+    --btn-bg:     250 250 250;   /* Word style */
+    --btn-text:   20 20 20;
+    --btn-border: 210 210 210;
+
+    --bubble-user-bg:     255 255 255;  /* bąbelek jak kartka Worda */
+    --bubble-user-text:   20 20 20;
+    --bubble-user-border: 210 210 210;
+
+    /* Akcent aurora bez zmian */
+    --accent-1: 52 211 153;
+    --accent-2: 56 189 248;
+    --accent-3: 167 139 250;
+    --aurora: linear-gradient(120deg,
+    rgb(var(--accent-1)),
+    rgb(var(--accent-2)),
+    rgb(var(--accent-3))
+    );
+    --aurora-soft: linear-gradient(120deg,
+    rgba(52,211,153,.12),
+    rgba(56,189,248,.12),
+    rgba(167,139,250,.12)
+    );
+}
+
+:root.dark {
+  color-scheme: dark;         /* spójne natywne kolory kontrolek w ciemnym */
+  --surface: 23 23 23;        /* neutral-900 */
+  --card:    38 38 38;        /* neutral-800 */
+  --text:    245 245 245;     /* neutral-100 */
+  --muted:   163 163 163;     /* neutral-400 */
+  --border:  64 64 64;        /* neutral-700 */
+  --input:   38 38 38;        /* neutral-800 */
+
+  --chip-bg:   38 38 38;
+  --chip-text: 245 245 245;
+
+  /* PRZYCISK „Wyślij” – ciemny */
+  --btn-bg:     64 64 64;     /* neutral-700 */
+  --btn-text:   245 245 245;  /* neutral-100 */
+  --btn-border: 82 82 82;     /* neutral-600 */
+
+  /* Dymek użytkownika – ciemny */
+  --bubble-user-bg:     52 52 52;      /* neutral-700-ish */
+  --bubble-user-text:   245 245 245;   /* neutral-100 */
+  --bubble-user-border: 82 82 82;      /* neutral-600 */
+}
+
+/* ── Guard na czas przełączania motywu (bez migania) ── */
+.theme-changing *, .theme-changing *::before, .theme-changing *::after {
+  transition-property: none !important;
+  animation: none !important;
+}
+
+/* ── Klasy narzędziowe oparte o zmienne ── */
+.bg-surface     { background-color: rgb(var(--surface)); }
+.bg-card        { background-color: rgb(var(--card)); }
+.text-basecolor { color:            rgb(var(--text)); }
+.text-muted     { color:            rgb(var(--muted)); }
+.border-base    { border-color:     rgb(var(--border)) !important; }
+.bg-input       { background-color: rgb(var(--input)); }
+
+/* przycisk „Wyślij” */
+.btn-primary{
+  background-color: rgb(var(--btn-bg));
+  color: rgb(var(--btn-text));
+  border: 1px solid rgb(var(--btn-border));
+  transition: filter .12s ease, transform .04s ease, box-shadow .12s ease;
+}
+.btn-primary:hover   { filter: brightness(1.03); }
+.btn-primary:active  { transform: translateY(0.5px); }
+.btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* Chip (etykieta objawu) */
+.chip{
+  background-color: rgb(var(--chip-bg));
+  color: rgb(var(--chip-text));
+  border: 1px solid rgb(var(--border));
+  border-radius: 9999px;
+  padding: .25rem .75rem;
+  font-size: .75rem; /* text-xs */
+  font-weight: 500;  /* medium */
+}
+
+/* Dymek użytkownika */
+.bg-bubble-user     { background-color: rgb(var(--bubble-user-bg)); }
+.text-bubble-user   { color:            rgb(var(--bubble-user-text)); }
+.border-bubble-user { border-color:     rgb(var(--bubble-user-border)) !important; }
+
+/* ── Aurora text utility (opcjonalnie do użycia w innych miejscach) ── */
+.aurora-text{
+  background: var(--aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Subtelny podpis autora — w kolorach akcentu ── */
+body::after{
+  content: "Autor: Grzegorz Sienkiewicz";
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  background: var(--aurora);              /* gradient akcentu */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;                     /* odsłania gradient w tekście */
+  -webkit-text-fill-color: transparent;
+  opacity: .95;
+  pointer-events: none;                   /* nie klikalne */
+  z-index: 40;
+  /* delikatny „glow”, różny w jasnym/ciemnym */
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.02)) drop-shadow(0 0 8px rgba(56,189,248,.25));
+}
+:root.dark body::after{
+  filter: drop-shadow(0 0 10px rgba(167,139,250,.28));
+}
+
+/* ── Scrollbar / Markdown / overscroll ── */
+* { scrollbar-width: thin; scrollbar-color: #9ca3af transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 9999px; }
+
+.prose p  { margin: 0.25rem 0; }
+.prose ul { margin: 0.25rem 0 0.25rem 1rem; list-style: disc; }
+.prose ol { margin: 0.25rem 0 0.25rem 1rem; list-style: decimal; }
+.prose a  { text-decoration: underline; }
+.prose code { background: rgba(0,0,0,.06); padding: .1rem .25rem; border-radius: .25rem; }
+:root.dark .prose code { background: rgba(255,255,255,.08); }
+
+/* Zaznaczenie tekstu (subtelne) */
+::selection            { background: rgba(99,102,241,.18); }
+:root.dark ::selection { background: rgba(255,255,255,.12); }
+
+/* Stabilny scroll i pełna wysokość */
+html, body { overscroll-behavior: contain; }
+html, body, #__next { height: 100%; }
+
+/* ── Stabilizacja wszystkich kontenerów z Tailwindowym .overflow-y-auto ── */
+@supports (scrollbar-gutter: stable) {
+  .overflow-y-auto { scrollbar-gutter: stable both-edges; }
+}
+/* Niech nie „kotwiczy” pozycji przy dogrywaniu węzłów + nie przebija scroll */
+.overflow-y-auto {
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+}
+
+/* Efekt pulsu przy mikrofonie (jeśli używasz) */
+.mic-pulse { box-shadow: 0 0 0 0 rgba(220, 38, 38, .35); animation: micPulse 1.6s ease-out infinite; }
+@keyframes micPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, .35); }
+  70%  { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}

@@ -1,0 +1,145 @@
+{
+  "paths": {
+    "train": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\data\\Final_Augmented_dataset_Diseases_and_Symptoms.CLEAN.OPT2.csv",
+    "calib": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\data\\calibration.csv",
+    "test": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\data\\Final_Testset_for_Eval.csv",
+    "class_weights": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\data\\Final_Augmented_dataset_Diseases_and_Symptoms.CLEAN.class_weight.csv",
+    "report": "check_report.json"
+  },
+  "features": {
+    "train": 412,
+    "calib": 412,
+    "test": 412
+  },
+  "feature_compat": {
+    "calib": {
+      "extra_vs_train": [],
+      "missing_vs_train": []
+    },
+    "test": {
+      "extra_vs_train": [],
+      "missing_vs_train": []
+    }
+  },
+  "non_binary": {
+    "train_cols": [],
+    "calib_cols": [],
+    "test_cols": []
+  },
+  "label_overlap": {
+    "calib": {
+      "only_in_CALIB": [],
+      "only_in_TRAIN": [
+        "acute_fatty_liver_of_pregnancy_aflp",
+        "adrenal_cancer",
+        "aspergillosis",
+        "carcinoid_syndrome",
+        "cat_scratch_disease",
+        "cryptococcosis",
+        "cushing_syndrome",
+        "dengue_fever",
+        "diabetic_kidney_disease",
+        "dislocation_of_the_knee",
+        "dislocation_of_the_patella",
+        "edward_syndrome",
+        "empyema",
+        "esophageal_varices",
+        "fetal_alcohol_syndrome",
+        "g6pd_enzyme_deficiency",
+        "human_immunodeficiency_virus_infection_hiv",
+        "hypertrophic_obstructive_cardiomyopathy_hocm",
+        "insulin_overdose",
+        "lichen_planus",
+        "lymphangitis",
+        "meckel_diverticulum",
+        "moyamoya_disease",
+        "necrotizing_fasciitis",
+        "omphalitis",
+        "open_wound_of_the_face",
+        "open_wound_of_the_finger",
+        "open_wound_of_the_jaw",
+        "otosclerosis",
+        "premature_rupture_of_amniotic_membrane",
+        "primary_thrombocythemia",
+        "pulmonic_valve_disease",
+        "reactive_arthritis",
+        "rheumatic_fever",
+        "scurvy",
+        "spherocytosis",
+        "sporotrichosis",
+        "toxoplasmosis",
+        "trichinosis",
+        "tricuspid_valve_disease",
+        "tuberous_sclerosis",
+        "vacterl_syndrome",
+        "vitamin_a_deficiency",
+        "wernicke_korsakoff_syndrome"
+      ]
+    },
+    "test": {
+      "only_in_TEST": [],
+      "only_in_TRAIN": [
+        "acute_fatty_liver_of_pregnancy_aflp",
+        "adrenal_cancer",
+        "aspergillosis",
+        "carcinoid_syndrome",
+        "cat_scratch_disease",
+        "cryptococcosis",
+        "cushing_syndrome",
+        "dengue_fever",
+        "diabetic_kidney_disease",
+        "dislocation_of_the_knee",
+        "dislocation_of_the_patella",
+        "edward_syndrome",
+        "empyema",
+        "esophageal_varices",
+        "fetal_alcohol_syndrome",
+        "g6pd_enzyme_deficiency",
+        "human_immunodeficiency_virus_infection_hiv",
+        "hypertrophic_obstructive_cardiomyopathy_hocm",
+        "insulin_overdose",
+        "lichen_planus",
+        "lymphangitis",
+        "meckel_diverticulum",
+        "moyamoya_disease",
+        "necrotizing_fasciitis",
+        "omphalitis",
+        "open_wound_of_the_face",
+        "open_wound_of_the_finger",
+        "open_wound_of_the_jaw",
+        "otosclerosis",
+        "premature_rupture_of_amniotic_membrane",
+        "primary_thrombocythemia",
+        "pulmonic_valve_disease",
+        "reactive_arthritis",
+        "rheumatic_fever",
+        "scurvy",
+        "spherocytosis",
+        "sporotrichosis",
+        "toxoplasmosis",
+        "trichinosis",
+        "tricuspid_valve_disease",
+        "tuberous_sclerosis",
+        "vacterl_syndrome",
+        "vitamin_a_deficiency",
+        "wernicke_korsakoff_syndrome"
+      ]
+    }
+  },
+  "class_weights": {},
+  "stats": {
+    "train": {
+      "rows": 162761,
+      "classes": 778
+    },
+    "calib": {
+      "rows": 36096,
+      "classes": 734
+    },
+    "test": {
+      "rows": 16352,
+      "classes": 734
+    }
+  },
+  "result": "PASS"
+}

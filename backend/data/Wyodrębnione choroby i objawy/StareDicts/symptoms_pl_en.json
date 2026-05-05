@@ -1,0 +1,2162 @@
+[
+  {
+    "pl": "kaszel",
+    "en": "cough",
+    "synonyms_pl": [
+      "kaszel suchy",
+      "kaszel mokry",
+      "kaszleć"
+    ],
+    "synonyms_en": [
+      "dry cough",
+      "wet cough",
+      "to cough"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "gorączka",
+    "en": "fever",
+    "synonyms_pl": [
+      "podwyższona temperatura",
+      "stan gorączkowy",
+      "gorączkować"
+    ],
+    "synonyms_en": [
+      "pyrexia",
+      "high temperature",
+      "to run a fever"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "duszność",
+    "en": "shortness of breath",
+    "synonyms_pl": [
+      "zadyszka",
+      "brak tchu",
+      "problemy z oddychaniem"
+    ],
+    "synonyms_en": [
+      "dyspnea",
+      "breathlessness",
+      "difficulty breathing"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "ból głowy",
+    "en": "headache ",
+    "synonyms_pl": [
+      "ból głowy (migrenowy)",
+      "ból migrenowy",
+      "cefalgia"
+    ],
+    "synonyms_en": [
+      "head pain",
+      "migraine headache",
+      "cephalgia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "ból brzucha",
+    "en": "abdominal pain",
+    "synonyms_pl": [
+      "ból żołądka",
+      "ból w nadbrzuszu",
+      "kolka brzuszna"
+    ],
+    "synonyms_en": [
+      "stomachache",
+      "bellyache",
+      "stomach pain"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "ból w klatce piersiowej",
+    "en": "chest pain",
+    "synonyms_pl": [
+      "ból w klatce",
+      "ucisk w klatce piersiowej"
+    ],
+    "synonyms_en": [
+      "thoracic pain",
+      "pressure in chest"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "ból gardła",
+    "en": "sore throat",
+    "synonyms_pl": [
+      "ból przy przełykaniu",
+      "drapanie w gardle"
+    ],
+    "synonyms_en": [
+      "throat pain",
+      "pharyngitis (sore throat)"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "ból pleców",
+    "en": "back pain",
+    "synonyms_pl": [
+      "ból krzyża",
+      "ból w krzyżu",
+      "lumbago"
+    ],
+    "synonyms_en": [
+      "backache",
+      "lower back pain"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "ból stawów",
+    "en": "joint pain",
+    "synonyms_pl": [
+      "bóle stawowe",
+      "arthralgia"
+    ],
+    "synonyms_en": [
+      "arthralgia",
+      "aching joints"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "ból mięśni",
+    "en": "muscle pain",
+    "synonyms_pl": [
+      "bóle mięśniowe",
+      "mialgia",
+      "zakwasy"
+    ],
+    "synonyms_en": [
+      "myalgia",
+      "muscle ache",
+      "soreness"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "ból ucha",
+    "en": "earache",
+    "synonyms_pl": [
+      "ból ucha",
+      "ból w uchu"
+    ],
+    "synonyms_en": [
+      "ear pain",
+      "otalgia"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "ból zęba",
+    "en": "toothache",
+    "synonyms_pl": [
+      "ból zęba",
+      "ból zębów"
+    ],
+    "synonyms_en": [
+      "dental pain",
+      "odontalgia"
+    ],
+    "category": "Stomatologiczny"
+  },
+  {
+    "pl": "nudności",
+    "en": "nausea",
+    "synonyms_pl": [
+      "mdłości",
+      "zawroty żołądka"
+    ],
+    "synonyms_en": [
+      "queasiness",
+      "sickness (feeling sick)"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "wymioty",
+    "en": "vomiting",
+    "synonyms_pl": [
+      "wymiotowanie",
+      "rzyganie (pot.)"
+    ],
+    "synonyms_en": [
+      "throwing up",
+      "emesis"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "biegunka",
+    "en": "diarrhea",
+    "synonyms_pl": [
+      "rozwolnienie",
+      "luźne stolce"
+    ],
+    "synonyms_en": [
+      "loose stools",
+      "the runs"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "zaparcie",
+    "en": "constipation",
+    "synonyms_pl": [
+      "zatwardzenie",
+      "obstrukcja (pot.)"
+    ],
+    "synonyms_en": [
+      "irregularity",
+      "hard stool"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "zgaga",
+    "en": "heartburn",
+    "synonyms_pl": [
+      "refluks",
+      "palenie w przełyku"
+    ],
+    "synonyms_en": [
+      "acid reflux",
+      "pyrosis"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "wzdęcia",
+    "en": "bloating",
+    "synonyms_pl": [
+      "uczucie pełności",
+      "obrzmienie brzucha"
+    ],
+    "synonyms_en": [
+      "abdominal bloating",
+      "fullness"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "gazy",
+    "en": "flatulence",
+    "synonyms_pl": [
+      "wiatry (pot.)",
+      "puszczanie gazów"
+    ],
+    "synonyms_en": [
+      "gas",
+      "intestinal gas"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "odbijanie",
+    "en": "belching",
+    "synonyms_pl": [
+      "bekanie (pot.)",
+      "odbijać się"
+    ],
+    "synonyms_en": [
+      "burping",
+      "eructation"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "czkawka",
+    "en": "hiccups",
+    "synonyms_pl": [
+      "czkanie"
+    ],
+    "synonyms_en": [
+      "hiccoughs",
+      "singultus"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "utrata apetytu",
+    "en": "loss of appetite",
+    "synonyms_pl": [
+      "brak apetytu",
+      "anoreksja (objaw)"
+    ],
+    "synonyms_en": [
+      "lack of appetite",
+      "anorexia (symptom)"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "nadmierny apetyt",
+    "en": "excessive hunger",
+    "synonyms_pl": [
+      "wilczy apetyt",
+      "żarłoczność",
+      "polifagia"
+    ],
+    "synonyms_en": [
+      "increased appetite",
+      "polyphagia"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "utrata masy ciała",
+    "en": "weight loss",
+    "synonyms_pl": [
+      "chudnięcie",
+      "spadek wagi"
+    ],
+    "synonyms_en": [
+      "losing weight",
+      "weight reduction"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "przyrost masy ciała",
+    "en": "weight gain",
+    "synonyms_pl": [
+      "tycie",
+      "wzrost wagi"
+    ],
+    "synonyms_en": [
+      "gaining weight",
+      "weight increase"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "zmęczenie",
+    "en": "fatigue",
+    "synonyms_pl": [
+      "znużenie",
+      "wyczerpanie"
+    ],
+    "synonyms_en": [
+      "tiredness",
+      "exhaustion"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "osłabienie",
+    "en": "weakness",
+    "synonyms_pl": [
+      "słabość",
+      "brak siły"
+    ],
+    "synonyms_en": [
+      "loss of strength",
+      "debility"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "dreszcze",
+    "en": "chills",
+    "synonyms_pl": [
+      "ciarki",
+      "drżenie z zimna"
+    ],
+    "synonyms_en": [
+      "shivers",
+      "rigors"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "nocne poty",
+    "en": "night sweats",
+    "synonyms_pl": [
+      "poty nocne"
+    ],
+    "synonyms_en": [
+      "excessive sweating at night"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "nadmierne pocenie się",
+    "en": "excessive sweating",
+    "synonyms_pl": [
+      "nadpotliwość"
+    ],
+    "synonyms_en": [
+      "hyperhidrosis",
+      "profuse sweating"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "bladość",
+    "en": "paleness",
+    "synonyms_pl": [
+      "bladość skóry",
+      "blady wygląd"
+    ],
+    "synonyms_en": [
+      "pallor",
+      "pale complexion"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "zażółcenie skóry (żółtaczka)",
+    "en": "jaundice",
+    "synonyms_pl": [
+      "żółte zabarwienie skóry",
+      "icterus"
+    ],
+    "synonyms_en": [
+      "yellowing of skin",
+      "icterus"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "sinica",
+    "en": "cyanosis",
+    "synonyms_pl": [
+      "sine zabarwienie skóry",
+      "zasinienie"
+    ],
+    "synonyms_en": [
+      "bluish skin",
+      "bluish discoloration"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "wysypka",
+    "en": "rash",
+    "synonyms_pl": [
+      "osutka",
+      "wykwity skórne"
+    ],
+    "synonyms_en": [
+      "skin rash",
+      "eruption"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "swędzenie",
+    "en": "itching",
+    "synonyms_pl": [
+      "świąd",
+      "uczucie swędzenia"
+    ],
+    "synonyms_en": [
+      "pruritus",
+      "itchy feeling"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "pokrzywka",
+    "en": "hives",
+    "synonyms_pl": [
+      "wysypka pokrzywkowa"
+    ],
+    "synonyms_en": [
+      "urticaria",
+      "nettle rash"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "zaczerwienienie skóry",
+    "en": "skin redness",
+    "synonyms_pl": [
+      "rumień"
+    ],
+    "synonyms_en": [
+      "redness",
+      "erythema"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "suchość skóry",
+    "en": "dry skin",
+    "synonyms_pl": [
+      "przesuszona skóra"
+    ],
+    "synonyms_en": [
+      "xerosis",
+      "skin dryness"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "łuszczenie się skóry",
+    "en": "peeling skin",
+    "synonyms_pl": [
+      "złuszczanie skóry"
+    ],
+    "synonyms_en": [
+      "skin flaking",
+      "desquamation"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "siniak",
+    "en": "bruise",
+    "synonyms_pl": [
+      "stłuczenie",
+      "krwiak"
+    ],
+    "synonyms_en": [
+      "contusion",
+      "hematoma"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "krwawienie",
+    "en": "bleeding",
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi"
+    ],
+    "synonyms_en": [
+      "hemorrhage",
+      "bleeding"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "krwawienie z nosa",
+    "en": "nosebleed",
+    "synonyms_pl": [
+      "krwotok z nosa",
+      "epistaksja"
+    ],
+    "synonyms_en": [
+      "nose bleed",
+      "epistaxis"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "rany wolno gojące się",
+    "en": "slow-healing wounds",
+    "synonyms_pl": [
+      "trudno gojące się rany"
+    ],
+    "synonyms_en": [
+      "poor wound healing"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "wypadanie włosów",
+    "en": "hair loss",
+    "synonyms_pl": [
+      "utrata włosów",
+      "łysienie"
+    ],
+    "synonyms_en": [
+      "alopecia",
+      "balding"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "łamliwość paznokci",
+    "en": "brittle nails",
+    "synonyms_pl": [
+      "kruchość paznokci"
+    ],
+    "synonyms_en": [
+      "fragile nails"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "łamanie włosów",
+    "en": "brittle hair",
+    "synonyms_pl": [
+      "łamliwość włosów"
+    ],
+    "synonyms_en": [
+      "hair breakage"
+    ],
+    "category": "Dermatologiczny"
+  },
+  {
+    "pl": "ból oka",
+    "en": "eye pain",
+    "synonyms_pl": [
+      "ból oczu",
+      "uczucie ucisku w oku"
+    ],
+    "synonyms_en": [
+      "ocular pain",
+      "ache in the eye"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "zaczerwienienie oczu",
+    "en": "red eyes",
+    "synonyms_pl": [
+      "przekrwione oczy"
+    ],
+    "synonyms_en": [
+      "bloodshot eyes",
+      "eye redness"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "łzawienie oczu",
+    "en": "tearing (eyes watering)",
+    "synonyms_pl": [
+      "nadmierne łzawienie"
+    ],
+    "synonyms_en": [
+      "watery eyes",
+      "epiphora"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "suchość oczu",
+    "en": "dry eyes",
+    "synonyms_pl": [
+      "zespół suchego oka",
+      "suche spojówki"
+    ],
+    "synonyms_en": [
+      "dry eye syndrome",
+      "ocular dryness"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "światłowstręt",
+    "en": "photophobia",
+    "synonyms_pl": [
+      "nadwrażliwość na światło"
+    ],
+    "synonyms_en": [
+      "light sensitivity"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "niewyraźne widzenie",
+    "en": "blurred vision",
+    "synonyms_pl": [
+      "zamazane widzenie",
+      "nieostre widzenie"
+    ],
+    "synonyms_en": [
+      "blurry vision",
+      "unclear vision"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "podwójne widzenie",
+    "en": "double vision",
+    "synonyms_pl": [
+      "widzenie podwójne",
+      "diplopia"
+    ],
+    "synonyms_en": [
+      "double sight",
+      "diplopia"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "utrata wzroku",
+    "en": "vision loss",
+    "synonyms_pl": [
+      "ślepota",
+      "utrata widzenia"
+    ],
+    "synonyms_en": [
+      "loss of sight",
+      "blindness"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "szum w uszach",
+    "en": "ringing in the ears",
+    "synonyms_pl": [
+      "dzwonienie w uszach",
+      "tinnitus"
+    ],
+    "synonyms_en": [
+      "tinnitus",
+      "ear ringing"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "utrata słuchu",
+    "en": "hearing loss",
+    "synonyms_pl": [
+      "niedosłuch",
+      "głuchota"
+    ],
+    "synonyms_en": [
+      "deafness",
+      "hearing impairment"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "zawroty głowy",
+    "en": "dizziness",
+    "synonyms_pl": [
+      "vertigo",
+      "kręcenie się w głowie"
+    ],
+    "synonyms_en": [
+      "lightheadedness",
+      "vertigo"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "omdlenie",
+    "en": "fainting",
+    "synonyms_pl": [
+      "zemdlenie",
+      "utrata przytomności"
+    ],
+    "synonyms_en": [
+      "syncope",
+      "passing out"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "drgawki",
+    "en": "seizures",
+    "synonyms_pl": [
+      "napad drgawek",
+      "konwulsje"
+    ],
+    "synonyms_en": [
+      "convulsions",
+      "fits"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "drżenie",
+    "en": "tremor",
+    "synonyms_pl": [
+      "drżenie mięśni",
+      "drżenie rąk"
+    ],
+    "synonyms_en": [
+      "shaking",
+      "trembling"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "drętwienie",
+    "en": "numbness",
+    "synonyms_pl": [
+      "utrata czucia",
+      "zdrętwienie"
+    ],
+    "synonyms_en": [
+      "loss of sensation",
+      "numb feeling"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "mrowienie",
+    "en": "tingling",
+    "synonyms_pl": [
+      "cierpnięcie",
+      "“mrówki” (pot.)"
+    ],
+    "synonyms_en": [
+      "pins and needles",
+      "paresthesia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "osłabienie mięśni",
+    "en": "muscle weakness",
+    "synonyms_pl": [
+      "niedowład",
+      "słabość mięśni"
+    ],
+    "synonyms_en": [
+      "muscular weakness",
+      "reduced muscle strength"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "paraliż",
+    "en": "paralysis",
+    "synonyms_pl": [
+      "porażenie",
+      "całkowity bezwład"
+    ],
+    "synonyms_en": [
+      "loss of movement",
+      "plegia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "sztywność karku",
+    "en": "stiff neck",
+    "synonyms_pl": [
+      "usztywnienie karku",
+      "sztywny kark"
+    ],
+    "synonyms_en": [
+      "neck stiffness",
+      "nuchal rigidity"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "utrata przytomności",
+    "en": "loss of consciousness",
+    "synonyms_pl": [
+      "omdlenie",
+      "zasłabnięcie"
+    ],
+    "synonyms_en": [
+      "blackout",
+      "fainting"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "trudności w mówieniu",
+    "en": "speech difficulties",
+    "synonyms_pl": [
+      "afazja",
+      "dyzartria",
+      "bełkotliwa mowa"
+    ],
+    "synonyms_en": [
+      "difficulty speaking",
+      "slurred speech"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "problemy z pamięcią",
+    "en": "memory problems",
+    "synonyms_pl": [
+      "zaniki pamięci",
+      "amnezja"
+    ],
+    "synonyms_en": [
+      "memory loss",
+      "amnesia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "dezorientacja",
+    "en": "confusion",
+    "synonyms_pl": [
+      "zagubienie",
+      "dezorientacja"
+    ],
+    "synonyms_en": [
+      "disorientation",
+      "confusion"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "problemy z koncentracją",
+    "en": "difficulty concentrating",
+    "synonyms_pl": [
+      "rozproszenie uwagi",
+      "osłabiona koncentracja"
+    ],
+    "synonyms_en": [
+      "trouble focusing",
+      "poor concentration"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "apatia",
+    "en": "apathy",
+    "synonyms_pl": [
+      "obojętność",
+      "brak zainteresowania"
+    ],
+    "synonyms_en": [
+      "indifference",
+      "lack of interest"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "drażliwość",
+    "en": "irritability",
+    "synonyms_pl": [
+      "rozdrażnienie",
+      "łatwe wpadanie w złość"
+    ],
+    "synonyms_en": [
+      "easy annoyance",
+      "agitation"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "wahania nastroju",
+    "en": "mood swings",
+    "synonyms_pl": [
+      "chwiejność emocjonalna",
+      "zmienność nastrojów"
+    ],
+    "synonyms_en": [
+      "emotional instability",
+      "mood changes"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "lęk",
+    "en": "anxiety",
+    "synonyms_pl": [
+      "niepokój",
+      "uczucie lęku"
+    ],
+    "synonyms_en": [
+      "fearfulness",
+      "anxiousness"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "napady paniki",
+    "en": "panic attacks",
+    "synonyms_pl": [
+      "ataki paniki"
+    ],
+    "synonyms_en": [
+      "panic episodes"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "obniżony nastrój",
+    "en": "depressed mood",
+    "synonyms_pl": [
+      "przygnębienie",
+      "smutek"
+    ],
+    "synonyms_en": [
+      "low mood",
+      "feeling down"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "bezsenność",
+    "en": "insomnia",
+    "synonyms_pl": [
+      "niemożność spania",
+      "problemy ze snem"
+    ],
+    "synonyms_en": [
+      "sleeplessness",
+      "difficulty sleeping"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "senność",
+    "en": "drowsiness",
+    "synonyms_pl": [
+      "ospałość",
+      "nadmierna senność"
+    ],
+    "synonyms_en": [
+      "sleepiness",
+      "somnolence"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "halucynacje",
+    "en": "hallucinations",
+    "synonyms_pl": [
+      "omamy"
+    ],
+    "synonyms_en": [
+      "visions",
+      "seeing/hearing things"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "urojenia",
+    "en": "delusions",
+    "synonyms_pl": [
+      "fałszywe przekonania"
+    ],
+    "synonyms_en": [
+      "false beliefs",
+      "delusional ideas"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "niepokój ruchowy",
+    "en": "restlessness (psychomotor)",
+    "synonyms_pl": [
+      "pobudzenie",
+      "wewnętrzny niepokój"
+    ],
+    "synonyms_en": [
+      "agitation",
+      "restless feeling"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "napady złości",
+    "en": "outbursts of anger",
+    "synonyms_pl": [
+      "wybuchy złości",
+      "agresja"
+    ],
+    "synonyms_en": [
+      "anger outbursts",
+      "aggression episodes"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "utrata węchu",
+    "en": "loss of smell",
+    "synonyms_pl": [
+      "anosmia",
+      "brak węchu"
+    ],
+    "synonyms_en": [
+      "anosmia",
+      "no sense of smell"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "utrata smaku",
+    "en": "loss of taste",
+    "synonyms_pl": [
+      "ageuzja",
+      "brak smaku"
+    ],
+    "synonyms_en": [
+      "ageusia",
+      "no sense of taste"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "kaszel krwią (krwioplucie)",
+    "en": "coughing up blood",
+    "synonyms_pl": [
+      "krwioplucie"
+    ],
+    "synonyms_en": [
+      "hemoptysis",
+      "bloody sputum"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "plwocina",
+    "en": "sputum/phlegm",
+    "synonyms_pl": [
+      "wydzielina z dróg oddechowych",
+      "flegma"
+    ],
+    "synonyms_en": [
+      "phlegm",
+      "mucus"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "świszczący oddech",
+    "en": "wheezing",
+    "synonyms_pl": [
+      "świsty oddechowe"
+    ],
+    "synonyms_en": [
+      "wheezing sound",
+      "whistling breath"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "chrypka",
+    "en": "hoarseness",
+    "synonyms_pl": [
+      "chrypnięcie",
+      "ochrypły głos"
+    ],
+    "synonyms_en": [
+      "hoarse voice",
+      "raspy voice"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "zatkany nos",
+    "en": "nasal congestion",
+    "synonyms_pl": [
+      "zapchany nos",
+      "obturacja nosa"
+    ],
+    "synonyms_en": [
+      "stuffy nose",
+      "nasal blockage"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "katar",
+    "en": "runny nose",
+    "synonyms_pl": [
+      "nieżyt nosa",
+      "wydzielina z nosa"
+    ],
+    "synonyms_en": [
+      "coryza",
+      "rhinitis",
+      "nasal discharge"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "kichanie",
+    "en": "sneezing",
+    "synonyms_pl": [
+      "kichnięcia"
+    ],
+    "synonyms_en": [
+      "sternutation",
+      "sneezing fits"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "kołatanie serca",
+    "en": "heart palpitations",
+    "synonyms_pl": [
+      "palpitacje",
+      "nierówne bicie serca"
+    ],
+    "synonyms_en": [
+      "pounding heart",
+      "fluttering heart"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "przyspieszone bicie serca",
+    "en": "rapid heartbeat",
+    "synonyms_pl": [
+      "tachykardia"
+    ],
+    "synonyms_en": [
+      "fast heart rate",
+      "tachycardia"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "wolne bicie serca",
+    "en": "slow heartbeat",
+    "synonyms_pl": [
+      "bradykardia"
+    ],
+    "synonyms_en": [
+      "slow heart rate",
+      "bradycardia"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "sinienie palców (objaw Raynauda)",
+    "en": "fingers turning blue (Raynaud’s)",
+    "synonyms_pl": [
+      "objaw Raynauda"
+    ],
+    "synonyms_en": [
+      "Raynaud’s phenomenon"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "obrzęk nóg",
+    "en": "leg swelling",
+    "synonyms_pl": [
+      "opuchlizna nóg",
+      "obrzęki kończyn"
+    ],
+    "synonyms_en": [
+      "swollen legs",
+      "peripheral edema"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "ból łydek przy chodzeniu",
+    "en": "calf pain when walking",
+    "synonyms_pl": [
+      "chromanie przestankowe"
+    ],
+    "synonyms_en": [
+      "claudication",
+      "leg cramps on walking"
+    ],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "pl": "kaszel nocny",
+    "en": "night cough",
+    "synonyms_pl": [
+      "kaszel w nocy"
+    ],
+    "synonyms_en": [
+      "nocturnal cough"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "duszność w spoczynku",
+    "en": "shortness of breath at rest",
+    "synonyms_pl": [
+      "duszność spoczynkowa"
+    ],
+    "synonyms_en": [
+      "resting dyspnea"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "duszność wysiłkowa",
+    "en": "shortness of breath on exertion",
+    "synonyms_pl": [
+      "duszność przy wysiłku"
+    ],
+    "synonyms_en": [
+      "exertional dyspnea"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "ból podczas oddawania moczu",
+    "en": "painful urination",
+    "synonyms_pl": [
+      "ból przy sikaniu",
+      "dysuria"
+    ],
+    "synonyms_en": [
+      "pain on urination",
+      "dysuria"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "częste oddawanie moczu",
+    "en": "frequent urination",
+    "synonyms_pl": [
+      "częste mikcje",
+      "częste siusianie"
+    ],
+    "synonyms_en": [
+      "polyuria",
+      "frequent peeing"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "parcie na mocz",
+    "en": "urinary urgency",
+    "synonyms_pl": [
+      "nagłe parcie na mocz"
+    ],
+    "synonyms_en": [
+      "urgency to urinate"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "nietrzymanie moczu",
+    "en": "urinary incontinence",
+    "synonyms_pl": [
+      "popuszczanie moczu",
+      "nietrzymanie moczu"
+    ],
+    "synonyms_en": [
+      "inability to hold urine",
+      "incontinence"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "krew w moczu",
+    "en": "blood in urine",
+    "synonyms_pl": [
+      "krwiomocz",
+      "hematuria"
+    ],
+    "synonyms_en": [
+      "hematuria",
+      "bloody urine"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "skąpomocz",
+    "en": "reduced urination",
+    "synonyms_pl": [
+      "mała ilość moczu"
+    ],
+    "synonyms_en": [
+      "oliguria",
+      "low urine output"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "impotencja (zaburzenia erekcji)",
+    "en": "erectile dysfunction",
+    "synonyms_pl": [
+      "niemoc płciowa",
+      "brak erekcji"
+    ],
+    "synonyms_en": [
+      "impotence",
+      "ED"
+    ],
+    "category": "Moczowo-płciowy"
+  },
+  {
+    "pl": "spadek libido",
+    "en": "low libido",
+    "synonyms_pl": [
+      "obniżone libido",
+      "utrata popędu"
+    ],
+    "synonyms_en": [
+      "decreased sex drive",
+      "loss of libido"
+    ],
+    "category": "Moczowo-płciowy"
+  },
+  {
+    "pl": "bolesne miesiączkowanie",
+    "en": "painful menstruation",
+    "synonyms_pl": [
+      "ból menstruacyjny",
+      "dysmenorrhea"
+    ],
+    "synonyms_en": [
+      "menstrual cramps",
+      "dysmenorrhea"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "nieregularne miesiączki",
+    "en": "irregular periods",
+    "synonyms_pl": [
+      "nieregularny cykl",
+      "rozregulowany okres"
+    ],
+    "synonyms_en": [
+      "irregular menstrual cycle",
+      "irregular menses"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "zatrzymanie miesiączki",
+    "en": "absent menstruation",
+    "synonyms_pl": [
+      "brak miesiączki",
+      "amenorrhea"
+    ],
+    "synonyms_en": [
+      "missing periods",
+      "amenorrhea"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "upławy",
+    "en": "vaginal discharge",
+    "synonyms_pl": [
+      "wydzielina z pochwy"
+    ],
+    "synonyms_en": [
+      "vaginal discharge",
+      "leukorrhea"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "ból w miednicy",
+    "en": "pelvic pain",
+    "synonyms_pl": [
+      "ból podbrzusza",
+      "ból miednicowy"
+    ],
+    "synonyms_en": [
+      "lower abdominal pain",
+      "pelvic pain"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "ból piersi",
+    "en": "breast pain",
+    "synonyms_pl": [
+      "tkliwość piersi",
+      "mastalgia"
+    ],
+    "synonyms_en": [
+      "breast tenderness",
+      "mastalgia"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "obrzęk piersi",
+    "en": "breast swelling",
+    "synonyms_pl": [
+      "powiększenie piersi",
+      "opuchnięcie piersi"
+    ],
+    "synonyms_en": [
+      "swollen breasts"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "powiększone węzły chłonne",
+    "en": "swollen lymph nodes",
+    "synonyms_pl": [
+      "powiększone węzły",
+      "limfadenopatia"
+    ],
+    "synonyms_en": [
+      "enlarged lymph nodes",
+      "swollen glands"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "pragnienie",
+    "en": "excessive thirst",
+    "synonyms_pl": [
+      "polidypsja",
+      "ciągłe pragnienie"
+    ],
+    "synonyms_en": [
+      "polydipsia",
+      "constant thirst"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "ból podczas stosunku",
+    "en": "pain during intercourse",
+    "synonyms_pl": [
+      "dyspareunia",
+      "bolesny stosunek"
+    ],
+    "synonyms_en": [
+      "dyspareunia",
+      "painful sex"
+    ],
+    "category": "Moczowo-płciowy"
+  },
+  {
+    "pl": "zaburzenia równowagi",
+    "en": "balance problems",
+    "synonyms_pl": [
+      "chwiejny chód",
+      "ataksja"
+    ],
+    "synonyms_en": [
+      "unsteady gait",
+      "ataxia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "choroba lokomocyjna",
+    "en": "motion sickness",
+    "synonyms_pl": [
+      "mdłości w podróży",
+      "choroba morska"
+    ],
+    "synonyms_en": [
+      "travel sickness",
+      "car sickness"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "nieprzyjemny zapach z ust",
+    "en": "bad breath",
+    "synonyms_pl": [
+      "cuchnący oddech",
+      "halitoza"
+    ],
+    "synonyms_en": [
+      "halitosis",
+      "foul breath"
+    ],
+    "category": "Stomatologiczny"
+  },
+  {
+    "pl": "nietolerancja zimna",
+    "en": "cold intolerance",
+    "synonyms_pl": [
+      "nadwrażliwość na zimno"
+    ],
+    "synonyms_en": [
+      "sensitivity to cold"
+    ],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "pl": "nietolerancja ciepła",
+    "en": "heat intolerance",
+    "synonyms_pl": [
+      "nadwrażliwość na ciepło"
+    ],
+    "synonyms_en": [
+      "sensitivity to heat"
+    ],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "pl": "nykturia (nocne oddawanie moczu)",
+    "en": "nocturia (nighttime urination)",
+    "synonyms_pl": [
+      "nocne wizyty w toalecie"
+    ],
+    "synonyms_en": [
+      "nighttime urination",
+      "nocturia"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "swędzenie oczu",
+    "en": "itchy eyes",
+    "synonyms_pl": [
+      "świąd oczu"
+    ],
+    "synonyms_en": [
+      "ocular itching"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "zmieniony smak w ustach",
+    "en": "altered taste",
+    "synonyms_pl": [
+      "metaliczny posmak",
+      "dysgeusia"
+    ],
+    "synonyms_en": [
+      "metallic taste",
+      "taste disturbance"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "ślinotok",
+    "en": "excessive salivation",
+    "synonyms_pl": [
+      "nadmierne ślinienie",
+      "ptyalizm"
+    ],
+    "synonyms_en": [
+      "drooling",
+      "ptyalism"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "utrata głosu",
+    "en": "loss of voice",
+    "synonyms_pl": [
+      "afonia",
+      "bezgłos"
+    ],
+    "synonyms_en": [
+      "aphonia",
+      "voice loss"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "chrapanie",
+    "en": "snoring",
+    "synonyms_pl": [
+      "głośne chrapanie"
+    ],
+    "synonyms_en": [
+      "snoring",
+      "(symptom of sleep apnea)"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "skurcze mięśni",
+    "en": "muscle cramps",
+    "synonyms_pl": [
+      "kurcze mięśni",
+      "skurcze łydek"
+    ],
+    "synonyms_en": [
+      "muscle spasms",
+      "cramps"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "ból (ogólnie)",
+    "en": "pain (general)",
+    "synonyms_pl": [
+      "uczucie bólu",
+      "dolegliwość bólowa"
+    ],
+    "synonyms_en": [
+      "ache",
+      "pain sensation"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "uderzenia gorąca",
+    "en": "hot flashes",
+    "synonyms_pl": [
+      "nagłe uczucie gorąca"
+    ],
+    "synonyms_en": [
+      "hot flushes",
+      "sudden warmth"
+    ],
+    "category": "Ginekologiczny"
+  },
+  {
+    "pl": "wyciek z ucha",
+    "en": "ear discharge",
+    "synonyms_pl": [
+      "wydzielina z ucha",
+      "ropienie ucha"
+    ],
+    "synonyms_en": [
+      "ear drainage",
+      "otorrhea"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "nadwrażliwość zębów",
+    "en": "tooth sensitivity",
+    "synonyms_pl": [
+      "wrażliwe zęby"
+    ],
+    "synonyms_en": [
+      "sensitive teeth"
+    ],
+    "category": "Stomatologiczny"
+  },
+  {
+    "pl": "krwawe wymioty",
+    "en": "vomiting blood",
+    "synonyms_pl": [
+      "wymioty krwią",
+      "hematemesis"
+    ],
+    "synonyms_en": [
+      "bloody vomit",
+      "hematemesis"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "trudności w połykaniu",
+    "en": "difficulty swallowing",
+    "synonyms_pl": [
+      "problemy z przełykaniem",
+      "dysfagia"
+    ],
+    "synonyms_en": [
+      "trouble swallowing",
+      "dysphagia"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "nadwrażliwość na dźwięk",
+    "en": "sound sensitivity",
+    "synonyms_pl": [
+      "fonofobia",
+      "nadwrażliwość słuchowa"
+    ],
+    "synonyms_en": [
+      "sensitivity to noise",
+      "phonophobia"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "uczucie ucisku w klatce piersiowej",
+    "en": "chest tightness",
+    "synonyms_pl": [
+      "ciężar na piersi",
+      "uczucie duszności w klatce"
+    ],
+    "synonyms_en": [
+      "tightness in chest",
+      "chest pressure"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "niemożność oddania moczu",
+    "en": "urinary retention",
+    "synonyms_pl": [
+      "zatrzymanie moczu"
+    ],
+    "synonyms_en": [
+      "inability to urinate",
+      "urinary retention"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "ból w okolicy lędźwiowej",
+    "en": "flank pain",
+    "synonyms_pl": [
+      "ból okolicy nerek",
+      "ból lędźwi"
+    ],
+    "synonyms_en": [
+      "kidney pain",
+      "loin pain"
+    ],
+    "category": "Urologiczny"
+  },
+  {
+    "pl": "ból jąder",
+    "en": "testicular pain",
+    "synonyms_pl": [
+      "ból jądra",
+      "ból moszny"
+    ],
+    "synonyms_en": [
+      "pain in testicles",
+      "scrotal pain"
+    ],
+    "category": "Moczowo-płciowy"
+  },
+  {
+    "pl": "swędzenie okolic intymnych",
+    "en": "genital itching",
+    "synonyms_pl": [
+      "świąd krocza"
+    ],
+    "synonyms_en": [
+      "genital itch",
+      "itching in genital area"
+    ],
+    "category": "Moczowo-płciowy"
+  },
+  {
+    "pl": "sztywność stawów",
+    "en": "joint stiffness",
+    "synonyms_pl": [
+      "poranna sztywność stawów"
+    ],
+    "synonyms_en": [
+      "stiff joints",
+      "limited joint mobility"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "sztywność mięśni",
+    "en": "muscle stiffness",
+    "synonyms_pl": [
+      "usztywnienie mięśni",
+      "sztywne mięśnie"
+    ],
+    "synonyms_en": [
+      "muscle rigidity",
+      "stiff muscles"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "łatwe siniaczenie się",
+    "en": "easy bruising",
+    "synonyms_pl": [
+      "skłonność do siniaków"
+    ],
+    "synonyms_en": [
+      "bruise easily",
+      "easy bruising"
+    ],
+    "category": "Hematologiczny"
+  },
+  {
+    "pl": "krwawienie dziąseł",
+    "en": "bleeding gums",
+    "synonyms_pl": [
+      "krwawienie z dziąseł"
+    ],
+    "synonyms_en": [
+      "gum bleeding",
+      "bleeding gums"
+    ],
+    "category": "Stomatologiczny"
+  },
+  {
+    "pl": "nadmierne owłosienie",
+    "en": "excessive hair growth",
+    "synonyms_pl": [
+      "hirsutyzm"
+    ],
+    "synonyms_en": [
+      "hirsutism",
+      "unwanted hair growth"
+    ],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "pl": "nadpobudliwość",
+    "en": "hyperactivity",
+    "synonyms_pl": [
+      "nadmierna ruchliwość"
+    ],
+    "synonyms_en": [
+      "overactivity",
+      "hyperactivity"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "wycofanie społeczne",
+    "en": "social withdrawal",
+    "synonyms_pl": [
+      "izolowanie się",
+      "unikanie ludzi"
+    ],
+    "synonyms_en": [
+      "social isolation",
+      "withdrawal"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "płaczliwość",
+    "en": "excessive crying",
+    "synonyms_pl": [
+      "łatwe popadanie w płacz"
+    ],
+    "synonyms_en": [
+      "tearfulness",
+      "crying spells"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "uczucie ciężkości nóg",
+    "en": "heavy legs",
+    "synonyms_pl": [
+      "zmęczenie nóg"
+    ],
+    "synonyms_en": [
+      "leg heaviness",
+      "tired legs"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "swędzenie ucha",
+    "en": "itchy ear",
+    "synonyms_pl": [
+      "świąd ucha"
+    ],
+    "synonyms_en": [
+      "itchy ear"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "swędzenie gardła",
+    "en": "itchy throat",
+    "synonyms_pl": [
+      "drapanie w gardle"
+    ],
+    "synonyms_en": [
+      "scratchy throat"
+    ],
+    "category": "Układ oddechowy"
+  },
+  {
+    "pl": "uczucie guli w gardle",
+    "en": "sensation of lump in throat",
+    "synonyms_pl": [
+      "globus hystericus"
+    ],
+    "synonyms_en": [
+      "lump in throat feeling",
+      "globus sensation"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "mlekotok",
+    "en": "galactorrhea (milk discharge)",
+    "synonyms_pl": [
+      "wydzielina mleczna z piersi"
+    ],
+    "synonyms_en": [
+      "milky discharge",
+      "galactorrhea"
+    ],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "pl": "ból szyi",
+    "en": "neck pain",
+    "synonyms_pl": [
+      "ból karku"
+    ],
+    "synonyms_en": [
+      "neck ache"
+    ],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "pl": "uczucie zatkania ucha",
+    "en": "ear fullness",
+    "synonyms_pl": [
+      "zatkane ucho"
+    ],
+    "synonyms_en": [
+      "ear pressure",
+      "ear fullness"
+    ],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "pl": "świąd odbytu",
+    "en": "anal itching",
+    "synonyms_pl": [
+      "swędzenie odbytu"
+    ],
+    "synonyms_en": [
+      "itchy anus",
+      "pruritus ani"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "nietrzymanie stolca",
+    "en": "fecal incontinence",
+    "synonyms_pl": [
+      "brak kontroli nad wypróżnieniem"
+    ],
+    "synonyms_en": [
+      "bowel incontinence",
+      "fecal incontinence"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "męty przed oczami",
+    "en": "floaters in vision",
+    "synonyms_pl": [
+      "plamki w polu widzenia"
+    ],
+    "synonyms_en": [
+      "eye floaters",
+      "spots in vision"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "błyski w polu widzenia",
+    "en": "flashes of light in vision",
+    "synonyms_pl": [
+      "iskrzenie w oczach"
+    ],
+    "synonyms_en": [
+      "seeing flashes",
+      "photopsia"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "ubytki w polu widzenia",
+    "en": "partial vision loss",
+    "synonyms_pl": [
+      "ograniczenie pola widzenia",
+      "mroczki przed oczami"
+    ],
+    "synonyms_en": [
+      "visual field loss",
+      "partial blindness"
+    ],
+    "category": "Sensoryczny"
+  },
+  {
+    "pl": "pieczenie stóp",
+    "en": "burning feet sensation",
+    "synonyms_pl": [
+      "palące stopy"
+    ],
+    "synonyms_en": [
+      "burning feet",
+      "burning sensation in feet"
+    ],
+    "category": "Neurologiczny"
+  },
+  {
+    "pl": "zimne poty",
+    "en": "cold sweats",
+    "synonyms_pl": [
+      "zimny pot",
+      "lepki pot"
+    ],
+    "synonyms_en": [
+      "clammy sweat",
+      "cold sweats"
+    ],
+    "category": "Ogólny"
+  },
+  {
+    "pl": "powiększenie obwodu brzucha",
+    "en": "abdominal swelling",
+    "synonyms_pl": [
+      "wzdęty brzuch",
+      "wodobrzusze"
+    ],
+    "synonyms_en": [
+      "bloated abdomen",
+      "ascites"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "ból odbytu",
+    "en": "anal pain",
+    "synonyms_pl": [
+      "ból odbytnicy",
+      "ból przy wypróżnianiu"
+    ],
+    "synonyms_en": [
+      "rectal pain",
+      "pain in anus"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "wczesne uczucie sytości",
+    "en": "early satiety",
+    "synonyms_pl": [
+      "szybkie uczucie pełności"
+    ],
+    "synonyms_en": [
+      "feeling full quickly",
+      "early satiety"
+    ],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "pl": "poczucie winy",
+    "en": "feelings of guilt",
+    "synonyms_pl": [
+      "nadmierne poczucie winy"
+    ],
+    "synonyms_en": [
+      "excessive guilt",
+      "guilty feelings"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "anhedonia (brak odczuwania przyjemności)",
+    "en": "anhedonia (loss of pleasure)",
+    "synonyms_pl": [
+      "utrata zainteresowań"
+    ],
+    "synonyms_en": [
+      "loss of pleasure",
+      "inability to feel joy"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "gonitwa myśli",
+    "en": "racing thoughts",
+    "synonyms_pl": [
+      "natłok myśli"
+    ],
+    "synonyms_en": [
+      "racing thoughts",
+      "stream of thoughts"
+    ],
+    "category": "Psychiczne"
+  },
+  {
+    "pl": "nerwoból twarzy",
+    "en": "facial neuralgia",
+    "synonyms_pl": [
+      "ból twarzy",
+      "neuralgia nerwu trójdzielnego"
+    ],
+    "synonyms_en": [
+      "facial pain",
+      "trigeminal neuralgia"
+    ],
+    "category": "Neurologiczny"
+  }
+]

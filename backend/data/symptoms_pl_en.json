@@ -1,0 +1,5084 @@
+[
+  {
+    "en": "Abdominal distention",
+    "pl": "wzdęcie brzucha",
+    "xgb_label": [
+      "abdominal_distention"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Abdominal pain",
+    "pl": "ból brzucha",
+    "xgb_label": [
+      "abdominal_pain"
+    ],
+    "synonyms_pl": [
+      "ból żołądka",
+      "kolka brzuszna",
+      "ból w nadbrzuszu",
+      "ból w brzucha",
+      "dolegliwości bólowe brzucha"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Abnormal appearing skin",
+    "pl": "nieprawidłowy wygląd skóry",
+    "xgb_label": [
+      "abnormal_appearing_skin"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Abnormal appearing tongue",
+    "pl": "nieprawidłowy wygląd języka",
+    "xgb_label": [
+      "abnormal_appearing_tongue"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Abnormal breathing sounds",
+    "pl": "nieprawidłowe odgłosy oddechowe",
+    "xgb_label": [
+      "abnormal_breathing_sounds"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Abnormal involuntary movements",
+    "pl": "nieprawidłowe, mimowolne ruchy",
+    "xgb_label": [
+      "abnormal_involuntary_movements"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Abnormal menstruation",
+    "pl": "nieprawidłowe miesiączkowanie",
+    "xgb_label": [
+      "abnormal_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Abnormal movement of eyelid",
+    "pl": "nieprawidłowe ruchy powieki",
+    "xgb_label": [
+      "abnormal_movement_of_eyelid"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Abnormal size or shape of ear",
+    "pl": "nieprawidłowy kształt lub wielkość ucha",
+    "xgb_label": [
+      "abnormal_size_or_shape_of_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Absence of menstruation",
+    "pl": "brak miesiączki (amenorrhea)",
+    "xgb_label": [
+      "absence_of_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Abusing alcohol",
+    "pl": "nadużywanie alkoholu",
+    "xgb_label": [
+      "abusing_alcohol"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Ache all over",
+    "pl": "uogólnione bóle całego ciała",
+    "xgb_label": [
+      "ache_all_over"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Acidity",
+    "pl": "nadkwaśność / zgaga",
+    "xgb_label": [
+      "acidity"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Acne or pimples",
+    "pl": "trądzik / pryszcze",
+    "xgb_label": [
+      "acne_or_pimples"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Acute liver failure",
+    "pl": "ostra niewydolność wątroby",
+    "xgb_label": [
+      "acute_liver_failure"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Allergic reaction",
+    "pl": "reakcja alergiczna",
+    "xgb_label": [
+      "allergic_reaction"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Altered sensorium",
+    "pl": "zaburzenia świadomości",
+    "xgb_label": [
+      "altered_sensorium"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Ankle pain",
+    "pl": "ból kostki",
+    "xgb_label": [
+      "ankle_pain"
+    ],
+    "synonyms_pl": [
+      "ból w kostki",
+      "dolegliwości bólowe kostki",
+      "nasilony ból kostki"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Ankle stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia kostki",
+    "xgb_label": [
+      "ankle_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Ankle swelling",
+    "pl": "obrzęk kostki",
+    "xgb_label": [
+      "ankle_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Ankle weakness",
+    "pl": "osłabienie kostki",
+    "xgb_label": [
+      "ankle_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Antisocial behavior",
+    "pl": "zachowania antyspołeczne",
+    "xgb_label": [
+      "antisocial_behavior"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Anxiety",
+    "pl": "lęk / niepokój",
+    "xgb_label": [
+      "anxiety"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Anxiety and nervousness",
+    "pl": "lęk i niepokój",
+    "xgb_label": [
+      "anxiety_and_nervousness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Apnea",
+    "pl": "bezdech",
+    "xgb_label": [
+      "apnea"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Arm cramps or spasms",
+    "pl": "skurcze ramienia",
+    "xgb_label": [
+      "arm_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Arm lump or mass",
+    "pl": "guzek / guz ramienia",
+    "xgb_label": [
+      "arm_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Arm pain",
+    "pl": "ból ramienia",
+    "xgb_label": [
+      "arm_pain"
+    ],
+    "synonyms_pl": [
+      "ból w ramienia",
+      "dolegliwości bólowe ramienia",
+      "nasilony ból ramienia"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Arm stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia ramienia",
+    "xgb_label": [
+      "arm_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Arm swelling",
+    "pl": "obrzęk ramienia",
+    "xgb_label": [
+      "arm_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Arm weakness",
+    "pl": "osłabienie ramienia",
+    "xgb_label": [
+      "arm_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Back cramps or spasms",
+    "pl": "skurcze mięśni pleców",
+    "xgb_label": [
+      "back_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Back mass or lump",
+    "pl": "guzek / guz w okolicy pleców",
+    "xgb_label": [
+      "back_mass_or_lump"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Back pain",
+    "pl": "ból pleców",
+    "xgb_label": [
+      "back_pain"
+    ],
+    "synonyms_pl": [
+      "ból krzyża",
+      "lumbago",
+      "ból w plecach",
+      "ból w pleców",
+      "dolegliwości bólowe pleców"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Back stiffness or tightness",
+    "pl": "sztywność / napięcie pleców",
+    "xgb_label": [
+      "back_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Back swelling",
+    "pl": "obrzęk pleców",
+    "xgb_label": [
+      "back_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Back weakness",
+    "pl": "osłabienie mięśni pleców",
+    "xgb_label": [
+      "back_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Bedwetting",
+    "pl": "moczenie nocne",
+    "xgb_label": [
+      "bedwetting"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Belly pain",
+    "pl": "ból brzucha",
+    "xgb_label": [
+      "belly_pain"
+    ],
+    "synonyms_pl": [
+      "ból żołądka",
+      "kolka brzuszna",
+      "ból w nadbrzuszu",
+      "ból w brzucha",
+      "dolegliwości bólowe brzucha"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Blackheads",
+    "pl": "zaskórniki",
+    "xgb_label": [
+      "blackheads"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Bladder discomfort",
+    "pl": "dyskomfort w pęcherzu moczowym",
+    "xgb_label": [
+      "bladder_discomfort"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Bladder mass",
+    "pl": "guz pęcherza moczowego",
+    "xgb_label": [
+      "bladder_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Bleeding from ear",
+    "pl": "krwawienie z ucha",
+    "xgb_label": [
+      "bleeding_from_ear"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Bleeding from eye",
+    "pl": "krwawienie z oka",
+    "xgb_label": [
+      "bleeding_from_eye"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Bleeding gums",
+    "pl": "krwawienie z dziąseł",
+    "xgb_label": [
+      "bleeding_gums"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Bleeding in mouth",
+    "pl": "krwawienie w jamie ustnej",
+    "xgb_label": [
+      "bleeding_in_mouth"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Bleeding or discharge from nipple",
+    "pl": "krwawienie lub wydzielina z brodawki sutkowej",
+    "xgb_label": [
+      "bleeding_or_discharge_from_nipple"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Blister",
+    "pl": "pęcherz skórny",
+    "xgb_label": [
+      "blister"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Blood clots during menstrual periods",
+    "pl": "skrzepy krwi podczas miesiączki",
+    "xgb_label": [
+      "blood_clots_during_menstrual_periods"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Blood in sputum",
+    "pl": "krew w plwocinie",
+    "xgb_label": [
+      "blood_in_sputum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Blood in stool",
+    "pl": "krew w stolcu",
+    "xgb_label": [
+      "blood_in_stool"
+    ],
+    "synonyms_pl": [
+      "krwawienie z odbytu",
+      "krwiste stolce",
+      "hematochezja"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Blood in urine",
+    "pl": "krew w moczu (krwiomocz)",
+    "xgb_label": [
+      "blood_in_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Bloody stool",
+    "pl": "krwawy stolec",
+    "xgb_label": [
+      "bloody_stool"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Blurred and distorted vision",
+    "pl": "zamazane i zniekształcone widzenie",
+    "xgb_label": [
+      "blurred_and_distorted_vision"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Bones are painful",
+    "pl": "bóle kostne",
+    "xgb_label": [
+      "bones_are_painful"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Bowlegged or knock kneed",
+    "pl": "kolana szpotawe lub koślawe",
+    "xgb_label": [
+      "bowlegged_or_knock_kneed"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Breathing fast",
+    "pl": "przyspieszony oddech (tachypnoe)",
+    "xgb_label": [
+      "breathing_fast"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Brittle nails",
+    "pl": "łamliwe paznokcie",
+    "xgb_label": [
+      "brittle_nails"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Bruising",
+    "pl": "siniaki / skłonność do siniaczenia",
+    "xgb_label": [
+      "bruising"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Bumps on penis",
+    "pl": "guzki na prąciu",
+    "xgb_label": [
+      "bumps_on_penis"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Burning abdominal pain",
+    "pl": "palący ból brzucha",
+    "xgb_label": [
+      "burning_abdominal_pain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Burning chest pain",
+    "pl": "palący ból w klatce piersiowej",
+    "xgb_label": [
+      "burning_chest_pain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Burning micturition",
+    "pl": "pieczenie przy oddawaniu moczu",
+    "xgb_label": [
+      "burning_micturition"
+    ],
+    "synonyms_pl": [
+      "dyzuria",
+      "pieczenie w trakcie mikcji",
+      "bolesne oddawanie moczu"
+    ],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Change in skin mole size or color",
+    "pl": "zmiana wielkości lub koloru znamienia skórnego",
+    "xgb_label": [
+      "change_in_skin_mole_size_or_color"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Changes in stool appearance",
+    "pl": "zmiana wyglądu stolca",
+    "xgb_label": [
+      "changes_in_stool_appearance"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Chest pain",
+    "pl": "ból w klatce piersiowej",
+    "xgb_label": [
+      "chest_pain"
+    ],
+    "synonyms_pl": [
+      "ból w klatce",
+      "ucisk w klatce piersiowej",
+      "kłucie w klatce",
+      "ból w w klatce piersiowej",
+      "dolegliwości bólowe w klatce piersiowej"
+    ],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Chest tightness",
+    "pl": "uczucie ucisku w klatce piersiowej",
+    "xgb_label": [
+      "chest_tightness"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Chills",
+    "pl": "dreszcze",
+    "xgb_label": [
+      "chills"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Cloudy eye",
+    "pl": "zmętnienie oka",
+    "xgb_label": [
+      "cloudy_eye"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Cold hands and feets",
+    "pl": "zimne dłonie i stopy",
+    "xgb_label": [
+      "cold_hands_and_feets"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Coma",
+    "pl": "śpiączka",
+    "xgb_label": [
+      "coma"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Congestion",
+    "pl": "zatkanie / przekrwienie (najczęściej nosa)",
+    "xgb_label": [
+      "congestion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Congestion in chest",
+    "pl": "zaleganie wydzieliny w klatce piersiowej",
+    "xgb_label": [
+      "congestion_in_chest"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Constipation",
+    "pl": "zaparcie",
+    "xgb_label": [
+      "constipation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Continuous feel of urine",
+    "pl": "ciągłe parcie na mocz",
+    "xgb_label": [
+      "continuous_feel_of_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Cough",
+    "pl": "kaszel",
+    "xgb_label": [
+      "cough"
+    ],
+    "synonyms_pl": [
+      "kaszel suchy",
+      "kaszel mokry",
+      "kaszleć"
+    ],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Coughing up blood",
+    "pl": "krwioplucie",
+    "xgb_label": [
+      "coughing_up_blood"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Coughing up sputum",
+    "pl": "odkrztuszanie plwociny",
+    "xgb_label": [
+      "coughing_up_sputum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Cramps and spasms",
+    "pl": "skurcze mięśni",
+    "xgb_label": [
+      "cramps_and_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Cross eyed",
+    "pl": "zez zbieżny",
+    "xgb_label": [
+      "cross_eyed"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Dark urine",
+    "pl": "ciemny mocz",
+    "xgb_label": [
+      "dark_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Decreased appetite",
+    "pl": "zmniejszony apetyt",
+    "xgb_label": [
+      "decreased_appetite"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Decreased heart rate",
+    "pl": "zwolniona akcja serca (bradykardia)",
+    "xgb_label": [
+      "decreased_heart_rate"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Dehydration",
+    "pl": "odwodnienie",
+    "xgb_label": [
+      "dehydration"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Delusions or hallucinations",
+    "pl": "urojenia lub omamy",
+    "xgb_label": [
+      "delusions_or_hallucinations"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Depression",
+    "pl": "depresja",
+    "xgb_label": [
+      "depression"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Depressive or psychotic symptoms",
+    "pl": "objawy depresyjne lub psychotyczne",
+    "xgb_label": [
+      "depressive_or_psychotic_symptoms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Diaper rash",
+    "pl": "pieluszkowe zapalenie skóry",
+    "xgb_label": [
+      "diaper_rash"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Diarrhea",
+    "pl": "biegunka",
+    "xgb_label": [
+      "diarrhea",
+      "diarrhoea"
+    ],
+    "synonyms_pl": [
+      "rozwolnienie",
+      "luźne stolce",
+      "częste wypróżnienia"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Difficulty eating",
+    "pl": "trudności z jedzeniem",
+    "xgb_label": [
+      "difficulty_eating"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Difficulty in swallowing",
+    "pl": "trudności w połykaniu (dysfagia)",
+    "xgb_label": [
+      "difficulty_in_swallowing"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Diminished hearing",
+    "pl": "niedosłuch",
+    "xgb_label": [
+      "diminished_hearing"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Diminished vision",
+    "pl": "pogorszone widzenie",
+    "xgb_label": [
+      "diminished_vision"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Discharge in stools",
+    "pl": "śluz / wydzielina w stolcu",
+    "xgb_label": [
+      "discharge_in_stools"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Dischromic patches",
+    "pl": "odbarwione plamy skórne",
+    "xgb_label": [
+      "dischromic_patches"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Distention of abdomen",
+    "pl": "wzdęcie brzucha",
+    "xgb_label": [
+      "distention_of_abdomen"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Disturbance of memory",
+    "pl": "zaburzenia pamięci",
+    "xgb_label": [
+      "disturbance_of_memory"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Disturbance of smell or taste",
+    "pl": "zaburzenia węchu lub smaku",
+    "xgb_label": [
+      "disturbance_of_smell_or_taste"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Dizziness",
+    "pl": "zawroty głowy",
+    "xgb_label": [
+      "dizziness"
+    ],
+    "synonyms_pl": [
+      "zawroty",
+      "wirowanie w głowie",
+      "oszołomienie"
+    ],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Double vision",
+    "pl": "podwójne widzenie (diplopia)",
+    "xgb_label": [
+      "double_vision"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Drainage in throat",
+    "pl": "spływanie wydzieliny po tylnej ścianie gardła",
+    "xgb_label": [
+      "drainage_in_throat"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Drowsiness",
+    "pl": "senność",
+    "xgb_label": [
+      "drowsiness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Drug abuse",
+    "pl": "nadużywanie substancji psychoaktywnych",
+    "xgb_label": [
+      "drug_abuse"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Dry lips",
+    "pl": "suche wargi",
+    "xgb_label": [
+      "dry_lips"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Dry or flaky scalp",
+    "pl": "sucha lub łuszcząca się skóra głowy",
+    "xgb_label": [
+      "dry_or_flaky_scalp"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Drying and tingling lips",
+    "pl": "suchość i mrowienie warg",
+    "xgb_label": [
+      "drying_and_tingling_lips"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Earache",
+    "pl": "ból ucha",
+    "xgb_label": [
+      "earache"
+    ],
+    "synonyms_pl": [
+      "ból w uchu",
+      "otalgia",
+      "ból ucha (otalgia)",
+      "ból w ucha",
+      "dolegliwości bólowe ucha"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Early or late onset of menopause",
+    "pl": "zbyt wczesna lub zbyt późna menopauza",
+    "xgb_label": [
+      "early_or_late_onset_of_menopause"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Elbow cramps or spasms",
+    "pl": "skurcze łokcia",
+    "xgb_label": [
+      "elbow_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Elbow lump or mass",
+    "pl": "guzek / guz łokcia",
+    "xgb_label": [
+      "elbow_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Elbow pain",
+    "pl": "ból łokcia",
+    "xgb_label": [
+      "elbow_pain"
+    ],
+    "synonyms_pl": [
+      "ból w łokcia",
+      "dolegliwości bólowe łokcia",
+      "nasilony ból łokcia"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Elbow stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia łokcia",
+    "xgb_label": [
+      "elbow_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Elbow swelling",
+    "pl": "obrzęk łokcia",
+    "xgb_label": [
+      "elbow_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Elbow weakness",
+    "pl": "osłabienie łokcia",
+    "xgb_label": [
+      "elbow_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Emotional symptoms",
+    "pl": "objawy emocjonalne",
+    "xgb_label": [
+      "emotional_symptoms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Enlarged thyroid",
+    "pl": "powiększona tarczyca (wole)",
+    "xgb_label": [
+      "enlarged_thyroid"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "en": "Erectile dysfunction",
+    "pl": "zaburzenia erekcji",
+    "xgb_label": [
+      "erectile_dysfunction"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Excessive anger",
+    "pl": "nadmierna złość",
+    "xgb_label": [
+      "excessive_anger"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Excessive appetite",
+    "pl": "nadmierny apetyt",
+    "xgb_label": [
+      "excessive_appetite"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Excessive growth",
+    "pl": "nadmierny wzrost / przerost",
+    "xgb_label": [
+      "excessive_growth"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Excessive hunger",
+    "pl": "wzmożone łaknienie",
+    "xgb_label": [
+      "excessive_hunger"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Excessive urination at night",
+    "pl": "częste nocne oddawanie moczu (nykturia)",
+    "xgb_label": [
+      "excessive_urination_at_night"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Extra marital contacts",
+    "pl": "kontakty pozamałżeńskie",
+    "xgb_label": [
+      "extra_marital_contacts"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Eye burns or stings",
+    "pl": "pieczenie lub szczypanie oczu",
+    "xgb_label": [
+      "eye_burns_or_stings"
+    ],
+    "synonyms_pl": [
+      "uczucie pieczenia",
+      "pieczenie (objaw)",
+      "drażniące pieczenie"
+    ],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Eye deviation",
+    "pl": "odchylenie gałki ocznej",
+    "xgb_label": [
+      "eye_deviation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Eye moves abnormally",
+    "pl": "nieprawidłowe ruchy gałek ocznych",
+    "xgb_label": [
+      "eye_moves_abnormally"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Eye strain",
+    "pl": "przemęczenie oczu",
+    "xgb_label": [
+      "eye_strain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Eyelid lesion or rash",
+    "pl": "zmiany skórne / wysypka na powiece",
+    "xgb_label": [
+      "eyelid_lesion_or_rash"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Eyelid retracted",
+    "pl": "cofnięcie powieki (retrakcja)",
+    "xgb_label": [
+      "eyelid_retracted"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Eyelid swelling",
+    "pl": "obrzęk powieki",
+    "xgb_label": [
+      "eyelid_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Facial neuralgia",
+    "pl": "nerwoból twarzy",
+    "xgb_label": [
+      "facial_neuralgia"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Family history",
+    "pl": "wywiad rodzinny obciążony",
+    "xgb_label": [
+      "family_history"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Fatigue",
+    "pl": "zmęczenie",
+    "xgb_label": [
+      "fatigue"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Fears and phobias",
+    "pl": "lęki i fobie",
+    "xgb_label": [
+      "fears_and_phobias"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Feeling cold",
+    "pl": "uczucie zimna",
+    "xgb_label": [
+      "feeling_cold"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Feeling hot",
+    "pl": "uczucie gorąca",
+    "xgb_label": [
+      "feeling_hot"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Feeling hot and cold",
+    "pl": "naprzemienne uczucie gorąca i zimna",
+    "xgb_label": [
+      "feeling_hot_and_cold"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Feeling ill",
+    "pl": "złe samopoczucie",
+    "xgb_label": [
+      "feeling_ill"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Feet turned in",
+    "pl": "stopy ustawione do środka",
+    "xgb_label": [
+      "feet_turned_in"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Fever",
+    "pl": "gorączka",
+    "xgb_label": [
+      "fever"
+    ],
+    "synonyms_pl": [
+      "podwyższona temperatura",
+      "stan gorączkowy",
+      "gorączkować",
+      "gorączke"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Flatulence",
+    "pl": "wzmożone gazy (wzdęcia)",
+    "xgb_label": [
+      "flatulence"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Flu like syndrome",
+    "pl": "objawy grypopodobne",
+    "xgb_label": [
+      "flu_like_syndrome"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Fluid in ear",
+    "pl": "płyn w uchu",
+    "xgb_label": [
+      "fluid_in_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Fluid overload",
+    "pl": "przeciążenie płynami (hiperwolemia)",
+    "xgb_label": [
+      "fluid_overload",
+      "fluid_overload_1"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Endokrynologiczny"
+  },
+  {
+    "en": "Fluid retention",
+    "pl": "zatrzymanie płynów",
+    "xgb_label": [
+      "fluid_retention"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Flushing",
+    "pl": "uderzenia gorąca / zaczerwienienie",
+    "xgb_label": [
+      "flushing"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Focal weakness",
+    "pl": "ogniskowy niedowład",
+    "xgb_label": [
+      "focal_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Foot or toe cramps or spasms",
+    "pl": "skurcze stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Foot or toe lump or mass",
+    "pl": "guzek / guz stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Foot or toe pain",
+    "pl": "ból stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_pain"
+    ],
+    "synonyms_pl": [
+      "ból w stopy lub palców stopy",
+      "dolegliwości bólowe stopy lub palców stopy",
+      "nasilony ból stopy lub palców stopy"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Foot or toe stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Foot or toe swelling",
+    "pl": "obrzęk stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Foot or toe weakness",
+    "pl": "osłabienie stopy lub palców stopy",
+    "xgb_label": [
+      "foot_or_toe_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Foreign body sensation in eye",
+    "pl": "uczucie ciała obcego w oku",
+    "xgb_label": [
+      "foreign_body_sensation_in_eye"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Foul smell of urine",
+    "pl": "nieprzyjemny zapach moczu",
+    "xgb_label": [
+      "foul_smell_of_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Frequent menstruation",
+    "pl": "zbyt częste miesiączki (polimenorrhea)",
+    "xgb_label": [
+      "frequent_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Frequent urination",
+    "pl": "częstomocz",
+    "xgb_label": [
+      "frequent_urination"
+    ],
+    "synonyms_pl": [
+      "częste oddawanie moczu",
+      "parcie na mocz",
+      "poliuria (objaw)"
+    ],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Frontal headache",
+    "pl": "ból głowy w okolicy czołowej",
+    "xgb_label": [
+      "frontal_headache"
+    ],
+    "synonyms_pl": [
+      "ból w głowy w okolicy czołowej",
+      "dolegliwości bólowe głowy w okolicy czołowej",
+      "nasilony ból głowy w okolicy czołowej"
+    ],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Groin mass",
+    "pl": "guz / powiększenie w pachwinie",
+    "xgb_label": [
+      "groin_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Groin pain",
+    "pl": "ból pachwiny",
+    "xgb_label": [
+      "groin_pain"
+    ],
+    "synonyms_pl": [
+      "ból w pachwiny",
+      "dolegliwości bólowe pachwiny",
+      "nasilony ból pachwiny"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Gum pain",
+    "pl": "ból dziąseł",
+    "xgb_label": [
+      "gum_pain"
+    ],
+    "synonyms_pl": [
+      "ból w dziąseł",
+      "dolegliwości bólowe dziąseł",
+      "nasilony ból dziąseł"
+    ],
+    "synonyms_en": [],
+    "category": "Stomatologiczny"
+  },
+  {
+    "en": "Hand or finger cramps or spasms",
+    "pl": "skurcze dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hand or finger lump or mass",
+    "pl": "guzek / guz dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hand or finger pain",
+    "pl": "ból dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_pain"
+    ],
+    "synonyms_pl": [
+      "ból w dłoni lub palców",
+      "dolegliwości bólowe dłoni lub palców",
+      "nasilony ból dłoni lub palców"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hand or finger stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hand or finger swelling",
+    "pl": "obrzęk dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Hand or finger weakness",
+    "pl": "osłabienie dłoni lub palców",
+    "xgb_label": [
+      "hand_or_finger_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Headache",
+    "pl": "ból głowy",
+    "xgb_label": [
+      "headache"
+    ],
+    "synonyms_pl": [
+      "cefalgia",
+      "ból migrenowy",
+      "migrenowy ból głowy",
+      "ból w głowy",
+      "dolegliwości bólowe głowy"
+    ],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Heartburn",
+    "pl": "zgaga",
+    "xgb_label": [
+      "heartburn"
+    ],
+    "synonyms_pl": [
+      "refluks",
+      "pieczenie w przełyku",
+      "nadkwasota"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Heavy menstrual flow",
+    "pl": "obfite miesiączkowanie (menorrhagia)",
+    "xgb_label": [
+      "heavy_menstrual_flow"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Hesitancy",
+    "pl": "trudność w rozpoczęciu oddawania moczu",
+    "xgb_label": [
+      "hesitancy"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Hip joint pain",
+    "pl": "ból stawu biodrowego",
+    "xgb_label": [
+      "hip_joint_pain"
+    ],
+    "synonyms_pl": [
+      "ból w stawu biodrowego",
+      "dolegliwości bólowe stawu biodrowego",
+      "nasilony ból stawu biodrowego"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hip lump or mass",
+    "pl": "guzek / guz biodra",
+    "xgb_label": [
+      "hip_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hip pain",
+    "pl": "ból biodra",
+    "xgb_label": [
+      "hip_pain"
+    ],
+    "synonyms_pl": [
+      "ból w biodra",
+      "dolegliwości bólowe biodra",
+      "nasilony ból biodra"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hip stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia biodra",
+    "xgb_label": [
+      "hip_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hip swelling",
+    "pl": "obrzęk biodra",
+    "xgb_label": [
+      "hip_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hip weakness",
+    "pl": "osłabienie biodra",
+    "xgb_label": [
+      "hip_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "History of alcohol consumption",
+    "pl": "wywiad: spożywanie alkoholu",
+    "xgb_label": [
+      "history_of_alcohol_consumption"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hoarseness",
+    "pl": "chrypka",
+    "xgb_label": [
+      "hoarseness"
+    ],
+    "synonyms_pl": [
+      "zachrypnięcie",
+      "uciążliwa chrypka",
+      "ochrypły głos"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Hostile behavior",
+    "pl": "wrogie zachowanie",
+    "xgb_label": [
+      "hostile_behavior"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hot flashes",
+    "pl": "uderzenia gorąca",
+    "xgb_label": [
+      "hot_flashes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Hurts to breath",
+    "pl": "ból przy oddychaniu",
+    "xgb_label": [
+      "hurts_to_breath"
+    ],
+    "synonyms_pl": [
+      "ból w przy oddychaniu",
+      "dolegliwości bólowe przy oddychaniu",
+      "nasilony ból przy oddychaniu"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Hysterical behavior",
+    "pl": "zachowania histeryczne",
+    "xgb_label": [
+      "hysterical_behavior"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Incontinence of stool",
+    "pl": "nietrzymanie stolca",
+    "xgb_label": [
+      "incontinence_of_stool"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Increased heart rate",
+    "pl": "przyspieszone tętno (tachykardia)",
+    "xgb_label": [
+      "increased_heart_rate"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Indigestion",
+    "pl": "niestrawność",
+    "xgb_label": [
+      "indigestion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Infant feeding problem",
+    "pl": "problemy z karmieniem niemowlęcia",
+    "xgb_label": [
+      "infant_feeding_problem"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Infant spitting up",
+    "pl": "ulewanie u niemowlęcia",
+    "xgb_label": [
+      "infant_spitting_up"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Infertility",
+    "pl": "niepłodność",
+    "xgb_label": [
+      "infertility"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Inflammatory nails",
+    "pl": "zapalne zmiany paznokci",
+    "xgb_label": [
+      "inflammatory_nails"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Infrequent menstruation",
+    "pl": "rzadkie miesiączki (oligomenorrhea)",
+    "xgb_label": [
+      "infrequent_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Insomnia",
+    "pl": "bezsenność",
+    "xgb_label": [
+      "insomnia"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Psychiatryczny"
+  },
+  {
+    "en": "Intermenstrual bleeding",
+    "pl": "krwawienia międzymiesiączkowe",
+    "xgb_label": [
+      "intermenstrual_bleeding"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Internal itching",
+    "pl": "świąd wewnętrzny",
+    "xgb_label": [
+      "internal_itching"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Involuntary urination",
+    "pl": "nietrzymanie moczu",
+    "xgb_label": [
+      "involuntary_urination"
+    ],
+    "synonyms_pl": [
+      "inkontynencja",
+      "wyciek moczu",
+      "niekontrolowane oddawanie moczu"
+    ],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Irregular appearing nails",
+    "pl": "nieprawidłowy wygląd paznokci",
+    "xgb_label": [
+      "irregular_appearing_nails"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Irregular appearing scalp",
+    "pl": "nieprawidłowy wygląd skóry owłosionej głowy",
+    "xgb_label": [
+      "irregular_appearing_scalp"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Irregular belly button",
+    "pl": "nieprawidłowy pępek",
+    "xgb_label": [
+      "irregular_belly_button"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Irregular heartbeat",
+    "pl": "nieregularne bicie serca (arytmia)",
+    "xgb_label": [
+      "irregular_heartbeat"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Irregular sugar level",
+    "pl": "nieregularne / nieprawidłowe poziomy cukru",
+    "xgb_label": [
+      "irregular_sugar_level"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Irritability",
+    "pl": "drażliwość",
+    "xgb_label": [
+      "irritability"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Irritable infant",
+    "pl": "drażliwe niemowlę",
+    "xgb_label": [
+      "irritable_infant"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Irritation in anus",
+    "pl": "podrażnienie odbytu",
+    "xgb_label": [
+      "irritation_in_anus"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Itchiness of eye",
+    "pl": "świąd oka",
+    "xgb_label": [
+      "itchiness_of_eye"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Itching",
+    "pl": "świąd",
+    "xgb_label": [
+      "itching"
+    ],
+    "synonyms_pl": [
+      "swędzenie",
+      "świąd skóry",
+      "pruritus"
+    ],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Itching of scrotum",
+    "pl": "świąd moszny",
+    "xgb_label": [
+      "itching_of_scrotum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Itching of skin",
+    "pl": "świąd skóry",
+    "xgb_label": [
+      "itching_of_skin"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Itching of the anus",
+    "pl": "świąd odbytu",
+    "xgb_label": [
+      "itching_of_the_anus"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Itchy ear s",
+    "pl": "swędzące uszy",
+    "xgb_label": [
+      "itchy_ear_s"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Itchy eyelid",
+    "pl": "swędząca powieka",
+    "xgb_label": [
+      "itchy_eyelid"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Itchy scalp",
+    "pl": "swędząca skóra głowy",
+    "xgb_label": [
+      "itchy_scalp"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Jaundice",
+    "pl": "żółtaczka",
+    "xgb_label": [
+      "jaundice"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Jaw pain",
+    "pl": "ból żuchwy",
+    "xgb_label": [
+      "jaw_pain"
+    ],
+    "synonyms_pl": [
+      "ból w żuchwy",
+      "dolegliwości bólowe żuchwy",
+      "nasilony ból żuchwy"
+    ],
+    "synonyms_en": [],
+    "category": "Stomatologiczny"
+  },
+  {
+    "en": "Jaw swelling",
+    "pl": "obrzęk żuchwy",
+    "xgb_label": [
+      "jaw_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Stomatologiczny"
+  },
+  {
+    "en": "Joint pain",
+    "pl": "ból stawów",
+    "xgb_label": [
+      "joint_pain"
+    ],
+    "synonyms_pl": [
+      "bóle stawowe",
+      "arthralgia",
+      "ból w stawach",
+      "ból w stawów",
+      "dolegliwości bólowe stawów"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Joint stiffness or tightness",
+    "pl": "sztywność stawów",
+    "xgb_label": [
+      "joint_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Joint swelling",
+    "pl": "obrzęk stawów",
+    "xgb_label": [
+      "joint_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Kidney mass",
+    "pl": "guz nerki",
+    "xgb_label": [
+      "kidney_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Knee cramps or spasms",
+    "pl": "skurcze kolana",
+    "xgb_label": [
+      "knee_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Knee lump or mass",
+    "pl": "guzek / guz kolana",
+    "xgb_label": [
+      "knee_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Knee pain",
+    "pl": "ból kolana",
+    "xgb_label": [
+      "knee_pain"
+    ],
+    "synonyms_pl": [
+      "ból w kolana",
+      "dolegliwości bólowe kolana",
+      "nasilony ból kolana"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Knee stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia kolana",
+    "xgb_label": [
+      "knee_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Knee swelling",
+    "pl": "obrzęk kolana",
+    "xgb_label": [
+      "knee_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Knee weakness",
+    "pl": "osłabienie kolana",
+    "xgb_label": [
+      "knee_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Lack of concentration",
+    "pl": "trudności z koncentracją",
+    "xgb_label": [
+      "lack_of_concentration"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Lack of growth",
+    "pl": "zahamowanie wzrastania",
+    "xgb_label": [
+      "lack_of_growth"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Lacrimation",
+    "pl": "łzawienie",
+    "xgb_label": [
+      "lacrimation"
+    ],
+    "synonyms_pl": [
+      "nadmierne łzawienie",
+      "łzy z oka",
+      "wydzielina wodnista z oczu"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Leg cramps or spasms",
+    "pl": "skurcze nogi",
+    "xgb_label": [
+      "leg_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Leg lump or mass",
+    "pl": "guzek / guz nogi",
+    "xgb_label": [
+      "leg_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Leg pain",
+    "pl": "ból nogi",
+    "xgb_label": [
+      "leg_pain"
+    ],
+    "synonyms_pl": [
+      "ból w nogi",
+      "dolegliwości bólowe nogi",
+      "nasilony ból nogi"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Leg stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia nogi",
+    "xgb_label": [
+      "leg_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Leg swelling",
+    "pl": "obrzęk nogi",
+    "xgb_label": [
+      "leg_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Leg weakness",
+    "pl": "osłabienie nogi",
+    "xgb_label": [
+      "leg_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Lethargy",
+    "pl": "osłabienie / apatia (letarg)",
+    "xgb_label": [
+      "lethargy"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Lip sore",
+    "pl": "nadżerka / owrzodzenie na wardze",
+    "xgb_label": [
+      "lip_sore"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Lip swelling",
+    "pl": "obrzęk wargi",
+    "xgb_label": [
+      "lip_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Long menstrual periods",
+    "pl": "przedłużone miesiączki",
+    "xgb_label": [
+      "long_menstrual_periods"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Loss of appetite",
+    "pl": "utrata apetytu",
+    "xgb_label": [
+      "loss_of_appetite"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Loss of balance",
+    "pl": "zaburzenia równowagi",
+    "xgb_label": [
+      "loss_of_balance"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Loss of consciousness",
+    "pl": "utrata przytomności",
+    "xgb_label": [
+      "loss_of_consciousness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Loss of sex drive",
+    "pl": "spadek libido",
+    "xgb_label": [
+      "loss_of_sex_drive"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Loss of smell",
+    "pl": "utrata węchu (anosmia)",
+    "xgb_label": [
+      "loss_of_smell"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Low back cramps or spasms",
+    "pl": "skurcze mięśni odcinka lędźwiowego",
+    "xgb_label": [
+      "low_back_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Low back pain",
+    "pl": "ból odcinka lędźwiowego",
+    "xgb_label": [
+      "low_back_pain"
+    ],
+    "synonyms_pl": [
+      "ból w odcinka lędźwiowego",
+      "dolegliwości bólowe odcinka lędźwiowego",
+      "nasilony ból odcinka lędźwiowego"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Low back stiffness or tightness",
+    "pl": "sztywność odcinka lędźwiowego",
+    "xgb_label": [
+      "low_back_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Low back swelling",
+    "pl": "obrzęk odcinka lędźwiowego",
+    "xgb_label": [
+      "low_back_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Low back weakness",
+    "pl": "osłabienie mięśni odcinka lędźwiowego",
+    "xgb_label": [
+      "low_back_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Low self esteem",
+    "pl": "niskie poczucie własnej wartości",
+    "xgb_label": [
+      "low_self_esteem"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Lower body pain",
+    "pl": "ból dolnej połowy ciała",
+    "xgb_label": [
+      "lower_body_pain"
+    ],
+    "synonyms_pl": [
+      "ból w dolnej połowy ciała",
+      "dolegliwości bólowe dolnej połowy ciała",
+      "nasilony ból dolnej połowy ciała"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Lump in throat",
+    "pl": "uczucie gulki w gardle",
+    "xgb_label": [
+      "lump_in_throat"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Lump or mass of breast",
+    "pl": "guzek / guz piersi",
+    "xgb_label": [
+      "lump_or_mass_of_breast"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Lump over jaw",
+    "pl": "guz w okolicy żuchwy",
+    "xgb_label": [
+      "lump_over_jaw"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Stomatologiczny"
+  },
+  {
+    "en": "Lymphedema",
+    "pl": "obrzęk limfatyczny (limfatyczny zastój)",
+    "xgb_label": [
+      "lymphedema"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Malaise",
+    "pl": "złe samopoczucie (malaise)",
+    "xgb_label": [
+      "malaise"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mass in scrotum",
+    "pl": "guz w mosznie",
+    "xgb_label": [
+      "mass_in_scrotum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mass on ear",
+    "pl": "guz na uchu",
+    "xgb_label": [
+      "mass_on_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Mass on eyelid",
+    "pl": "guz na powiece",
+    "xgb_label": [
+      "mass_on_eyelid"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Mass on vulva",
+    "pl": "guz na sromie",
+    "xgb_label": [
+      "mass_on_vulva"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mass or swelling around the anus",
+    "pl": "guz lub obrzęk wokół odbytu",
+    "xgb_label": [
+      "mass_or_swelling_around_the_anus"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Melena",
+    "pl": "smoliste stolce (melena)",
+    "xgb_label": [
+      "melena"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Mood swings",
+    "pl": "wahania nastroju",
+    "xgb_label": [
+      "mood_swings"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mouth dryness",
+    "pl": "suchość w ustach (kserostomia)",
+    "xgb_label": [
+      "mouth_dryness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mouth pain",
+    "pl": "ból jamy ustnej",
+    "xgb_label": [
+      "mouth_pain"
+    ],
+    "synonyms_pl": [
+      "ból w jamy ustnej",
+      "dolegliwości bólowe jamy ustnej",
+      "nasilony ból jamy ustnej"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Mouth ulcer",
+    "pl": "owrzodzenie w jamie ustnej (afty)",
+    "xgb_label": [
+      "mouth_ulcer"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Movement stiffness",
+    "pl": "sztywność ruchów",
+    "xgb_label": [
+      "movement_stiffness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Mucoid sputum",
+    "pl": "śluzowa plwocina",
+    "xgb_label": [
+      "mucoid_sputum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Muscle cramps",
+    "pl": "skurcze mięśni",
+    "xgb_label": [
+      "muscle_cramps"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle cramps contractures or spasms",
+    "pl": "skurcze i przykurcze mięśni",
+    "xgb_label": [
+      "muscle_cramps_contractures_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle pain",
+    "pl": "bóle mięśni (mialgia)",
+    "xgb_label": [
+      "muscle_pain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle stiffness or tightness",
+    "pl": "sztywność mięśni",
+    "xgb_label": [
+      "muscle_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle swelling",
+    "pl": "obrzęk mięśni",
+    "xgb_label": [
+      "muscle_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle wasting",
+    "pl": "zanik mięśni",
+    "xgb_label": [
+      "muscle_wasting"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Muscle weakness",
+    "pl": "osłabienie mięśni",
+    "xgb_label": [
+      "muscle_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Nailbiting",
+    "pl": "obgryzanie paznokci (onychofagia)",
+    "xgb_label": [
+      "nailbiting"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Nasal congestion",
+    "pl": "zatkany nos (obrzęk błony śluzowej)",
+    "xgb_label": [
+      "nasal_congestion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Nausea",
+    "pl": "nudności",
+    "xgb_label": [
+      "nausea"
+    ],
+    "synonyms_pl": [
+      "mdłości",
+      "uczucie mdłości",
+      "złe samopoczucie żołądkowe"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Neck cramps or spasms",
+    "pl": "skurcze mięśni szyi",
+    "xgb_label": [
+      "neck_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Neck mass",
+    "pl": "guz szyi",
+    "xgb_label": [
+      "neck_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Neck pain",
+    "pl": "ból szyi",
+    "xgb_label": [
+      "neck_pain"
+    ],
+    "synonyms_pl": [
+      "ból w szyi",
+      "dolegliwości bólowe szyi",
+      "nasilony ból szyi"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Neck stiffness or tightness",
+    "pl": "sztywność karku",
+    "xgb_label": [
+      "neck_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Neck swelling",
+    "pl": "obrzęk szyi",
+    "xgb_label": [
+      "neck_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Neck weakness",
+    "pl": "osłabienie mięśni szyi",
+    "xgb_label": [
+      "neck_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Nightmares",
+    "pl": "koszmary senne",
+    "xgb_label": [
+      "nightmares"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Nodal skin eruptions",
+    "pl": "grudkowe wykwity skórne",
+    "xgb_label": [
+      "nodal_skin_eruptions"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Nose deformity",
+    "pl": "zniekształcenie nosa",
+    "xgb_label": [
+      "nose_deformity"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Nosebleed",
+    "pl": "krwawienie z nosa (krwotok z nosa)",
+    "xgb_label": [
+      "nosebleed"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Numbness",
+    "pl": "drętwienie",
+    "xgb_label": [
+      "numbness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Obesity",
+    "pl": "otyłość",
+    "xgb_label": [
+      "obesity"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Obsessions and compulsions",
+    "pl": "natrętne myśli i przymusy (obsesje i kompulsje)",
+    "xgb_label": [
+      "obsessions_and_compulsions"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Pain behind the eyes",
+    "pl": "ból za oczami",
+    "xgb_label": [
+      "pain_behind_the_eyes"
+    ],
+    "synonyms_pl": [
+      "ból w za oczami",
+      "dolegliwości bólowe za oczami",
+      "nasilony ból za oczami"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Pain during bowel movements",
+    "pl": "ból przy wypróżnianiu",
+    "xgb_label": [
+      "pain_during_bowel_movements"
+    ],
+    "synonyms_pl": [
+      "ból w przy wypróżnianiu",
+      "dolegliwości bólowe przy wypróżnianiu",
+      "nasilony ból przy wypróżnianiu"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Pain during intercourse",
+    "pl": "ból podczas stosunku (dyspareunia)",
+    "xgb_label": [
+      "pain_during_intercourse"
+    ],
+    "synonyms_pl": [
+      "ból w podczas stosunku (dyspareunia)",
+      "dolegliwości bólowe podczas stosunku (dyspareunia)",
+      "nasilony ból podczas stosunku (dyspareunia)"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Pain during pregnancy",
+    "pl": "ból w czasie ciąży",
+    "xgb_label": [
+      "pain_during_pregnancy"
+    ],
+    "synonyms_pl": [
+      "ból w w czasie ciąży",
+      "dolegliwości bólowe w czasie ciąży",
+      "nasilony ból w czasie ciąży"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Pain in anal region",
+    "pl": "ból w okolicy odbytu",
+    "xgb_label": [
+      "pain_in_anal_region"
+    ],
+    "synonyms_pl": [
+      "ból w w okolicy odbytu",
+      "dolegliwości bólowe w okolicy odbytu",
+      "nasilony ból w okolicy odbytu"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Pain in eye",
+    "pl": "ból oka",
+    "xgb_label": [
+      "pain_in_eye"
+    ],
+    "synonyms_pl": [
+      "ból w oku",
+      "dolegliwości oka",
+      "uczucie kłucia w oku",
+      "ból w oka",
+      "dolegliwości bólowe oka"
+    ],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Pain in gums",
+    "pl": "ból dziąseł",
+    "xgb_label": [
+      "pain_in_gums"
+    ],
+    "synonyms_pl": [
+      "ból w dziąseł",
+      "dolegliwości bólowe dziąseł",
+      "nasilony ból dziąseł"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Pain of the anus",
+    "pl": "ból odbytu",
+    "xgb_label": [
+      "pain_of_the_anus"
+    ],
+    "synonyms_pl": [
+      "ból w odbytu",
+      "dolegliwości bólowe odbytu",
+      "nasilony ból odbytu"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Pain or soreness of breast",
+    "pl": "ból / tkliwość piersi",
+    "xgb_label": [
+      "pain_or_soreness_of_breast"
+    ],
+    "synonyms_pl": [
+      "ból w / tkliwość piersi",
+      "dolegliwości bólowe / tkliwość piersi",
+      "nasilony ból / tkliwość piersi"
+    ],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Painful menstruation",
+    "pl": "bolesne miesiączkowanie (dysmenorrhea)",
+    "xgb_label": [
+      "painful_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Painful sinuses",
+    "pl": "bolesność zatok",
+    "xgb_label": [
+      "painful_sinuses"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Painful urination",
+    "pl": "bolesne oddawanie moczu (dysuria)",
+    "xgb_label": [
+      "painful_urination"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Painful walking",
+    "pl": "ból przy chodzeniu",
+    "xgb_label": [
+      "painful_walking"
+    ],
+    "synonyms_pl": [
+      "ból w przy chodzeniu",
+      "dolegliwości bólowe przy chodzeniu",
+      "nasilony ból przy chodzeniu"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Paleness",
+    "pl": "bladość",
+    "xgb_label": [
+      "paleness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Palpitations",
+    "pl": "kołatanie serca",
+    "xgb_label": [
+      "palpitations"
+    ],
+    "synonyms_pl": [
+      "palpitacje",
+      "nierówne bicie serca",
+      "przyspieszone bicie serca"
+    ],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Passage of gases",
+    "pl": "oddawanie gazów",
+    "xgb_label": [
+      "passage_of_gases"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Patches in throat",
+    "pl": "naloty w gardle",
+    "xgb_label": [
+      "patches_in_throat"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Pelvic pain",
+    "pl": "ból miednicy",
+    "xgb_label": [
+      "pelvic_pain"
+    ],
+    "synonyms_pl": [
+      "ból w miednicy",
+      "dolegliwości bólowe miednicy",
+      "nasilony ból miednicy"
+    ],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Pelvic pressure",
+    "pl": "uczucie ucisku w miednicy",
+    "xgb_label": [
+      "pelvic_pressure"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Penile discharge",
+    "pl": "wydzielina z prącia",
+    "xgb_label": [
+      "penile_discharge"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Penis pain",
+    "pl": "ból prącia",
+    "xgb_label": [
+      "penis_pain"
+    ],
+    "synonyms_pl": [
+      "ból w prącia",
+      "dolegliwości bólowe prącia",
+      "nasilony ból prącia"
+    ],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Penis redness",
+    "pl": "zaczerwienienie prącia",
+    "xgb_label": [
+      "penis_redness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Plugged feeling in ear",
+    "pl": "uczucie zatkanego ucha",
+    "xgb_label": [
+      "plugged_feeling_in_ear"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Poor circulation",
+    "pl": "słabe krążenie",
+    "xgb_label": [
+      "poor_circulation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Postpartum problems of the breast",
+    "pl": "problemy z piersiami po porodzie",
+    "xgb_label": [
+      "postpartum_problems_of_the_breast"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Posture problems",
+    "pl": "wady postawy",
+    "xgb_label": [
+      "posture_problems"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Premature ejaculation",
+    "pl": "przedwczesny wytrysk",
+    "xgb_label": [
+      "premature_ejaculation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Premenstrual tension or irritability",
+    "pl": "napięcie przedmiesiączkowe / drażliwość",
+    "xgb_label": [
+      "premenstrual_tension_or_irritability"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Problems during pregnancy",
+    "pl": "problemy w ciąży",
+    "xgb_label": [
+      "problems_during_pregnancy"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Problems with movement",
+    "pl": "zaburzenia ruchu",
+    "xgb_label": [
+      "problems_with_movement"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Problems with orgasm",
+    "pl": "zaburzenia orgazmu",
+    "xgb_label": [
+      "problems_with_orgasm"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Problems with shape or size of breast",
+    "pl": "nieprawidłowy kształt lub rozmiar piersi",
+    "xgb_label": [
+      "problems_with_shape_or_size_of_breast"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Prominent veins on calf",
+    "pl": "uwypuklone żyły na łydce",
+    "xgb_label": [
+      "prominent_veins_on_calf"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Puffy face and eyes",
+    "pl": "obrzęknięta twarz i oczy",
+    "xgb_label": [
+      "puffy_face_and_eyes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Pulling at ears",
+    "pl": "ciągnięcie za uszy (u dzieci)",
+    "xgb_label": [
+      "pulling_at_ears"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Pupils unequal",
+    "pl": "nierówne źrenice (anisocoria)",
+    "xgb_label": [
+      "pupils_unequal"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Pus draining from ear",
+    "pl": "ropny wyciek z ucha",
+    "xgb_label": [
+      "pus_draining_from_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Pus filled pimples",
+    "pl": "krosty wypełnione ropą",
+    "xgb_label": [
+      "pus_filled_pimples"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Pus in sputum",
+    "pl": "ropa w plwocinie",
+    "xgb_label": [
+      "pus_in_sputum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Pus in urine",
+    "pl": "ropa w moczu (ropomocz)",
+    "xgb_label": [
+      "pus_in_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Rapid heartbeat",
+    "pl": "przyspieszone bicie serca (tachykardia)",
+    "xgb_label": [
+      "rapid_heartbeat"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Rash",
+    "pl": "wysypka",
+    "xgb_label": [
+      "rash"
+    ],
+    "synonyms_pl": [
+      "osutka",
+      "zmiany skórne",
+      "rumień"
+    ],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Receiving blood transfusion",
+    "pl": "otrzymanie transfuzji krwi (w wywiadzie)",
+    "xgb_label": [
+      "receiving_blood_transfusion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Receiving unsterile injections",
+    "pl": "zastosowanie niesterylnej iniekcji (w wywiadzie)",
+    "xgb_label": [
+      "receiving_unsterile_injections"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Recent pregnancy",
+    "pl": "świeżo po ciąży / niedawna ciąża",
+    "xgb_label": [
+      "recent_pregnancy"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Recent weight loss",
+    "pl": "ostatnio utracona masa ciała",
+    "xgb_label": [
+      "recent_weight_loss"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Rectal bleeding",
+    "pl": "krwawienie z odbytu",
+    "xgb_label": [
+      "rectal_bleeding"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Red eyes",
+    "pl": "zaczerwienione oczy",
+    "xgb_label": [
+      "red_eyes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Red sore around nose",
+    "pl": "czerwona, bolesna zmiana wokół nosa",
+    "xgb_label": [
+      "red_sore_around_nose"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Red spots over body",
+    "pl": "czerwone plamki na ciele",
+    "xgb_label": [
+      "red_spots_over_body"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Redness in ear",
+    "pl": "zaczerwienienie ucha",
+    "xgb_label": [
+      "redness_in_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Redness in or around nose",
+    "pl": "zaczerwienienie w okolicy nosa",
+    "xgb_label": [
+      "redness_in_or_around_nose"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Redness of eyes",
+    "pl": "zaczerwienienie oczu",
+    "xgb_label": [
+      "redness_of_eyes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Reduced urination",
+    "pl": "zmniejszona ilość oddawanego moczu (skąpomocz)",
+    "xgb_label": [
+      "reduced_urination"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Regurgitation",
+    "pl": "cofanie treści (regurgitacja)",
+    "xgb_label": [
+      "regurgitation",
+      "regurgitation_1"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Restlessness",
+    "pl": "niepokój ruchowy / pobudzenie",
+    "xgb_label": [
+      "restlessness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Retention of urine",
+    "pl": "zatrzymanie moczu",
+    "xgb_label": [
+      "retention_of_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Rib pain",
+    "pl": "ból żeber",
+    "xgb_label": [
+      "rib_pain"
+    ],
+    "synonyms_pl": [
+      "ból w żeber",
+      "dolegliwości bólowe żeber",
+      "nasilony ból żeber"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Ringing in ear",
+    "pl": "szumy uszne (dzwonienie)",
+    "xgb_label": [
+      "ringing_in_ear"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Runny nose",
+    "pl": "katar",
+    "xgb_label": [
+      "runny_nose"
+    ],
+    "synonyms_pl": [
+      "nieżyt nosa",
+      "wyciek z nosa",
+      "wydzielina z nosa"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Rusty sputum",
+    "pl": "rdzawa plwocina",
+    "xgb_label": [
+      "rusty_sputum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Scanty menstrual flow",
+    "pl": "skąpe miesiączkowanie (oligomenorrhea)",
+    "xgb_label": [
+      "scanty_menstrual_flow"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Scurring",
+    "pl": "bliznowacenie skóry",
+    "xgb_label": [
+      "scurring"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Seizures",
+    "pl": "napady drgawkowe (padaczkowe)",
+    "xgb_label": [
+      "seizures"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Sharp abdominal pain",
+    "pl": "ostry ból brzucha",
+    "xgb_label": [
+      "sharp_abdominal_pain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Sharp chest pain",
+    "pl": "ostry ból w klatce piersiowej",
+    "xgb_label": [
+      "sharp_chest_pain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Sercowo-naczyniowy"
+  },
+  {
+    "en": "Shortness of breath",
+    "pl": "duszność",
+    "xgb_label": [
+      "shortness_of_breath"
+    ],
+    "synonyms_pl": [
+      "zadyszka",
+      "brak tchu",
+      "problemy z oddychaniem"
+    ],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Shoulder cramps or spasms",
+    "pl": "skurcze barku",
+    "xgb_label": [
+      "shoulder_cramps_or_spasms"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Shoulder lump or mass",
+    "pl": "guzek / guz barku",
+    "xgb_label": [
+      "shoulder_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Shoulder pain",
+    "pl": "ból barku",
+    "xgb_label": [
+      "shoulder_pain"
+    ],
+    "synonyms_pl": [
+      "ból w barku",
+      "dolegliwości bólowe barku",
+      "nasilony ból barku"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Shoulder stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia barku",
+    "xgb_label": [
+      "shoulder_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Shoulder swelling",
+    "pl": "obrzęk barku",
+    "xgb_label": [
+      "shoulder_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Shoulder weakness",
+    "pl": "osłabienie barku",
+    "xgb_label": [
+      "shoulder_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Side pain",
+    "pl": "ból boku",
+    "xgb_label": [
+      "side_pain"
+    ],
+    "synonyms_pl": [
+      "ból w boku",
+      "dolegliwości bólowe boku",
+      "nasilony ból boku"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Silver like dusting",
+    "pl": "srebrzyste łuszczenie skóry",
+    "xgb_label": [
+      "silver_like_dusting"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Sinus congestion",
+    "pl": "zatkanie zatok",
+    "xgb_label": [
+      "sinus_congestion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Sinus pressure",
+    "pl": "uczucie ucisku w zatokach",
+    "xgb_label": [
+      "sinus_pressure"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Skin dryness peeling scaliness or roughness",
+    "pl": "suchość, łuszczenie i szorstkość skóry",
+    "xgb_label": [
+      "skin_dryness_peeling_scaliness_or_roughness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin growth",
+    "pl": "wyrośl skórna",
+    "xgb_label": [
+      "skin_growth"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin irritation",
+    "pl": "podrażnienie skóry",
+    "xgb_label": [
+      "skin_irritation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin lesion",
+    "pl": "zmiana skórna",
+    "xgb_label": [
+      "skin_lesion"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin moles",
+    "pl": "znamiona skórne",
+    "xgb_label": [
+      "skin_moles"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin oiliness",
+    "pl": "nadmierne przetłuszczanie skóry",
+    "xgb_label": [
+      "skin_oiliness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin on arm or hand looks infected",
+    "pl": "zakażenie skóry ramienia lub dłoni",
+    "xgb_label": [
+      "skin_on_arm_or_hand_looks_infected"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin on head or neck looks infected",
+    "pl": "zakażenie skóry głowy lub szyi",
+    "xgb_label": [
+      "skin_on_head_or_neck_looks_infected"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin on leg or foot looks infected",
+    "pl": "zakażenie skóry nogi lub stopy",
+    "xgb_label": [
+      "skin_on_leg_or_foot_looks_infected"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin pain",
+    "pl": "ból skóry",
+    "xgb_label": [
+      "skin_pain"
+    ],
+    "synonyms_pl": [
+      "ból w skóry",
+      "dolegliwości bólowe skóry",
+      "nasilony ból skóry"
+    ],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin peeling",
+    "pl": "złuszczanie skóry",
+    "xgb_label": [
+      "skin_peeling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Skin swelling",
+    "pl": "obrzęk skóry",
+    "xgb_label": [
+      "skin_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Sleepwalking",
+    "pl": "chodzenie we śnie (somnambulizm)",
+    "xgb_label": [
+      "sleepwalking"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Slurring words",
+    "pl": "bełkotliwa mowa (dyzartria)",
+    "xgb_label": [
+      "slurring_words"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Small dents in nails",
+    "pl": "dołeczki w paznokciach (naparstkowatość)",
+    "xgb_label": [
+      "small_dents_in_nails"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Smoking problems",
+    "pl": "problemy związane z paleniem tytoniu",
+    "xgb_label": [
+      "smoking_problems"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Sneezing",
+    "pl": "kichanie",
+    "xgb_label": [
+      "sneezing"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Sore in nose",
+    "pl": "owrzodzenie / rana w nosie",
+    "xgb_label": [
+      "sore_in_nose"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Sore throat",
+    "pl": "ból gardła",
+    "xgb_label": [
+      "sore_throat"
+    ],
+    "synonyms_pl": [
+      "drapanie w gardle",
+      "ból przy przełykaniu",
+      "angina (ból gardła)",
+      "ból w gardła",
+      "dolegliwości bólowe gardła"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Speech difficulties",
+    "pl": "trudności w mówieniu",
+    "xgb_label": [
+      "speech_difficulties"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Spinning movements",
+    "pl": "wirowe zawroty głowy",
+    "xgb_label": [
+      "spinning_movements"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Spots or clouds in vision",
+    "pl": "mroczki lub zmętnienia w polu widzenia",
+    "xgb_label": [
+      "spots_or_clouds_in_vision"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Spotting or bleeding during pregnancy",
+    "pl": "plamienie lub krwawienie w ciąży",
+    "xgb_label": [
+      "spotting_or_bleeding_during_pregnancy"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Spotting urination",
+    "pl": "oddawanie moczu kroplami",
+    "xgb_label": [
+      "spotting_urination"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Sputum phlegm",
+    "pl": "plwocina (flegma)",
+    "xgb_label": [
+      "sputum_phlegm"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "Stiff neck",
+    "pl": "sztywność karku",
+    "xgb_label": [
+      "stiff_neck"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Stiffness all over",
+    "pl": "sztywność całego ciała",
+    "xgb_label": [
+      "stiffness_all_over"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Stomach bleeding",
+    "pl": "krwawienie z żołądka",
+    "xgb_label": [
+      "stomach_bleeding"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Stomach bloating",
+    "pl": "wzdęcie brzucha",
+    "xgb_label": [
+      "stomach_bloating"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Stuttering or stammering",
+    "pl": "jąkanie",
+    "xgb_label": [
+      "stuttering_or_stammering"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Sunken eyes",
+    "pl": "zapadnięte oczy",
+    "xgb_label": [
+      "sunken_eyes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Suprapubic pain",
+    "pl": "ból nadłonowy",
+    "xgb_label": [
+      "suprapubic_pain"
+    ],
+    "synonyms_pl": [
+      "ból w nadłonowy",
+      "dolegliwości bólowe nadłonowy",
+      "nasilony ból nadłonowy"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Sweating",
+    "pl": "nadmierne pocenie się",
+    "xgb_label": [
+      "sweating"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Swelled lymph nodes",
+    "pl": "powiększone węzły chłonne",
+    "xgb_label": [
+      "swelled_lymph_nodes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Swelling joints",
+    "pl": "obrzęki stawów",
+    "xgb_label": [
+      "swelling_joints"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Swelling of scrotum",
+    "pl": "obrzęk moszny",
+    "xgb_label": [
+      "swelling_of_scrotum"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Swelling of stomach",
+    "pl": "obrzęk brzucha",
+    "xgb_label": [
+      "swelling_of_stomach"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Swollen abdomen",
+    "pl": "powiększony / obrzęknięty brzuch",
+    "xgb_label": [
+      "swollen_abdomen"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Swollen blood vessels",
+    "pl": "poszerzone / obrzęknięte naczynia krwionośne",
+    "xgb_label": [
+      "swollen_blood_vessels"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Swollen extremeties",
+    "pl": "obrzęk kończyn",
+    "xgb_label": [
+      "swollen_extremeties"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Swollen eye",
+    "pl": "obrzęk oka",
+    "xgb_label": [
+      "swollen_eye"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Swollen lymph nodes",
+    "pl": "powiększone węzły chłonne",
+    "xgb_label": [
+      "swollen_lymph_nodes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Swollen or red tonsils",
+    "pl": "powiększone lub zaczerwienione migdałki",
+    "xgb_label": [
+      "swollen_or_red_tonsils"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Swollen tongue",
+    "pl": "obrzęk języka",
+    "xgb_label": [
+      "swollen_tongue"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Symptoms of bladder",
+    "pl": "objawy ze strony pęcherza moczowego",
+    "xgb_label": [
+      "symptoms_of_bladder"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Symptoms of eye",
+    "pl": "objawy oczne",
+    "xgb_label": [
+      "symptoms_of_eye"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Symptoms of infants",
+    "pl": "objawy u niemowląt",
+    "xgb_label": [
+      "symptoms_of_infants"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Symptoms of prostate",
+    "pl": "objawy ze strony prostaty",
+    "xgb_label": [
+      "symptoms_of_prostate"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Symptoms of the face",
+    "pl": "objawy dotyczące twarzy",
+    "xgb_label": [
+      "symptoms_of_the_face"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Symptoms of the kidneys",
+    "pl": "objawy ze strony nerek",
+    "xgb_label": [
+      "symptoms_of_the_kidneys"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Symptoms of the scrotum and testes",
+    "pl": "objawy dotyczące moszny i jąder",
+    "xgb_label": [
+      "symptoms_of_the_scrotum_and_testes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Temper problems",
+    "pl": "problemy z kontrolą złości",
+    "xgb_label": [
+      "temper_problems"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Testicular pain",
+    "pl": "ból jądra / jąder",
+    "xgb_label": [
+      "testicular_pain"
+    ],
+    "synonyms_pl": [
+      "ból w jądra / jąder",
+      "dolegliwości bólowe jądra / jąder",
+      "nasilony ból jądra / jąder"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Thirst",
+    "pl": "wzmożone pragnienie",
+    "xgb_label": [
+      "thirst"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Throat feels tight",
+    "pl": "uczucie ścisku w gardle",
+    "xgb_label": [
+      "throat_feels_tight"
+    ],
+    "synonyms_pl": [
+      "wrażenie",
+      "odczuwanie",
+      "poczucie"
+    ],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Throat irritation",
+    "pl": "podrażnienie gardła",
+    "xgb_label": [
+      "throat_irritation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Throat redness",
+    "pl": "zaczerwienienie gardła",
+    "xgb_label": [
+      "throat_redness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Throat swelling",
+    "pl": "obrzęk gardła",
+    "xgb_label": [
+      "throat_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  },
+  {
+    "en": "Tingling",
+    "pl": "mrowienie",
+    "xgb_label": [
+      "tingling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Tongue bleeding",
+    "pl": "krwawienie z języka",
+    "xgb_label": [
+      "tongue_bleeding"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Tongue lesions",
+    "pl": "zmiany na języku",
+    "xgb_label": [
+      "tongue_lesions"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Tongue pain",
+    "pl": "ból języka",
+    "xgb_label": [
+      "tongue_pain"
+    ],
+    "synonyms_pl": [
+      "ból w języka",
+      "dolegliwości bólowe języka",
+      "nasilony ból języka"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Too little hair",
+    "pl": "przerzedzenie włosów / zbyt mało owłosienia",
+    "xgb_label": [
+      "too_little_hair"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Toothache",
+    "pl": "ból zęba / zębów",
+    "xgb_label": [
+      "toothache"
+    ],
+    "synonyms_pl": [
+      "ból w zęba / zębów",
+      "dolegliwości bólowe zęba / zębów",
+      "nasilony ból zęba / zębów"
+    ],
+    "synonyms_en": [],
+    "category": "Stomatologiczny"
+  },
+  {
+    "en": "Toxic look typhos",
+    "pl": "toksyczny wygląd (tyfoidalny)",
+    "xgb_label": [
+      "toxic_look_typhos"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Ulcers on tongue",
+    "pl": "owrzodzenia na języku",
+    "xgb_label": [
+      "ulcers_on_tongue"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Underweight",
+    "pl": "niedowaga",
+    "xgb_label": [
+      "underweight"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Unnamed 133",
+    "pl": "nieopisany objaw (Unnamed 133)",
+    "xgb_label": [
+      "unnamed_133"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Unpredictable menstruation",
+    "pl": "nieregularne miesiączkowanie",
+    "xgb_label": [
+      "unpredictable_menstruation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Unsteadiness",
+    "pl": "chwiejność / niepewny chód",
+    "xgb_label": [
+      "unsteadiness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Unusual color or odor to urine",
+    "pl": "nietypowy kolor lub zapach moczu",
+    "xgb_label": [
+      "unusual_color_or_odor_to_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Unwanted hair",
+    "pl": "niepożądane / nadmierne owłosienie",
+    "xgb_label": [
+      "unwanted_hair"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Upper abdominal pain",
+    "pl": "ból w nadbrzuszu",
+    "xgb_label": [
+      "upper_abdominal_pain"
+    ],
+    "synonyms_pl": [
+      "ból w w nadbrzuszu",
+      "dolegliwości bólowe w nadbrzuszu",
+      "nasilony ból w nadbrzuszu"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Uterine contractions",
+    "pl": "skurcze macicy",
+    "xgb_label": [
+      "uterine_contractions"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal bleeding after menopause",
+    "pl": "krwawienie z pochwy po menopauzie",
+    "xgb_label": [
+      "vaginal_bleeding_after_menopause"
+    ],
+    "synonyms_pl": [
+      "krwotok",
+      "utrata krwi",
+      "krwawienie (krwotok)"
+    ],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal discharge",
+    "pl": "wydzielina z pochwy",
+    "xgb_label": [
+      "vaginal_discharge"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal dryness",
+    "pl": "suchość pochwy",
+    "xgb_label": [
+      "vaginal_dryness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal itching",
+    "pl": "świąd pochwy",
+    "xgb_label": [
+      "vaginal_itching"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal pain",
+    "pl": "ból pochwy",
+    "xgb_label": [
+      "vaginal_pain"
+    ],
+    "synonyms_pl": [
+      "ból w pochwy",
+      "dolegliwości bólowe pochwy",
+      "nasilony ból pochwy"
+    ],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vaginal redness",
+    "pl": "zaczerwienienie pochwy",
+    "xgb_label": [
+      "vaginal_redness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ginekologiczny"
+  },
+  {
+    "en": "Vision loss",
+    "pl": "utrata widzenia",
+    "xgb_label": [
+      "vision_loss"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Visual disturbances",
+    "pl": "zaburzenia widzenia",
+    "xgb_label": [
+      "visual_disturbances"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Vomiting",
+    "pl": "wymioty",
+    "xgb_label": [
+      "vomiting"
+    ],
+    "synonyms_pl": [
+      "torsje",
+      "wymiotowanie",
+      "nudności i wymioty"
+    ],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Vomiting blood",
+    "pl": "krwawe wymioty",
+    "xgb_label": [
+      "vomiting_blood"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ pokarmowy"
+  },
+  {
+    "en": "Vulvar irritation",
+    "pl": "podrażnienie sromu",
+    "xgb_label": [
+      "vulvar_irritation"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Vulvar sore",
+    "pl": "owrzodzenie sromu",
+    "xgb_label": [
+      "vulvar_sore"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Warts",
+    "pl": "brodawki",
+    "xgb_label": [
+      "warts"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Watering from eyes",
+    "pl": "łzawienie oczu",
+    "xgb_label": [
+      "watering_from_eyes"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Weakness",
+    "pl": "ogólne osłabienie",
+    "xgb_label": [
+      "weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Weakness in limbs",
+    "pl": "osłabienie kończyn",
+    "xgb_label": [
+      "weakness_in_limbs"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Weakness of one body side",
+    "pl": "osłabienie jednej połowy ciała (niedowład połowiczy)",
+    "xgb_label": [
+      "weakness_of_one_body_side"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Neurologiczny"
+  },
+  {
+    "en": "Weight gain",
+    "pl": "zwiększenie masy ciała",
+    "xgb_label": [
+      "weight_gain"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Weight loss",
+    "pl": "spadek masy ciała",
+    "xgb_label": [
+      "weight_loss"
+    ],
+    "synonyms_pl": [
+      "niezamierzona utrata masy",
+      "utrata wagi",
+      "chudnięcie"
+    ],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Wheezing",
+    "pl": "świsty oddechowe",
+    "xgb_label": [
+      "wheezing"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Układ oddechowy"
+  },
+  {
+    "en": "White discharge from eye",
+    "pl": "biała wydzielina z oka",
+    "xgb_label": [
+      "white_discharge_from_eye"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Okulistyczny"
+  },
+  {
+    "en": "Wrinkles on skin",
+    "pl": "zmarszczki skóry",
+    "xgb_label": [
+      "wrinkles_on_skin"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  },
+  {
+    "en": "Wrist lump or mass",
+    "pl": "guzek / guz nadgarstka",
+    "xgb_label": [
+      "wrist_lump_or_mass"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Wrist pain",
+    "pl": "ból nadgarstka",
+    "xgb_label": [
+      "wrist_pain"
+    ],
+    "synonyms_pl": [
+      "ból w nadgarstka",
+      "dolegliwości bólowe nadgarstka",
+      "nasilony ból nadgarstka"
+    ],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Wrist stiffness or tightness",
+    "pl": "sztywność / uczucie napięcia nadgarstka",
+    "xgb_label": [
+      "wrist_stiffness_or_tightness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Wrist swelling",
+    "pl": "obrzęk nadgarstka",
+    "xgb_label": [
+      "wrist_swelling"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Wrist weakness",
+    "pl": "osłabienie nadgarstka",
+    "xgb_label": [
+      "wrist_weakness"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Mięśniowo-szkieletowy"
+  },
+  {
+    "en": "Yellow crust ooze",
+    "pl": "żółte sączące się strupy",
+    "xgb_label": [
+      "yellow_crust_ooze"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Ogólny"
+  },
+  {
+    "en": "Yellow urine",
+    "pl": "żółty mocz",
+    "xgb_label": [
+      "yellow_urine"
+    ],
+    "synonyms_pl": [],
+    "synonyms_en": [],
+    "category": "Urologiczny"
+  },
+  {
+    "en": "Yellowish skin",
+    "pl": "zażółcenie skóry",
+    "xgb_label": [
+      "yellowish_skin"
+    ],
+    "synonyms_pl": [
+      "żółtaczka",
+      "żółta skóra",
+      "zażółcenie powłok"
+    ],
+    "synonyms_en": [],
+    "category": "Dermatologiczny"
+  }
+]
