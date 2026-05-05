@@ -1,0 +1,47 @@
+Copyright (c) 2026 Grzegorz Sienkiewicz
+
+All Rights Reserved.
+
+This software and associated documentation files (the "Software") are the
+proprietary and confidential intellectual property of Grzegorz Sienkiewicz.
+The Software was developed as part of an engineering thesis (praca inżynierska).
+
+NO LICENSE IS GRANTED to use, copy, modify, merge, publish, distribute,
+sublicense, sell, or otherwise exploit the Software, in whole or in part,
+in any form or by any means, without the prior express written permission
+of the copyright holder.
+
+The Software is made publicly visible on GitHub for the sole purposes of:
+  (a) academic review and evaluation of the author's engineering thesis;
+  (b) demonstrating the author's technical portfolio to prospective
+      employers and collaborators.
+
+Public visibility on GitHub or any other platform does NOT constitute a
+grant of any license, express or implied, including but not limited to any
+rights under copyright, patent, trademark, or trade secret law.
+
+Any reproduction, redistribution, modification, derivative work, or
+commercial use of the Software, in whole or in part, requires the prior
+written consent of the copyright holder.
+
+To request permission, contact: gsienkiewicz03@gmail.com
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+The Software incorporates third-party open-source libraries, each governed
+by its own license (see backend/requirements.txt and frontend/package.json
+for the dependency list). The proprietary license above applies only to
+the original code authored by Grzegorz Sienkiewicz; third-party components
+remain under their respective licenses.
+
+Medical disclaimer: The Software is intended for educational and research
+purposes only. It is NOT a medical device and does NOT provide medical
+advice, diagnosis, or treatment. Always seek the advice of a qualified
+health provider with any questions you may have regarding a medical
+condition.
