@@ -1,0 +1,9 @@
+# Drop the LLM weights file here:
+#   Bielik-11B-v2.3-Instruct.Q6_K.gguf  (~8.7 GB)
+#
+# Download from HuggingFace:
+#   https://huggingface.co/speakleash/Bielik-11B-v2.3-Instruct-GGUF
+#
+# This file is excluded from git due to size.
+# Path expected by backend/config.py:
+#   backend/weights/bielik-gguf/Bielik-11B-v2.3-Instruct.Q6_K.gguf

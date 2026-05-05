@@ -36,6 +36,8 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 coverage/
+test-results/
+playwright-report/
 
 # ───── Bazy danych (lokalne, testowe) ─────
 *.db
@@ -54,6 +56,9 @@ database/*.sqlite
 *.joblib
 !backend/ml/river_ovr_ftrl.joblib
 weights/
+!backend/weights/
+!backend/weights/bielik-gguf/
+!backend/weights/**/.gitkeep
 
 # ───── Duże pliki danych (>50MB) ─────
 backend/data/Dataset_1/
@@ -63,9 +68,12 @@ backend/data/train_remainder.csv
 backend/data/calibration.csv
 backend/ml/Backup/
 
+# ───── Logi runtime ─────
+logs/*
+!logs/.gitkeep
+
 # ───── Dane i cache ─────
 datasets/
-logs/
 *.zip
 *.rar
 *.7z

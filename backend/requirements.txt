@@ -1,26 +1,55 @@
-# --- Web framework ---
+# =================================================================
+#  SymptomChecker — backend requirements
+#  Python 3.11+
+# =================================================================
+
+# ───── Web framework ─────
 fastapi
 uvicorn[standard]
+python-multipart
 
-# --- Utils / data ---
+# ───── Configuration / .env ─────
+python-dotenv
+
+# ───── Validation / serialization ─────
 pydantic
+pydantic[email]            # EmailStr support
+email-validator
+
+# ───── Auth / sessions ─────
+python-jose[cryptography]  # JWT (HS256 + JWKS for Supabase)
+passlib[bcrypt]            # password hashing
+
+# ───── Database ─────
+sqlalchemy>=2.0
+
+# ───── Data / utils ─────
 pandas
 numpy
 joblib
 
-# --- Machine learning ---
+# ───── Classical ML ─────
 scikit-learn
 xgboost
-scikit-optimize
+scikit-optimize            # Bayesian search for XGB hyperparams
 
-# --- PyTorch + Transformers ---
+# ───── Online learning ─────
+river                      # OVR + FTRL
+
+# ───── Visualization (ML validation reports) ─────
+matplotlib
+
+# ───── PyTorch + Transformers (embeddings, fallback path) ─────
 torch
 transformers
 accelerate
-bitsandbytes       # 8-bit quantization (może być problematyczne na Windows → fallback do ctransformers)
-
-# --- Fallback LLM loader (GGUF) ---
-ctransformers
-
-# --- Embeddings (multi-lang) ---
 sentence-transformers
+
+# ───── LLM loader (GGUF — Bielik) ─────
+ctransformers              # primary GGUF backend
+# bitsandbytes             # 8-bit quant; problematic on Windows — uncomment on Linux
+
+# ───── Testing ─────
+pytest
+pytest-asyncio
+httpx                      # FastAPI TestClient / async calls
