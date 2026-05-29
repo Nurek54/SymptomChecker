@@ -34,7 +34,17 @@ function StatusDot({ state }: { state: "ok" | "starting" | "down" }) {
             : state === "starting"
                 ? "bg-amber-500"
                 : "bg-rose-500";
-    return <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls}`} />;
+    return (
+        <span className="relative inline-flex h-3 w-3 items-center justify-center" aria-hidden>
+            {state === "ok" && (
+                <span
+                    className={`absolute inset-0 rounded-full ${cls} opacity-60`}
+                    style={{ animation: "sc-heartbeat 2s ease-out infinite" }}
+                />
+            )}
+            <span className={`relative inline-block h-2.5 w-2.5 rounded-full ${cls}`} />
+        </span>
+    );
 }
 
 /** Płynne i BEZ-migowe przełączanie motywu */
@@ -127,9 +137,16 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
     // 🔐 Auth state (gość)
     const { isGuest } = useAuth();
 
-    // Ping „online/offline”
+    // Ping „online/offline” — zoptymalizowany pod kątem wyścigu wątków w Strict Mode
     useEffect(() => {
-        (async () => setOnline(await healthcheck()))();
+        let alive = true;
+        (async () => {
+            const res = await healthcheck();
+            if (alive) setOnline(res);
+        })();
+        return () => {
+            alive = false;
+        };
     }, []);
 
     // Inicjalizacja motywu (tylko klient)
@@ -149,9 +166,15 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
         applyTheme("dark");
     };
 
-    // Conversation Health
+    // Conversation Health — zoptymalizowany interwał do 45 sekund
     const [health, setHealth] = useState<HealthStatus | null>(null);
-    const [healthError, setHealthError] = useState(false);
+    // v10: zamiast pojedynczego booleana — licznik kolejnych niepowodzeń.
+    // Wcześniej pojedynczy timeout pollu /health (np. 10s timeout pod
+    // load'em LLM) ustawiał `healthError=true` i pasek pokazywał "Błąd",
+    // mimo że backend żył. Teraz status "Błąd" zapala się dopiero po
+    // 2 kolejnych nieudanych pollach (~90 sekund problemów) — pojedynczy
+    // spike nie wyzwala alarmu.
+    const [healthFailCount, setHealthFailCount] = useState(0);
 
     useEffect(() => {
         let alive = true;
@@ -160,19 +183,23 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                 const h = await getHealthDetailed();
                 if (!alive) return;
                 setHealth(h);
-                setHealthError(false);
+                setHealthFailCount(0);
             } catch {
                 if (!alive) return;
-                setHealthError(true);
+                setHealthFailCount((c) => c + 1);
             }
         }
         poll();
-        const id = setInterval(poll, 10_000);
+
+        // Zmieniono z 10000ms na 45000ms, aby uniknąć spamu i kolejkowania żądań podczas generowania LLM
+        const id = setInterval(poll, 45000);
         return () => {
             alive = false;
             clearInterval(id);
         };
     }, []);
+
+    const healthError = healthFailCount >= 2;
 
     const isOk = (v?: boolean) => (v === undefined ? true : !!v);
 
@@ -246,16 +273,28 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
 
                 {/* ŚRODEK: Pasek statusów (połączony: sieć + komponenty) */}
                 <div
-                    className="hidden min-w-0 items-center gap-2 rounded-full border border-base bg-input/70 px-2.5 py-1 text-xs shadow-sm backdrop-blur-sm sm:flex"
+                    className="hidden min-w-0 items-center gap-2 rounded-full border border-base bg-input/70 px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm sm:flex"
                     title="Stan połączenia i komponentów"
                 >
                     <StatusDot state={overall} />
-                    <span className="font-medium">{overallLabel}</span>
+                    {}
+                    <span
+                        className={[
+                            "font-semibold text-[13px]",
+                            overall === "ok"
+                                ? "text-emerald-600 dark:text-emerald-300"
+                                : overall === "starting"
+                                    ? "text-amber-600 dark:text-amber-300"
+                                    : "text-rose-600 dark:text-rose-300",
+                        ].join(" ")}
+                    >
+                        {overallLabel}
+                    </span>
                     <span className="mx-1 text-muted">•</span>
 
-                    {/* Sieć */}
+                    {/* Sieć — mniejsze, mniej eye-catch */}
                     <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${
+                        className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] opacity-80 ${
                             online
                                 ? OK_CHIP_CLASSES
                                 : online === false
@@ -271,17 +310,17 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                         }
                     >
                         {online ? (
-                            <Wifi className="h-3.5 w-3.5" />
+                            <Wifi className="h-3 w-3" />
                         ) : online === false ? (
-                            <WifiOff className="h-3.5 w-3.5" />
+                            <WifiOff className="h-3 w-3" />
                         ) : (
-                            <Ellipsis className="h-3.5 w-3.5" />
+                            <Ellipsis className="h-3 w-3" />
                         )}
                         Sieć
                     </span>
 
-                    {/* Komponenty */}
-                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    {/* Komponenty — mniejsze badge'y, niższa opacity */}
+                    <div className="flex min-w-0 flex-wrap items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
                         <Badge label="XGB / River" ready={health?.xgb_ready} />
                         <Badge label="Matcher" ready={health?.matcher_ready} />
                         <Badge label="LLM" ready={health?.llm_ready ?? undefined} />

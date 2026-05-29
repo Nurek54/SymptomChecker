@@ -3,7 +3,7 @@ import os
 import time
 import logging
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+from typing import Optional
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -38,24 +38,20 @@ COOKIE_NAME = SESSION_COOKIE_NAME
 # =========================
 _auth_prewarmed = False
 
+
 def prewarm_auth() -> None:
-    """
-    „Rozgrzewa” ścieżkę kryptograficzną HS256, żeby pierwszy request nie miał nawet
-    minimalnego overheadu importów/kompilacji. Zero sieci, zero I/O.
-    """
+    """Rozgrzewa ścieżkę kryptograficzną HS256. Zero sieci, zero I/O."""
     global _auth_prewarmed
     if _auth_prewarmed or not SUPABASE_JWT_SECRET:
         _auth_prewarmed = True
         return
     try:
         now = int(time.time())
-        # sztuczny, krótkowieczny token testowy
         probe = jwt.encode(
             {"sub": "0", "iat": now, "exp": now + 60},
             SUPABASE_JWT_SECRET,
             algorithm="HS256",
         )
-        # i od razu go zdekoduj (rozgrzanie ścieżki decode)
         _ = jwt.decode(
             probe,
             SUPABASE_JWT_SECRET,
@@ -65,9 +61,9 @@ def prewarm_auth() -> None:
         _auth_prewarmed = True
         log.info("Auth HS256 prewarmed.")
     except Exception as e:
-        # nawet jeśli prewarm się nie uda, normalny decode dalej zadziała
         log.debug("Auth HS256 prewarm skipped: %s", e)
         _auth_prewarmed = True
+
 
 # =========================
 #   Helpers (Bearer, wiek, token cookie)
@@ -92,15 +88,13 @@ def _extract_bearer(request: Request) -> str:
             if tok:
                 return tok
         except Exception:
-            # nie JSON – może sam token
             return v
 
     raise HTTPException(401, "Brak tokenu Supabase (Authorization: Bearer <token>).")
 
+
 def _decode_supabase_jwt(token: str) -> dict:
-    """
-    Weryfikuje token Supabase **wyłącznie** HS256 (SUPABASE_JWT_SECRET).
-    """
+    """Weryfikuje token Supabase wyłącznie HS256 (SUPABASE_JWT_SECRET)."""
     if not SUPABASE_JWT_SECRET:
         raise HTTPException(500, "Błędna konfiguracja serwera (brak SUPABASE_JWT_SECRET).")
     try:
@@ -122,7 +116,8 @@ def _age(dob: Optional[date]) -> Optional[int]:
     return max(a, 0)
 
 def _mint_backend_token(user_id: int) -> str:
-    now = datetime.now(tz=timezone.utc)
+    # FIX #6: datetime.utcnow() jest deprecated od 3.12 — używamy timezone-aware.
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),
         "iat": int(now.timestamp()),
@@ -130,14 +125,8 @@ def _mint_backend_token(user_id: int) -> str:
     }
     return jwt.encode(payload, AUTH_SECRET, algorithm="HS256")
 
-def _ensure_local_profile(db: Session, claims: dict) -> UserModel:
-    """
-    Mapuje konto Supabase na rekord w Twojej tabeli users:
-      1) po (auth_provider='supabase', provider_sub=sub),
-      2) fallback po email,
-      3) jeśli brak → tworzymy usera (password_hash=NULL),
-      4) miękko uzupełniamy puste pola z user_metadata (first/last/dob/username).
-    """
+
+def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = True) -> UserModel:
     sub = str(claims.get("sub") or "").strip()
     meta = claims.get("user_metadata") or {}
     if not isinstance(meta, dict):
@@ -148,8 +137,8 @@ def _ensure_local_profile(db: Session, claims: dict) -> UserModel:
     username_meta = (meta.get("username") or meta.get("preferred_username") or "").strip()
 
     first_name_meta = (meta.get("first_name") or "").strip() or None
-    last_name_meta  = (meta.get("last_name") or "").strip() or None
-    dob_meta_raw    = (meta.get("date_of_birth") or "").strip() or None
+    last_name_meta = (meta.get("last_name") or "").strip() or None
+    dob_meta_raw = (meta.get("date_of_birth") or "").strip() or None
     dob_meta: Optional[date] = None
     if dob_meta_raw:
         try:
@@ -165,7 +154,7 @@ def _ensure_local_profile(db: Session, claims: dict) -> UserModel:
     if not user and email:
         user = crud.get_user_by_email(db, email)
 
-    # 3) create
+    # 3) create — to robimy zawsze, bo bez usera nie ma o czym mówić
     if not user:
         base_for_username = username_meta or (email.split("@")[0] if email else (full_name or "user"))
         username = crud.generate_username(db, base_for_username)
@@ -182,45 +171,52 @@ def _ensure_local_profile(db: Session, claims: dict) -> UserModel:
         )
         db.commit()
         log.info("Utworzono lokalny profil usera (supabase sub=%s, email=%s, id=%s)", sub, email, user.id)
-    else:
-        changed = False
-        if not user.provider_sub and sub:
-            user.auth_provider = "supabase"
-            user.provider_sub = sub
+        return user
+
+    # 4) miękka aktualizacja — tylko gdy explicite zezwolone
+    if not allow_writes:
+        return user
+
+    changed = False
+    if not user.provider_sub and sub:
+        user.auth_provider = "supabase"
+        user.provider_sub = sub
+        changed = True
+
+    if first_name_meta and not (user.first_name or "").strip():
+        user.first_name = first_name_meta
+        changed = True
+    if last_name_meta and not (user.last_name or "").strip():
+        user.last_name = last_name_meta
+        changed = True
+    if dob_meta and not getattr(user, "date_of_birth", None):
+        user.date_of_birth = dob_meta
+        changed = True
+
+    if username_meta and user.username.startswith("user") and user.username != username_meta:
+        cand = crud.generate_username(db, username_meta)
+        if cand != user.username:
+            user.username = cand
             changed = True
 
-        # miękka synchronizacja pustych pól z meta
-        if first_name_meta and not (user.first_name or "").strip():
-            user.first_name = first_name_meta; changed = True
-        if last_name_meta and not (user.last_name or "").strip():
-            user.last_name = last_name_meta; changed = True
-        if dob_meta and not getattr(user, "date_of_birth", None):
-            user.date_of_birth = dob_meta; changed = True
-
-        # ewentualna korekta username (jeśli był auto)
-        if username_meta and user.username.startswith("user") and user.username != username_meta:
-            cand = crud.generate_username(db, username_meta)
-            if cand != user.username:
-                user.username = cand; changed = True
-
-        if changed:
-            db.add(user)
-            db.commit()
-            log.info("Zaktualizowano lokalny profil (id=%s) z claimów Supabase.", user.id)
+    if changed:
+        db.add(user)
+        db.commit()
+        log.info("Zaktualizowano lokalny profil (id=%s) z claimów Supabase.", user.id)
 
     return user
+
 
 # =========================
 #   Endpoints
 # =========================
 @router.post("/session", response_model=UserOut)
 def exchange_session(request: Request, response: Response, db: Session = Depends(get_db)):
-    """
-    Wymienia Supabase access_token (Bearer) na backendowe cookie HTTP-only (sc_session).
-    """
+    """Wymienia Supabase access_token (Bearer) na backendowe cookie HTTP-only."""
     sb_token = _extract_bearer(request)
     claims = _decode_supabase_jwt(sb_token)
-    user = _ensure_local_profile(db, claims)
+    # przy wymianie sesji — ok, tu *celowo* dopuszczamy pełne pierwsze write'y
+    user = _ensure_local_profile(db, claims, allow_writes=True)
 
     token = _mint_backend_token(user.id)
     response.set_cookie(
@@ -234,21 +230,23 @@ def exchange_session(request: Request, response: Response, db: Session = Depends
     out.age = _age(getattr(user, "date_of_birth", None))
     return out
 
+
 @router.get("/me", response_model=UserOut)
 def me(request: Request, db: Session = Depends(get_db)):
     sb_token = _extract_bearer(request)
     claims = _decode_supabase_jwt(sb_token)
-    user = _ensure_local_profile(db, claims)
+    user = _ensure_local_profile(db, claims, allow_writes=False)
 
     out = UserOut.model_validate(user, from_attributes=True)
     out.age = _age(getattr(user, "date_of_birth", None))
     return out
 
+
 @router.put("/me", response_model=UserOut)
 def update_me(data: UpdateProfileIn, request: Request, db: Session = Depends(get_db)):
     sb_token = _extract_bearer(request)
     claims = _decode_supabase_jwt(sb_token)
-    user = _ensure_local_profile(db, claims)
+    user = _ensure_local_profile(db, claims, allow_writes=True)
 
     user = crud.update_user_profile(
         db,
@@ -263,6 +261,7 @@ def update_me(data: UpdateProfileIn, request: Request, db: Session = Depends(get
     out = UserOut.model_validate(user, from_attributes=True)
     out.age = _age(getattr(user, "date_of_birth", None))
     return out
+
 
 @router.post("/logout")
 def logout(response: Response):

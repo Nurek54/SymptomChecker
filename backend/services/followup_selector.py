@@ -17,15 +17,6 @@ def _normalize(s: str) -> str:
 
 
 class FollowupSelector:
-    """
-    Ekspresowy wybór kolejnego pytania (bez kosztownych wywołań modeli):
-      • korzysta z rankingu cech wg feature_importances_ (fallback: kolejność z modelu),
-      • filtruje: już posiadane, zanegowane, ostatnio pytane i z bloklisty,
-      • preferuje cechy z tych samych kategorii co już zebrane,
-      • dla PL preferuje takie, które mają sensowne tłumaczenie (matcher.to_pl),
-      • zwraca pierwszą sensowną pozycję (O(D), ale bez inferencji).
-    """
-
     def __init__(self, state: AppState):
         self.st = state
 
@@ -37,8 +28,6 @@ class FollowupSelector:
         if env:
             bl |= {t.strip().lower() for t in env.split(",") if t.strip()}
         self._blocklist = bl
-
-        # prekomputacja rankingu cech
         feats = [str(f).strip().lower() for f in (self.st.xgb.features or [])]
         try:
             imps = list(getattr(self.st.xgb.model, "feature_importances_", []))
@@ -63,12 +52,10 @@ class FollowupSelector:
         return any(tok and tok in n for tok in self._blocklist)
 
     def _good_pl(self, feat_name: str) -> bool:
-        """Czy mamy sensowny tekst PL dla danej cechy (nie to samo co surowy klucz EN)?"""
         matcher = self.st.matcher
         if not hasattr(matcher, "to_pl"):
             return True
         pl = matcher.to_pl(feat_name)
-        # jeśli po normalizacji PL == EN (np. "knee_weakness" -> "knee weakness"), uznaj jako słabsze
         return _normalize(pl) != _normalize(feat_name)
 
     def choose_next(self, sess_id: str, current_syms: List[str], lang: str = "pl") -> Optional[str]:

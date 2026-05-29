@@ -2,9 +2,8 @@ from __future__ import annotations
 import re
 import random
 from typing import List, Dict, Any
-from config import STOP_PHRASES  # <-- NOWE
+from config import STOP_PHRASES
 
-# ——— frazy kończące rozmowę (regex fallback) ———
 STOP_PATTERNS = [
     r"\bto wszystko\b",
     r"\bto już wszystko\b",
@@ -13,11 +12,7 @@ STOP_PATTERNS = [
     r"\bstop\b",
 ]
 
-# ——— maskowanie danych wrażliwych w logach ———
-
-# bardzo prosty regex na e-mail
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-# 11 cyfr – np. PESEL
 PESEL_RE = re.compile(r"\b\d{11}\b")
 
 
@@ -35,12 +30,10 @@ def mask_sensitive(msg: str) -> str:
 
 def contains_stop_phrase(text: str) -> bool:
     t = (text or "").strip().lower()
-    # 1) krótkie frazy z configu (PL/EN)
     for p in (STOP_PHRASES or []):
         p = (p or "").strip().lower()
         if p and p in t:
             return True
-    # 2) regex fallback
     return any(re.search(p, t) for p in STOP_PATTERNS)
 
 
@@ -97,9 +90,15 @@ def validate_llm_summary(
             return False
     return True
 
-
-def _is_pl(lang: str) -> bool:
-    return True
+def _is_pl(lang: str | None) -> bool:
+    """
+    Zwraca True, gdy `lang` reprezentuje język polski.
+    Akceptuje warianty: 'pl', 'PL', 'pl-PL', 'pl_PL', None/'' → False.
+    """
+    if not lang:
+        return False
+    code = str(lang).strip().lower().replace("_", "-")
+    return code == "pl" or code.startswith("pl-")
 
 
 def join_with_conjunction(items: List[str], conj_pl: str = "i") -> str:

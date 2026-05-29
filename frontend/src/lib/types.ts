@@ -1,9 +1,11 @@
 // src/lib/types.ts
+
 export type Role = "user" | "assistant";
 
 export interface ChatMessage {
   role: Role;
   content: string;
+  createdAt: string; // 👈 Dodane pole, aby komponenty UI (np. MessageBubble, ChatUI) miały dostęp do daty utworzenia wiadomości
 }
 
 export interface TopDiagnosis {

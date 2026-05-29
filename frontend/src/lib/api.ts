@@ -58,11 +58,16 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-/** Deduplikacja exchange'ów, by nie wywoływać /auth/session równolegle */
 let exchangePromise: Promise<boolean> | null = null;
 
+const PREWARM_TTL_MS = 60_000;
+let _lastPrewarmOkAt = 0;
+
 /** Utrzymanie backendowego cookie sesji (export – do pre-warmu) */
-export async function ensureBackendSession(): Promise<boolean> {
+export async function ensureBackendSession(force = false): Promise<boolean> {
+    if (!force && Date.now() - _lastPrewarmOkAt < PREWARM_TTL_MS) {
+        return true; // świeże, nie ma sensu znowu pytać
+    }
     if (exchangePromise) return exchangePromise;
     exchangePromise = (async () => {
         const access = await getTokenWait(2000);
@@ -73,6 +78,9 @@ export async function ensureBackendSession(): Promise<boolean> {
                 headers: { Authorization: `Bearer ${access}` },
                 credentials: "include",
             });
+            if (r.ok) {
+                _lastPrewarmOkAt = Date.now();
+            }
             return r.ok;
         } catch {
             return false;
@@ -121,49 +129,118 @@ async function buildHeaders(init?: RequestInit): Promise<Headers> {
     return h;
 }
 
-/** Ujednolicony wrapper na fetch (Bearer + COOKIES) z retry 1× po 401 */
-export async function apiFetch<T = any>(path: string, init: RequestInit = {}): Promise<T> {
-    const headers = await buildHeaders(init);
-    const doFetch = () =>
-        fetch(`${API_BASE}${path}`, {
-            ...init,
-            headers,
-            credentials: "include",
-        });
+const DEFAULT_TIMEOUT_MS = 180_000; // 3 min — wystarczy na długą generację LLM
 
-    let res = await doFetch();
+function _isMutating(method?: string): boolean {
+    const m = (method || "GET").toUpperCase();
+    return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE";
+}
 
-    if (res.status === 401) {
-        const ok = await ensureBackendSession();
-        if (ok) res = await doFetch();
+function _isChatEndpoint(path: string): boolean {
+    return path === "/chat" || path.startsWith("/chat?");
+}
+
+/** Ujednolicony wrapper na fetch (Bearer + COOKIES) z timeoutem i selektywnym retry. */
+export async function apiFetch<T = any>(
+    path: string,
+    init: RequestInit = {},
+    opts: { timeoutMs?: number } = {}
+): Promise<T> {
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const mutating = _isMutating(init.method);
+
+    // v9: prewarm TYLKO dla /chat (nie dla każdego POST). TTL=60s i tak
+    // sprawi że faktyczny request idzie najwyżej raz na minutę.
+    if (mutating && _isChatEndpoint(path)) {
+        try {
+            await ensureBackendSession();
+        } catch {
+            // ignorujemy — i tak spróbujemy
+        }
     }
 
-    const text = await res.text().catch(() => "");
-    let data: any = null;
+    // Łączymy zewnętrzny signal (jeśli jest) z naszym timeoutem.
+    const localCtrl = new AbortController();
+    const timeoutId = setTimeout(() => localCtrl.abort(), timeoutMs);
+
+    const externalSignal = init.signal;
+    const onExternalAbort = () => localCtrl.abort();
+    if (externalSignal) {
+        if (externalSignal.aborted) localCtrl.abort();
+        else externalSignal.addEventListener("abort", onExternalAbort);
+    }
+
+    const cleanup = () => {
+        clearTimeout(timeoutId);
+        externalSignal?.removeEventListener("abort", onExternalAbort);
+    };
+
     try {
-        data = text ? JSON.parse(text) : null;
-    } catch {
-        data = text || null;
-    }
+        const headers = await buildHeaders(init);
+        const doFetch = () =>
+            fetch(`${API_BASE}${path}`, {
+                ...init,
+                headers,
+                credentials: "include",
+                signal: localCtrl.signal,
+            });
 
-    if (!res.ok) {
-        if (res.status === 401) emitUnauthorized();
-        const detail =
-            (data && (data.detail || data.message)) ||
-            (typeof data === "string" ? data : "") ||
-            res.statusText;
-        throw new Error(`API ${res.status}: ${detail}`);
-    }
+        let res: Response;
+        try {
+            res = await doFetch();
+        } catch (e: any) {
+            // Rozróżniamy timeout od innych błędów sieciowych
+            if (e?.name === "AbortError") {
+                if (localCtrl.signal.aborted && !externalSignal?.aborted) {
+                    throw new Error(
+                        `API timeout po ${Math.round(timeoutMs / 1000)}s: ${path}. ` +
+                        `Backend może wciąż liczyć — odśwież stronę za chwilę.`
+                    );
+                }
+                throw new Error(`Żądanie anulowane: ${path}`);
+            }
+            throw e;
+        }
 
-    if (res.status === 204) return {} as T;
-    return (data ?? {}) as T;
+        // Retry 401 TYLKO dla idempotentnych metod (GET/HEAD).
+        // Dla POST /chat dwa requesty = dwa wywołania LLM równolegle = deadlock.
+        if (res.status === 401 && !mutating) {
+            const ok = await ensureBackendSession();
+            if (ok) res = await doFetch();
+        }
+
+        const text = await res.text().catch(() => "");
+        let data: any = null;
+        try {
+            data = text ? JSON.parse(text) : null;
+        } catch {
+            data = text || null;
+        }
+
+        if (!res.ok) {
+            if (res.status === 401) emitUnauthorized();
+            const detail =
+                (data && (data.detail || data.message)) ||
+                (typeof data === "string" ? data : "") ||
+                res.statusText;
+            throw new Error(`API ${res.status}: ${detail}`);
+        }
+
+        if (res.status === 204) return {} as T;
+        return (data ?? {}) as T;
+    } finally {
+        cleanup();
+    }
 }
 
 /* ─────────── PRE-WARM: publiczne API do „dogrzewania” sesji ─────────── */
 
-/** Publiczny pre-warm (używany przez strażników/klient-bootstrap) */
-export async function prewarmAuth(_force = false): Promise<boolean> {
-    return ensureBackendSession();
+/**
+ * Publiczny pre-warm (używany przez strażników/klient-bootstrap).
+ * v9: `force=true` omija TTL cache (useful po świeżym logowaniu).
+ */
+export async function prewarmAuth(force = false): Promise<boolean> {
+    return ensureBackendSession(force);
 }
 
 /** Jednorazowa instalacja strażników focus/visibility/online */
@@ -175,7 +252,8 @@ export function installSessionGuards() {
     // @ts-ignore
     (window as any).__scGuardsInstalled = true;
 
-    const warm = () => { void prewarmAuth(); };
+    // v9: bez force — TTL cache zadba, żeby nie spamić.
+    const warm = () => { void prewarmAuth(false); };
 
     window.addEventListener("focus", warm);
     window.addEventListener("online", warm);
@@ -183,25 +261,39 @@ export function installSessionGuards() {
         if (document.visibilityState === "visible") warm();
     });
 
-    // szybkie dogrzanie po załadowaniu
-    void prewarmAuth();
+    // szybkie dogrzanie po załadowaniu — force=true, bo to pierwszy raz
+    void prewarmAuth(true);
 }
 
 /* =======================
    ======== AUTH =========
    ======================= */
 
-export async function exchangeSession(): Promise<any | null> {
-    const access = await getTokenWait(2000);
-    if (!access) return null;
+let _exchangeSessionPromise: Promise<any | null> | null = null;
 
-    const r = await fetch(`${API_BASE}/auth/session`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${access}` },
-        credentials: "include",
-    });
-    if (!r.ok) throw new Error(await r.text());
-    return await r.json(); // UserOut
+export async function exchangeSession(): Promise<any | null> {
+    if (_exchangeSessionPromise) return _exchangeSessionPromise;
+    _exchangeSessionPromise = (async () => {
+        const access = await getTokenWait(2000);
+        if (!access) return null;
+
+        const r = await fetch(`${API_BASE}/auth/session`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${access}` },
+            credentials: "include",
+        });
+        if (!r.ok) throw new Error(await r.text());
+        // v9: świeży exchange = reset TTL, żeby kolejne ensureBackendSession()
+        // nie strzelało następnego /auth/session bez powodu.
+        _lastPrewarmOkAt = Date.now();
+        return await r.json(); // UserOut
+    })();
+    try {
+        return await _exchangeSessionPromise;
+    } finally {
+        // krótkie okno deduplikacji (~500ms) na dogonienie pozostałych wywołań
+        setTimeout(() => { _exchangeSessionPromise = null; }, 500);
+    }
 }
 
 export async function login(email: string, password: string): Promise<void> {
@@ -237,12 +329,25 @@ export async function logout(): Promise<void> {
 }
 
 export async function getMe<T = any>(): Promise<T | null> {
-    try {
-        const { data } = await api.get<T>("/auth/me");
-        return (data as T) ?? null;
-    } catch {
-        return null;
+    // v10: po Ctrl+R AuthProvider robi tu pierwsze sprawdzenie kim jest user.
+    // Jeśli to padnie (401, timing race z exchangeSession), AuthProvider
+    // myśli że user nie jest zalogowany — nawigacja idzie na login, wszystko
+    // wygląda jakby "backend odpadł". Retry z prewarm naprawia to.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const { data } = await api.get<T>("/auth/me");
+            return (data as T) ?? null;
+        } catch (e: any) {
+            const status = e?.response?.status;
+            if (status === 401 && attempt < 2) {
+                try { await ensureBackendSession(true); } catch {}
+                await new Promise(r => setTimeout(r, 400 * Math.pow(2, attempt)));
+                continue;
+            }
+            return null;
+        }
     }
+    return null;
 }
 
 export async function me<T = any>(): Promise<T> {
@@ -313,18 +418,30 @@ export function getTop3Split(
    ========= HEALTH ======
    ======================= */
 export async function healthcheck(): Promise<boolean> {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5_000);
     try {
-        const res = await fetch(`${API_BASE}/health`, { cache: "no-store", credentials: "include" });
+        const res = await fetch(`${API_BASE}/health`, {
+            cache: "no-store",
+            credentials: "include",
+            signal: ctrl.signal,
+        });
         return res.ok;
     } catch {
         return false;
+    } finally {
+        clearTimeout(t);
     }
 }
 
 export type HealthStatus = { xgb_ready?: boolean; matcher_ready?: boolean; llm_ready?: boolean };
 
 export function getHealthDetailed(): Promise<HealthStatus> {
-    return apiFetch<HealthStatus>("/health", { cache: "no-store" as any });
+    // v10: 10s → 30s. Pod load'em (np. w trakcie generacji LLM) Supabase
+    // getTokenRaw() + buildHeaders bywa wolniejsze, a 10s wystarczało żeby
+    // pojedyncze opóźnienie wystrzeliło status "Błąd" w UI, mimo że backend
+    // żyje. Status w UI ma być sygnałem realnego problemu, nie spike'ów.
+    return apiFetch<HealthStatus>("/health", { cache: "no-store" as any }, { timeoutMs: 30_000 });
 }
 
 /* =======================
@@ -360,13 +477,55 @@ export type HistoryDetail = {
 };
 
 export function listHistory(signal?: AbortSignal): Promise<HistoryItem[]> {
-    return apiFetch<HistoryItem[]>("/history", { signal } as RequestInit);
+    // v10: history ma być ZAWSZE dostępna — opakowane w retry z backoffem.
+    // Po Ctrl+R apiFetch potrafi trafić moment, gdy Supabase rehydratuje sesję
+    // z localStorage i backend nie ma jeszcze cookie. Domyślny retry-on-401
+    // w apiFetch obsługuje to dla pojedynczego wywołania, ale jeśli sam
+    // ensureBackendSession() potrzebuje 1-2s na refresh tokenu Supabase,
+    // wciąż możemy dostać 401. Retry z backoffem pokrywa ten przypadek.
+    return _withAuthRetry(
+        () => apiFetch<HistoryItem[]>("/history", { signal } as RequestInit, { timeoutMs: 15_000 }),
+        signal
+    );
 }
 
 export function getConversation(convId: number, signal?: AbortSignal): Promise<HistoryDetail> {
-    return apiFetch<HistoryDetail>(`/history/${convId}`, { signal } as RequestInit);
+    return _withAuthRetry(
+        () => apiFetch<HistoryDetail>(`/history/${convId}`, { signal } as RequestInit, { timeoutMs: 15_000 }),
+        signal
+    );
 }
 
 export async function deleteConversation(convId: number): Promise<void> {
     await apiFetch(`/history/${convId}`, { method: "DELETE" });
+}
+
+async function _withAuthRetry<T>(
+    fn: () => Promise<T>,
+    signal?: AbortSignal,
+    maxAttempts = 3
+): Promise<T> {
+    let lastErr: any = null;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        if (signal?.aborted) throw new Error("Aborted");
+        try {
+            return await fn();
+        } catch (e: any) {
+            lastErr = e;
+            const msg = String(e?.message || "");
+            // Tylko 401 retryujemy z wymuszonym prewarm. 4xx (inne) i 5xx —
+            // przekazujemy wyżej bez retry (powtarzanie i tak nie pomoże).
+            const is401 = msg.includes("API 401:");
+            if (!is401) throw e;
+            if (attempt === maxAttempts - 1) break;
+            // Wymuś świeży exchange sesji — może Supabase już zdążył odświeżyć token
+            try {
+                await ensureBackendSession(true);
+            } catch {}
+            // Backoff: 400ms, 1200ms, 2800ms
+            const delay = 400 * Math.pow(2.5, attempt);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastErr;
 }

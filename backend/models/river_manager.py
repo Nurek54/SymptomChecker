@@ -5,7 +5,7 @@ import time
 import joblib
 import logging
 import warnings
-from typing import List, Tuple, Optional, Dict, Any, Union
+from typing import List, Tuple, Optional, Dict, Any, Union, Set
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,6 @@ from sklearn.metrics import accuracy_score, f1_score
 from river import linear_model, optim
 from river.multiclass import OneVsRestClassifier
 
-# ───── config ─────
 from config import (
     DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     RIVER_MODEL_PATH, RIVER_CALIB_PATH, RIVER_CALIBRATION_CSV,
@@ -23,7 +22,6 @@ from config import (
     XGB_RANDOM_STATE,
 )
 
-# ───── opcje ważenia (fallback, jeśli nie ma w config.py) ─────
 try:
     from config import RIVER_WEIGHT_MEDIAN_NORM, RIVER_WEIGHT_CAP, RIVER_WEIGHT_MIN
 except Exception:
@@ -36,9 +34,8 @@ if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 
 RIVER_FEATURES_PATH = os.path.join(os.path.dirname(RIVER_MODEL_PATH), "river_features.json")
-SPECIAL_COLS = {"diseases", "xgb_label", "weight"}  # zawsze używamy lowercase
+SPECIAL_COLS = {"diseases", "xgb_label", "weight"}
 
-# ───────────────────────── helpery ─────────────────────────
 def _learn_in_place(model: OneVsRestClassifier, x: Dict[str, int], y: str, w: Optional[float] = None) -> OneVsRestClassifier:
     ret = model.learn_one(x, y, w=w) if w is not None else model.learn_one(x, y)
     return ret if ret is not None else model
@@ -56,9 +53,6 @@ def _softmax(z: np.ndarray) -> np.ndarray:
     return ez / ez.sum(axis=1, keepdims=True)
 
 def _norm_entropy(ps) -> float:
-    """
-    Zwraca entropię znormalizowaną do [0,1]; ~1.0 oznacza prawie 'uniform'.
-    """
     ps = np.asarray(ps, dtype=float)
     ps = ps[(ps > 0) & np.isfinite(ps)]
     if ps.size <= 1:
@@ -95,7 +89,6 @@ def _sanitize_weights_series(s: pd.Series) -> pd.Series:
 def _sanitize_single_weight(wi: float) -> float:
     return float(_sanitize_weights_series(pd.Series([wi], dtype=float)).iloc[0])
 
-# ───────────────────────── IO ─────────────────────────
 def _load_train_dataframe() -> pd.DataFrame:
     log.info("[River][IO] Start: wczytywanie TRAIN z %s", DATA_CSV)
     t0 = time.time()
@@ -103,7 +96,6 @@ def _load_train_dataframe() -> pd.DataFrame:
         raise FileNotFoundError(f"Brak pliku z danymi: {DATA_CSV}")
     df = pd.read_csv(DATA_CSV)
 
-    # Ujednolicenie nazw kolumn do lowercase (zgodność z set_features)
     df.columns = [str(c).strip().lower() for c in df.columns]
 
     if "diseases" not in df.columns:
@@ -164,7 +156,6 @@ def _maybe_load_test(features: List[str]) -> Optional[Tuple[pd.DataFrame, pd.Ser
              time.time() - t0, len(yte), Xte.shape[1])
     return Xte, yte
 
-# ───────────────────────── Artefakty ─────────────────────────
 def _save_artifacts(model: OneVsRestClassifier, features: List[str]) -> None:
     log.info("[River][ART] Start: zapis artefaktów do %s", RIVER_MODEL_PATH)
     t0 = time.time()
@@ -195,14 +186,7 @@ def _load_artifacts() -> Tuple[Optional[OneVsRestClassifier], List[str]]:
         log.warning("[River][ART] Nie udało się wczytać modelu: %s", e)
         return None, []
 
-# ───────────────────────── Kalibrator temperatury ─────────────────────────
 class RiverTemperatureCalibrator:
-    """
-    Kalibracja multiclass dla OVR Rivera:
-      - liczymy marginesy m_k = logit(p_k(x)) − logit(p_k({}))  (odjęty bias klasy),
-      - na marginesy stosujemy softmax(m_k / T),
-      - T dobieramy minimalizując NLL.
-    """
     def __init__(self, T: float = 1.0, classes: Optional[List[str]] = None):
         self.T: float = float(T)
         self.classes_: List[str] = list(classes) if classes else []
@@ -303,16 +287,7 @@ class RiverTemperatureCalibrator:
         log.info("[River][Cal] Załadowano T=%.5f (klas=%d).", T, len(classes))
         return cls(T=T, classes=classes)
 
-# ───────────────────────── Manager ─────────────────────────
 class RiverManager:
-    """
-    Menedżer online'owej regresji logistycznej One-vs-Rest w River:
-    - set_features(feats): wymuś kolejność cech (np. z XGB),
-    - train(): wczytanie artefaktów / bootstrap,
-    - calibrate(): dobór temperatury,
-    - predict_topk(): szybka predykcja z neutralizacją biasu klas i (opcjonalnie) kalibracją.
-    """
-
     def __init__(self):
         self.model: Optional[OneVsRestClassifier] = None
         self.features: List[str] = []
@@ -322,7 +297,6 @@ class RiverManager:
         self._forced_features: List[str] = []  # wymuszone przez set_features()
         self._base_proba: Optional[Dict[str, float]] = None  # cache P(y|{})
 
-    # ─── wymuszenie listy cech (np. z XGB) ───
     def set_features(self, feats: Optional[List[str]]) -> None:
         fs = [str(f).strip().lower() for f in (feats or []) if str(f).strip()]
         self._forced_features = list(fs)
@@ -385,7 +359,6 @@ class RiverManager:
         return v
 
     def _baseline_proba(self) -> Dict[str, float]:
-        """Cache P(y|{}) – rozkład bazowy (bias)."""
         if self.model is None:
             return {}
         if self._base_proba is None:
@@ -394,7 +367,6 @@ class RiverManager:
             self._base_proba = {c: float(base.get(c, 1e-9)) for c in classes}
         return self._base_proba
 
-    # ───── kalibracja ─────
     def calibrate(self, csv_path: Optional[str] = None, limit: Optional[int] = None) -> float:
         log.info("[River][Cal] Start: calibrate(csv_path=%s, limit=%s)", str(csv_path), str(limit))
         t0 = time.time()
@@ -429,7 +401,6 @@ class RiverManager:
         log.info("[River][Cal] Zakończono: T=%.5f (n=%d) w %.2fs.", T, n, time.time() - t0)
         return T
 
-    # ───── train (jak XGB) ─────
     def train(self) -> None:
         log.info("[River][Train] ▶ Start train()")
         t_all = time.time()
@@ -438,9 +409,26 @@ class RiverManager:
 
         model, feats_loaded = _load_artifacts()
         if model is not None and feats_loaded:
-            if forced and feats_loaded != self._forced_features:
-                log.warning("[River][Train] Artefakty mają inny porządek cech niż XGB — retraining z porządkiem XGB.")
-                model = None  # wymuś bootstrap
+            if forced:
+                loaded_set = set(feats_loaded)
+                forced_set = set(self._forced_features)
+                if loaded_set != forced_set:
+                    missing = forced_set - loaded_set
+                    extra = loaded_set - forced_set
+                    log.warning(
+                        "[River][Train] Zbiór cech artefaktów różni się od XGB — retrain. "
+                        "missing=%d extra=%d", len(missing), len(extra),
+                    )
+                    model = None  # wymuś bootstrap
+                else:
+                    self.model = model
+                    self.features = list(self._forced_features)
+                    self._prepare_vector_template()
+                    self.warmup()
+                    self._base_proba = None
+                    log.info(
+                        "[River][Train] Zbiór cech zgodny — używam załadowanego modelu z porządkiem XGB."
+                    )
             else:
                 self.model = model
                 self.features = feats_loaded
@@ -545,7 +533,6 @@ class RiverManager:
 
         log.info("[River][Train] ■ Zakończono train() w %.2fs", time.time() - t_all)
 
-    # ─────────────────────────── API: incremental ───────────────────────────
     def train_incremental(self, new_csv: str, limit: Optional[int] = None) -> None:
         log.info("[River][INC] ▶ Start train_incremental(new_csv=%s, limit=%s)", new_csv, str(limit))
         t_all = time.time()
@@ -611,16 +598,7 @@ class RiverManager:
 
         log.info("[River][INC] ■ Zakończono train_incremental() w %.2fs", time.time() - t_all)
 
-    # ─────────────────────────── API: predict (FAST) — naprawione ───────────────────────────
     def _x_from_vec(self, vec: Union[List[List[int]], List[int], Dict[str, int], set, tuple]) -> Tuple[Dict[str, int], int]:
-        """
-        Buduje słownik {feature_name: 1} oraz zwraca liczbę aktywnych cech.
-        Obsługuje:
-          - listę list ([[...]]),
-          - listę 0/1 w jednym wymiarze ([...]),
-          - dict {"feature":1, ...},
-          - set/tuple nazw cech.
-        """
         need = len(self.features)
         if need == 0:
             return {}, 0
@@ -692,7 +670,7 @@ class RiverManager:
         else:
             lam = 0.80
 
-        base = self._baseline_proba()  # cache P(y|{})
+        base = self._baseline_proba()
         base_logits = {c: _logit(float(base.get(c, 1e-9))) for c in classes}
 
         margins = np.asarray(
@@ -705,11 +683,9 @@ class RiverManager:
         if cal is not None and cal.classes_ == classes:
             probs = cal.transform_proba(margins)[0]
         else:
-            probs = _softmax(margins / 0.9)[0]  # lekki sharpen bez kalibratora
+            probs = _softmax(margins / 0.9)[0]
 
-        # Jeśli bardzo płasko LUB blisko priors → użyj ostrzejszych marginesów z pełnym odjęciem biasu
         flat = _norm_entropy(probs) > 0.985
-        # podobieństwo do priors (kosinus) — gdy ~1.0, rozkład ≈ priors
         p = np.asarray([probs[list(classes).index(c)] for c in classes], dtype=float)
         b = np.asarray([base.get(c, 1e-9) for c in classes], dtype=float)
         denom = (np.linalg.norm(p) * np.linalg.norm(b)) or 1.0
@@ -748,13 +724,7 @@ class RiverManager:
         return res
 
 
-# ───────────────────────── Thin wrapper dla routera ─────────────────────────
 class RiverIncrementalTrainer:
-    """
-    Cienki wrapper wykorzystywany przez router. Pozwala:
-      - fit_from_csv(csv_path, limit, allow_new_classes, allow_new_features)
-      - train_one(feats_dict, label, weight, allow_new_classes, allow_new_features)
-    """
     def __init__(self, mgr: RiverManager):
         self.mgr = mgr
 

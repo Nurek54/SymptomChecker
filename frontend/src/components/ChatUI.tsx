@@ -38,7 +38,7 @@ const AURORA = "linear-gradient(120deg, rgba(52,211,153,.35), rgba(56,189,248,.3
 const AURORA_SOFT = "linear-gradient(120deg, rgba(52,211,153,.25), rgba(56,189,248,.25), rgba(167,139,250,.25))";
 const AURORA_HALO = "linear-gradient(120deg, rgba(52,211,153,.55), rgba(56,189,248,.55), rgba(167,139,250,.55))";
 
-type QuickIntent = { label: string; text: string; icon: ElementType };
+type QuickIntent = { label: string; text: string; icon: ElementType; tint: string };
 
 export default function ChatUI() {
     // === SessionId ===
@@ -81,25 +81,31 @@ export default function ChatUI() {
         () => [] as { role: "user" | "assistant"; content: string; createdAt: string }[],
         []
     );
+
     const messages: ChatMessage[] = useMemo(
         () =>
             (storedMsgs ?? EMPTY_LIST).map((m) => ({
                 role: m.role,
                 content: m.content,
+                createdAt: m.createdAt,
             })),
         [storedMsgs, EMPTY_LIST]
     );
 
     // Powitanie tylko raz
     useEffect(() => {
-        const arr = (useChatStore.getState().bySession[sessionId] ?? []) as typeof EMPTY_LIST;
-        if (arr.length === 0) {
-            addMsg(sessionId, {
-                role: "assistant",
-                content: "Cześć! Opisz proszę swoje objawy…",
-                createdAt: new Date().toISOString(),
-            });
-        }
+        const tid = setTimeout(() => {
+            const arr = (useChatStore.getState().bySession[sessionId] ?? []) as typeof EMPTY_LIST;
+            if (arr.length === 0) {
+                addMsg(sessionId, {
+                    role: "assistant",
+                    content: "Cześć! Opisz proszę swoje objawy…",
+                    createdAt: new Date().toISOString(),
+                });
+            }
+        }, 100); // 100ms na hydrację persist'a; jest synchronous dla localStorage,
+                 // ale w Strict Mode efekty mogą reentrować — opóźnienie chroni.
+        return () => clearTimeout(tid);
     }, [sessionId, addMsg]);
 
     // === Lokalne ===
@@ -160,41 +166,77 @@ export default function ChatUI() {
                 label: "Choroba?",
                 text: "Na podstawie moich objawów powiedz, jaka choroba jest najbardziej prawdopodobna i dlaczego.",
                 icon: Stethoscope,
+                tint: "text-emerald-400",
             },
             {
                 label: "Zalecenia",
                 text: "Proszę podaj mi konkretne zalecenia.",
                 icon: ClipboardList,
+                tint: "text-cyan-400",
             },
             {
                 label: "Pilność",
                 text: "Oceń pilność mojej sytuacji i powiedz, czy powinienem iść do lekarza.",
                 icon: AlertTriangle,
+                tint: "text-amber-400",
             },
             {
                 label: "Leki OTC",
                 text: "Jakie leki bez recepty mogą pomóc? Proszę o dawki i przeciwwskazania.",
                 icon: Pill,
+                tint: "text-cyan-400",
             },
             {
                 label: "Profilaktyka",
                 text: "Jak mogę zapobiegać pogorszeniu i jakie środki domowe polecacie?",
                 icon: ShieldCheck,
+                tint: "text-cyan-400",
             },
             {
                 label: "Podsumuj",
                 text: "Streść dotychczasową rozmowę w punktach i zaproponuj następny krok.",
                 icon: Sparkles,
+                tint: "text-violet-400",
             },
         ],
         []
     );
 
+    const abortRef = useRef<AbortController | null>(null);
+
+    // Anuluj trwające żądanie gdy komponent się odmonowuje albo zmienia się sesja.
+    useEffect(() => {
+        return () => {
+            abortRef.current?.abort();
+            abortRef.current = null;
+        };
+    }, [sessionId]);
+
     // Wspólna wysyłka
     const sendText = useCallback(
         async (text: string) => {
             const trimmed = text.trim();
-            if (!trimmed || busy) return;
+            if (!trimmed) return;
+
+            // v7: gdy backend wciąż liczy poprzednią odpowiedź — informujemy użytkownika.
+            // Wcześniej cichaczem odrzucało (return bez śladu), więc użytkownik nie wiedział,
+            // dlaczego druga wiadomość "nie zadziałała". Teraz pokazujemy assistantowi
+            // krótki komunikat, żeby było widać, że żądanie zostało zauważone.
+            if (busy) {
+                addMsg(sessionId, {
+                    role: "user",
+                    content: trimmed,
+                    createdAt: new Date().toISOString(),
+                });
+                addMsg(sessionId, {
+                    role: "assistant",
+                    content:
+                        "Jeszcze pracuję nad poprzednią odpowiedzią — daj mi chwilę i ponów pytanie, " +
+                        "gdy zobaczysz, że skończyłem (znak ładowania zniknie).",
+                    createdAt: new Date().toISOString(),
+                });
+                return;
+            }
 
             addMsg(sessionId, {
                 role: "user",
@@ -203,8 +245,19 @@ export default function ChatUI() {
             });
             setBusy(true);
 
+            abortRef.current?.abort(); // jakby coś zostało z poprzedniej iteracji
+            const ctrl = new AbortController();
+            abortRef.current = ctrl;
+
+            const SAFETY_MS = 200_000; // 3:20 — trochę więcej niż timeout w apiFetch (180s)
+            const safetyTimer = setTimeout(() => {
+                if (abortRef.current === ctrl) {
+                    ctrl.abort();
+                }
+            }, SAFETY_MS);
+
             try {
-                const data: ChatApiResponse = await sendChat(trimmed, sessionId);
+                const data: ChatApiResponse = await sendChat(trimmed, sessionId, ctrl.signal);
                 const reply = data.response || "(brak odpowiedzi)";
 
                 addMsg(sessionId, {
@@ -226,14 +279,22 @@ export default function ChatUI() {
                     topDiag: mappedTop,
                 });
             } catch (e: any) {
+                const isAbort =
+                    e?.name === "AbortError" ||
+                    String(e?.message || "").toLowerCase().includes("timeout") ||
+                    String(e?.message || "").toLowerCase().includes("anulowane");
                 addMsg(sessionId, {
                     role: "assistant",
-                    content: `Niestety, coś poszło nie tak: ${
-                        e?.message || "nieznany błąd"
-                    }`,
+                    content: isAbort
+                        ? "Backend nie odpowiedział na czas. Spróbuj jeszcze raz — jeśli powtórzy się kilka razy, sprawdź logi serwera (możliwy wyścig na LLM)."
+                        : `Niestety, coś poszło nie tak: ${e?.message || "nieznany błąd"}`,
                     createdAt: new Date().toISOString(),
                 });
             } finally {
+                clearTimeout(safetyTimer);
+                if (abortRef.current === ctrl) {
+                    abortRef.current = null;
+                }
                 setBusy(false);
             }
         },
@@ -320,6 +381,18 @@ export default function ChatUI() {
         }
     };
 
+    const isEmptyState =
+        messages.length <= 1 && (!messages[0] || messages[0].role === "assistant");
+
+    // Lista przykładowych otwarć — short, conversational, klikalne wstawiają
+    // tekst od razu do inputu (nie wysyła, user może edytować).
+    const SUGGESTED_PROMPTS = [
+        "Boli mnie głowa od 2 dni",
+        "Mam gorączkę i kaszel",
+        "Wysypka na ramieniu",
+        "Ból brzucha po posiłku",
+    ];
+
     // ====== RENDER ======
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-surface text-basecolor">
@@ -351,16 +424,70 @@ export default function ChatUI() {
                                     key={i}
                                     role={m.role}
                                     content={m.content}
+                                    createdAt={m.createdAt}
                                 />
                             ))}
 
+                            {}
+                            {isEmptyState && !busy && (
+                                <div className="ml-0 sm:ml-10 mt-1 flex flex-wrap gap-2 animate-in fade-in duration-500">
+                                    {SUGGESTED_PROMPTS.map((p) => (
+                                        <button
+                                            key={p}
+                                            onClick={() => {
+                                                setInput(p);
+                                                requestAnimationFrame(() => {
+                                                    inputRef.current?.focus();
+                                                    autosize();
+                                                });
+                                            }}
+                                            className="group relative inline-flex items-center gap-1.5 rounded-full border border-base bg-card px-3 py-1.5 text-xs text-muted transition-all hover:border-emerald-400/40 hover:bg-input hover:text-basecolor focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40"
+                                            title="Kliknij, aby wstawić do pola"
+                                        >
+                                            <span className="text-[10px] opacity-50">→</span>
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {}
                             {busy && (
-                                <div className="flex items-center gap-2 text-sm text-muted">
-                  <span
-                      className="inline-block h-2 w-2 rounded-full"
-                      style={{ background: AURORA }}
-                  />
-                                    <Spinner /> asystent myśli…
+                                <div className="flex w-full justify-start">
+                                    <div className="mr-2 mt-0.5 hidden shrink-0 sm:block">
+                                        <span
+                                            className="relative grid h-8 w-8 place-items-center rounded-full border border-base shadow-sm"
+                                            style={{
+                                                background:
+                                                    "linear-gradient(135deg, rgba(52,211,153,.18), rgba(56,189,248,.18) 55%, rgba(167,139,250,.18))",
+                                            }}
+                                            aria-hidden
+                                        >
+                                            <Stethoscope className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
+                                        </span>
+                                    </div>
+                                    <div className="rounded-2xl rounded-bl-md border border-base bg-card px-4 py-3 shadow-sm">
+                                        <span className="flex items-end gap-1" aria-label="Asystent pisze…">
+                                            <span
+                                                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400/80"
+                                                style={{ animation: "sc-typing 1.4s ease-in-out infinite" }}
+                                            />
+                                            <span
+                                                className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-400/80"
+                                                style={{
+                                                    animation: "sc-typing 1.4s ease-in-out infinite",
+                                                    animationDelay: "0.2s",
+                                                }}
+                                            />
+                                            <span
+                                                className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400/80"
+                                                style={{
+                                                    animation: "sc-typing 1.4s ease-in-out infinite",
+                                                    animationDelay: "0.4s",
+                                                }}
+                                            />
+                                        </span>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -381,7 +508,7 @@ export default function ChatUI() {
                                 <div className="-mb-[6px] w-full overflow-x-auto overflow-y-hidden">
                                     <div className="min-w-full flex justify-center">
                                         <div className="inline-flex items-center gap-1.5 whitespace-nowrap px-1">
-                                            {quickIntents.map(({ label, text, icon: Icon }) => (
+                                            {quickIntents.map(({ label, text, icon: Icon, tint }) => (
                                                 <button
                                                     key={label}
                                                     onClick={() => sendText(text)}
@@ -399,7 +526,7 @@ export default function ChatUI() {
                                                         style={{ background: AURORA_SOFT }}
                                                     />
                                                     <span className="relative z-10 inline-flex items-center gap-1.5 leading-none">
-                            <Icon className="h-4 w-4 shrink-0 -mt-[1px]" />
+                            <Icon className={`h-4 w-4 shrink-0 -mt-[1px] ${tint}`} />
                                                         {label}
                           </span>
                                                 </button>

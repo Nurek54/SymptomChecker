@@ -1,11 +1,10 @@
-# backend/main.py
 import os
 import importlib.util
 from pathlib import Path
 import uvicorn
 
 try:
-    from dotenv import load_dotenv  # type: ignore
+    from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass

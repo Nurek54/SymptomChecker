@@ -52,9 +52,22 @@ function pct(n?: number | null) {
 
 function ProbBar({ value }: { value: number }) {
   const w = Math.max(0, Math.min(100, value));
+  const gradient =
+    w >= 80
+      ? "linear-gradient(90deg, #34d399, #38bdf8)"            // emerald → cyan
+      : w >= 40
+      ? "linear-gradient(90deg, #38bdf8, #fbbf24)"            // cyan → amber
+      : "linear-gradient(90deg, rgba(148,163,184,.6), rgba(148,163,184,.85))"; // gray subtle
   return (
     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--border))]">
-      <div className="h-full rounded-full transition-[width]" style={{ width: `${w}%`, background: AURORA_BAR }} />
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${w}%`,
+          background: gradient,
+          transition: "width 600ms cubic-bezier(.4,0,.2,1), background 300ms",
+        }}
+      />
     </div>
   );
 }
@@ -602,9 +615,23 @@ export function TopDiagCard({
                   style={{ background: AURORA_SOFT }}
                 />
                 <div className="relative z-[1] flex items-center gap-2">
+                  {}
                   <span
-                    className="grid h-6 w-6 place-items-center shrink-0 rounded-lg border border-base bg-card text-[11px] font-semibold"
-                    style={{ background: "rgba(0,0,0,0.02)" }}
+                    className={[
+                      "grid h-6 w-6 place-items-center shrink-0 rounded-lg text-[11px] font-bold tabular-nums",
+                      i === 0
+                        ? "text-white shadow-sm border border-emerald-400/50"
+                        : i === 1
+                          ? "text-cyan-100 border border-cyan-400/60"
+                          : "text-muted border border-base bg-card",
+                    ].join(" ")}
+                    style={
+                      i === 0
+                        ? { background: "linear-gradient(135deg, #34d399, #10b981)" }
+                        : i === 1
+                          ? { background: "linear-gradient(135deg, rgba(56,189,248,.35), rgba(56,189,248,.15))" }
+                          : undefined
+                    }
                   >
                     {i + 1}
                   </span>

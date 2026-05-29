@@ -1,10 +1,17 @@
-# backend/core/state.py
-from dataclasses import dataclass
+from __future__ import annotations
+from dataclasses import dataclass, field
+from typing import Optional, TYPE_CHECKING
+
 import torch
-from backend.models.xgb_manager import XGBManager
-from backend.models.llm_manager import LLMManager
-from backend.services.symptom_matcher import SymptomMatcher
-from backend.services.session_store import SessionStore
+
+from models.xgb_manager import XGBManager
+from models.llm_manager import LLMManager
+from services.symptom_matcher import SymptomMatcher
+from services.session_store import SessionStore
+
+if TYPE_CHECKING:
+    from models.river_manager import RiverManager
+
 
 @dataclass
 class AppState:
@@ -13,3 +20,4 @@ class AppState:
     llm: LLMManager
     matcher: SymptomMatcher
     sessions: SessionStore
+    river: Optional["RiverManager"] = field(default=None)

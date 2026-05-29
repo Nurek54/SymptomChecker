@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, date
-
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
@@ -14,25 +13,17 @@ class TopDiagnosisItem(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    """Wejście dla endpointu /chat."""
     session_id: str
     user_input: str
     lang: str = "pl"
 
 
 class ChatResponse(BaseModel):
-    """
-    Wyjście z endpointu /chat, walidowane też w testach jednostkowych.
-
-    Pola:
-    - response: tekst odpowiedzi asystenta (wymagane),
-    - symptoms: lista objawów w formie kanonicznej (wymagane),
-    - top_diagnoses: lista pozycji Top-3 (opcjonalna w payloadzie – jeżeli
-      backend jej nie zwróci, dostaje pustą listę).
-    """
     response: str
     symptoms: list[str]
     top_diagnoses: list[TopDiagnosisItem] = Field(default_factory=list)
+    diagnosis_en: str | None = None
+    diagnosis_pl: str | None = None
 
 
 # ====== AUTH / USER ======

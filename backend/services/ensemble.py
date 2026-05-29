@@ -32,7 +32,6 @@ _EPS = 1e-12
 class EnsembleTopK:
     """
     Ensemble XGB + River.
-
     Zasada:
       - bierzemy Top-K z XGB i z River,
       - normalizujemy obie listy do rozkładu prawdopodobieństwa,
@@ -47,11 +46,6 @@ class EnsembleTopK:
     Publiczne API:
       - predict_topk(vec, k)  – to idzie na główny UI
       - predict_split(vec, k) – osobno XGB / River / Ensemble + meta (overlay).
-
-    Uwaga: w testach możesz nadpisać self.wx / self.wr i wtedy
-    używane są dokładnie te wagi (po renormalizacji), bez dodatkowej
-    dynamiki – dzięki temu testy typu „log-space weighted mean”
-    wychodzą jak trzeba.
     """
 
     def __init__(self, state: AppState):
@@ -63,7 +57,6 @@ class EnsembleTopK:
         self.min_wr = float(ENSEMBLE_MIN_RIVER_WEIGHT if ENSEMBLE_MIN_RIVER_WEIGHT is not None else 0.15)
         self.conf_gap = float(ENSEMBLE_CONF_GAP if ENSEMBLE_CONF_GAP is not None else 0.20)
 
-    # ── utils ──────────────────────────────────────────────────────────────────
     @staticmethod
     def _to_map(items: List[Dict[str, Any]]) -> Dict[str, float]:
         out: Dict[str, float] = {}
@@ -118,13 +111,8 @@ class EnsembleTopK:
             return 0
         return sum(1 for v in vec[0] if int(v) > 0)
 
-    # ── sygnał pewności ────────────────────────────────────────────────────────
     @staticmethod
     def _conf_signal(m: Dict[str, float]) -> float:
-        """
-        Publiczny sygnał "confidence" (0–1) – używany w testach,
-        nie powinien nigdy zwracać wartości ujemnych.
-        """
         if not m:
             return 0.0
         ps = list(m.values())
@@ -171,16 +159,7 @@ class EnsembleTopK:
 
         return wx, wr, gated_to
 
-    # ── główne API ─────────────────────────────────────────────────────────────
     def predict_topk(self, vec: List[List[int]], k: int = 3) -> List[Dict[str, Any]]:
-        """
-        Główna ścieżka – to jest używane do top_diagnoses na UI.
-        ZAWSZE robi fuzję XGB + River (oprócz sytuacji, gdy jeden model nie zwraca nic).
-
-        W trybie testowym:
-        - jeśli na instancji ustawiono atrybuty self.wx i self.wr,
-          to używamy tych wag (po renormalizacji) zamiast dynamiki.
-        """
         k_each = max(self.kfuse, int(k))
         t0 = time.perf_counter()
         top_x = self._safe_topk("xgb", vec, k=k_each)
@@ -195,7 +174,6 @@ class EnsembleTopK:
         mx = self._normalize(self._to_map(top_x)) if top_x else {}
         mr = self._normalize(self._to_map(top_r)) if top_r else {}
 
-        # tylko jeden model → nie ma co fuzjować
         if mx and not mr:
             best = heapq.nlargest(int(k), mx.items(), key=lambda kv: kv[1])
             return [{"diagnosis_en": n, "probability": float(p)} for n, p in best]
@@ -206,7 +184,6 @@ class EnsembleTopK:
         conf_x = self._confidence(mx)
         conf_r = self._confidence(mr)
 
-        # tryb testowy – ręczne wagi wx/wr
         manual_weights = hasattr(self, "wx") and hasattr(self, "wr")
         if manual_weights:
             wx_dyn = float(getattr(self, "wx"))
@@ -222,7 +199,6 @@ class EnsembleTopK:
         else:
             wx_dyn, wr_dyn, gated_to = self._compute_weights(mx, mr)
 
-        # obie listy → fuzja log-space
         keys = set(mx) | set(mr)
         scores: Dict[str, float] = {}
         for name in keys:
@@ -243,10 +219,6 @@ class EnsembleTopK:
         return [{"diagnosis_en": name, "probability": float(prob)} for name, prob in best]
 
     def predict_split(self, vec: List[List[int]], k: int = 3) -> Dict[str, Any]:
-        """
-        Overlay diagnostyczny – pokazuje osobno XGB / River / Ensemble + meta.
-        Tu robimy fuzję tak samo jak w predict_topk.
-        """
         k_each = max(self.kfuse, int(k))
         t0 = time.perf_counter()
         top_x = self._safe_topk("xgb", vec, k=k_each) or []
@@ -323,7 +295,6 @@ class EnsembleTopK:
                 },
             }
 
-        # obie listy → fuzja jak w predict_topk
         manual_weights = hasattr(self, "wx") and hasattr(self, "wr")
         if manual_weights:
             wx_dyn = float(getattr(self, "wx"))

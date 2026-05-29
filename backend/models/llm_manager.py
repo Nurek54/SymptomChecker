@@ -1,14 +1,13 @@
-# services/llm_manager.py
 from __future__ import annotations
 import os
 import time
 import json
 import traceback
+import threading
 import unicodedata
 import re
 from typing import List, Optional, Sequence
 
-# — ogranicz wątki bibliotek CPU (mniej szumu na CPU)
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
@@ -22,7 +21,6 @@ from config import (
     LLM_MIN_OUTPUT_CHARS, LLM_REPETITION_PENALTY, LLM_TOP_K,
 )
 
-# ── opcjonalne flagi ─────────────────────────────────────────────────────
 try:
     from config import LLM_THREADS
 except Exception:
@@ -39,17 +37,14 @@ try:
     from config import LLM_WARMUP
 except Exception:
     LLM_WARMUP = True
-# Cache strategia: "off" (domyślne), "hint", "on"
 try:
     from config import LLM_TUNING_CACHE_MODE
 except Exception:
     LLM_TUNING_CACHE_MODE = "off"  # 'off'|'hint'|'on'
 
-# Dodatkowe sterowanie autoboostem
-LLM_AUTBOOST_ENABLE = True  # można podpiąć pod config, jeśli chcesz
+LLM_AUTBOOST_ENABLE = True
 
 
-# ── utilsy tekstu ─────────────────────────────────────────────────
 _MULTISPACE_RE = re.compile(r"[ \t]{2,}")
 _NEWLINES_RE = re.compile(r"\r\n?")
 
@@ -73,28 +68,35 @@ def _apply_stop_sequences(text: str, stops: Sequence[str]) -> str:
             cut_idx = i if cut_idx is None else min(cut_idx, i)
     return text[:cut_idx] if cut_idx is not None else text
 
+def _looks_like_cut_word(text: str) -> bool:
+    if not text:
+        return False
+    s = text.rstrip()
+    if not s:
+        return False
+    last = s[-1]
+    if last in ".!?…":
+        return False
+    if last.isalnum():
+        return True
+    if last in ",;:-—":
+        return True
+    return False
+
+
 def _post_process(text: str, stops: Sequence[str]) -> str:
     text = _apply_stop_sequences(text, stops)
     text = _normalize_text(text)
-    if text and text[-1] not in ".!?…":
+    if text and text[-1] not in ".!?…" and not _looks_like_cut_word(text):
         text += "."
     return text
 
 
 class LLMManager:
-    """
-    Slot 'bielik' → ctransformers (GGUF)
-    API: load(), generate()
-
-    Zmiany:
-      • LLM_GPU_LAYERS = twardy sufit (upper bound) dla autoboostu,
-      • cache (.llm_tuning.json) zapisuje TYLKO spadki (downshift),
-      • wzrosty (autoboost w danej sesji) nie są utrwalane.
-    """
-
     def __init__(self):
         self.backend: Optional[str] = None
         self.model = None
+        self._gen_lock = threading.Lock()
 
         self._ctx_len = int(LLM_CONTEXT_LEN) if LLM_CONTEXT_LEN else 4096
         self._stops: List[str] = list(LLM_STOP_SEQUENCES or [])
@@ -122,13 +124,11 @@ class LLMManager:
         # efektywne warstwy w TEJ sesji
         self._gpu_layers_effective = int(LLM_GPU_LAYERS or 0)
 
-        # „sufit” trwały (persist) – nie zapisujemy wzwyż
         self._persist_layers_cap = int(LLM_GPU_LAYERS or 0)  # będzie nadpisany z cache, jeśli istnieje
 
         # ścieżka do pliku z wynikiem autotuningu
         self._tuning_path = os.path.abspath(".llm_tuning.json")
 
-    # ─────────────────────── ctransformers loader ───────────────────────
     def _load_ctransformers(self, repo: str, filename: str, gpu_layers: int):
         from ctransformers import AutoModelForCausalLM
         print(f"[LLM] ctransformers: repo={repo} file={filename} "
@@ -165,7 +165,6 @@ class LLMManager:
                 continue
         raise RuntimeError(f"ctransformers could not load the model (tried types: {candidates}). Last error: {last_err}")
 
-    # — pojedyncza próba z daną liczbą warstw —
     def _try_load_with_layers(self, layers: int) -> bool:
         try:
             self.model = self._load_ctransformers(self.repo, self.filename, int(layers))
@@ -178,14 +177,11 @@ class LLMManager:
                   "".join(traceback.format_exception_only(type(e), e)).strip())
             return False
 
-    # — sekwencja prób: start od hint, schodź w dół aż do CPU(0) —
     def _load_with_best_layers(self, hint_layers: int) -> bool:
-        # przygotuj malejącą listę kandydatów
         cand = []
         start = max(0, int(hint_layers))
         if start > 0:
             cand.append(start)
-            # schodzimy „co 16”, aż do 16; potem 8/4/2/1; na końcu 0 (CPU)
             x = start
             while x > 16:
                 x = max(16, x - 16)
@@ -216,7 +212,6 @@ class LLMManager:
                 return True
         return False
 
-    # — autoboost warstw w bieżącej SESJI (nie zapisujemy wzwyż) —
     def _gpu_layers_autoboost_session(self, upper_cap: int):
         if not LLM_AUTBOOST_ENABLE:
             return
@@ -228,7 +223,6 @@ class LLMManager:
 
         last_ok = min(base, upper_cap)
         if base > upper_cap:
-            # bezpieczeństwo: jeśli hint/cap się zmniejszył – nie podbijamy
             self._gpu_layers_effective = last_ok
             return
 
@@ -253,7 +247,6 @@ class LLMManager:
                           "".join(traceback.format_exception_only(type(e), e)).strip())
                     return
 
-    # — wykryj i maksuj prefill batch na GPU —
     def _probe_generation_kwargs(self):
         if int(self._gpu_layers_effective or 0) <= 0:
             return
@@ -299,7 +292,6 @@ class LLMManager:
         else:
             self._supports_batch_size = self._prefill_batch > 0
 
-    # — mikro-benchmark tok/s —
     def _measure_tps(self, threads: int) -> float:
         try:
             t0 = time.perf_counter()
@@ -340,21 +332,17 @@ class LLMManager:
         self._threads = int(pick)
         print(f"[LLM] threads set → {self._threads} (best={best_th}@{best_tps:.1f} tok/s, gpu-biased pick)")
 
-    # ── zapis/odczyt tuningu (persist only DOWN) ────────────────────────
     def _save_tuning(self):
         if LLM_TUNING_CACHE_MODE != "on":
             return
         try:
-            # zapisujemy TYLKO spadki: cap = min(stary_cap, bieżące_effective)
             cap_before = int(self._persist_layers_cap or 0)
             cap_after = int(min(self._persist_layers_cap or 1e9, self._gpu_layers_effective))
             self._persist_layers_cap = cap_after  # aktualizuj w pamięci
 
             data = {
                 "model_file": self.filename,
-                # persistujemy cap (downshift only) – sesyjne wzrosty nie są utrwalane
                 "persist_layers": cap_after,
-                # meta (pomocne do szybszego startu)
                 "session_layers_last": int(self._gpu_layers_effective),
                 "prefill_batch": int(self._prefill_batch),
                 "supports_n_batch": bool(self._supports_n_batch),
@@ -378,14 +366,12 @@ class LLMManager:
             if data.get("model_file") != self.filename:
                 return False
 
-            # kompatybilność wsteczna: akceptuj stare pole 'gpu_layers_effective'
             persist = data.get("persist_layers")
             if persist is None:
                 persist = data.get("gpu_layers_effective")
 
             if persist is not None:
                 self._persist_layers_cap = int(persist)
-            # wczytaj meta (nie są krytyczne)
             self._prefill_batch = int(data.get("prefill_batch", 0))
             self._supports_n_batch = bool(data.get("supports_n_batch", False))
             self._supports_batch_size = bool(data.get("supports_batch_size", False))
@@ -397,14 +383,12 @@ class LLMManager:
         except Exception:
             return False
 
-    # ─────────────────────────────────── API ─────────────────────────────
     def load(self):
         if not (self.repo and self.filename):
             raise RuntimeError("Brak REPO/FILENAME dla slotu 'bielik'.")
 
         restored = self._load_tuning()
 
-        # sufit z configu (jeśli podany) musi ograniczać cache
         cfg_cap = int(LLM_GPU_LAYERS or 0)
         if cfg_cap > 0:
             if self._persist_layers_cap > 0:
@@ -412,8 +396,6 @@ class LLMManager:
             else:
                 self._persist_layers_cap = cfg_cap
 
-        # 1) Załaduj model schodząc w dół od „hintu”
-        # hint = min(persist_cap, cfg_cap) z priorytetem cache; jeśli oba 0 → 0
         if self._persist_layers_cap > 0 and cfg_cap > 0:
             hint_layers = min(self._persist_layers_cap, cfg_cap)
         elif self._persist_layers_cap > 0:
@@ -452,11 +434,11 @@ class LLMManager:
         cap = int(user_cap or 512)
         if not LLM_AUTOSIZE_MAX_NEW_TOKENS:
             return cap
-        # krótsze dekodowanie dla dłuższych promptów – szybciej
-        if prompt_len < 600:   return min(cap, 192)
-        if prompt_len < 900:   return min(cap, 224)
-        if prompt_len < 1500:  return min(cap, 240)
-        return min(cap, 256)
+        if prompt_len < 4000:
+            return cap
+        if prompt_len < 8000:
+            return min(cap, max(cap, 1200))
+        return min(cap, max(cap, 1024))
 
     def _gen_ctransformers(self, prompt: str, max_new_tokens: int, temperature: float, top_p: float,
                            stops: Sequence[str], seed: Optional[int]) -> str:
@@ -467,7 +449,6 @@ class LLMManager:
             "stop": list(stops),
             "threads": int(self._threads),
         }
-        # preferuj duży prefill na GPU
         if self._prefill_batch > 0:
             if self._supports_n_batch:
                 kwargs["n_batch"] = int(self._prefill_batch)
@@ -486,6 +467,20 @@ class LLMManager:
             pass
         return self.model(prompt, **kwargs)
 
+    def _ends_naturally(self, text: str) -> bool:
+        if not text:
+            return False
+        s = text.rstrip()
+        if not s:
+            return False
+        last = s[-1]
+        if last in ".!?…":
+            return True
+        closing = {'"', "'", ")", "]"}
+        if last in closing and len(s) >= 2 and s[-2] in ".!?…":
+            return True
+        return False
+
     def generate(
         self,
         prompt: str,
@@ -494,28 +489,101 @@ class LLMManager:
         top_p: float = LLM_TOP_P,
         stop_sequences: Optional[Sequence[str]] = None,
         seed: Optional[int] = None,
+        min_new_tokens: int = 0,
+        top_k: Optional[int] = None,
+        repetition_penalty: Optional[float] = None,
+        continue_until_complete: bool = True,
+        max_continuations: int = 6,
     ) -> str:
         if self.backend != "ctransformers" or self.model is None:
             raise RuntimeError("LLM niezaładowany (ctransformers).")
 
+        acquired = self._gen_lock.acquire(timeout=180.0)
+        if not acquired:
+            raise RuntimeError("LLM zajęty zbyt długo (timeout 180s na _gen_lock).")
+        try:
+            return self._generate_locked(
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                stop_sequences=stop_sequences,
+                seed=seed,
+                min_new_tokens=min_new_tokens,
+                top_k=top_k,
+                repetition_penalty=repetition_penalty,
+                continue_until_complete=continue_until_complete,
+                max_continuations=max_continuations,
+            )
+        finally:
+            self._gen_lock.release()
+
+    def _generate_locked(
+        self,
+        prompt: str,
+        max_new_tokens: int = LLM_MAX_NEW_TOKENS,
+        temperature: float = LLM_TEMP,
+        top_p: float = LLM_TOP_P,
+        stop_sequences: Optional[Sequence[str]] = None,
+        seed: Optional[int] = None,
+        min_new_tokens: int = 0,
+        top_k: Optional[int] = None,
+        repetition_penalty: Optional[float] = None,
+        continue_until_complete: bool = True,
+        max_continuations: int = 6,
+    ) -> str:
         temperature = float(max(0.0, min(2.0, temperature if temperature is not None else 0.35)))
         top_p = float(max(0.0, min(1.0, top_p if top_p is not None else 0.95)))
 
         max_user = int(max_new_tokens or 512)
         max_by_ctx = int(self._ctx_len * 0.6)
-        max_new_tokens = int(max(16, min(max_by_ctx, self._autosize_tokens(len(prompt or ""), max_user))))
+        eff_max = int(max(16, min(max_by_ctx, self._autosize_tokens(len(prompt or ""), max_user))))
         stops = tuple(stop_sequences) if stop_sequences is not None else tuple(self._stops)
 
-        text = self._gen_ctransformers(prompt, max_new_tokens, temperature, top_p, stops, seed)
+        text = self._gen_ctransformers(prompt, eff_max, temperature, top_p, stops, seed)
         text = _post_process(text, stops)
 
-        if LLM_ENABLE_RETRY:
+        if continue_until_complete:
+            total_text = text
+            iteration = 0
+            while (
+                iteration < max_continuations
+                and total_text.strip()
+                and not self._ends_naturally(total_text)
+            ):
+                iteration += 1
+                cont_prompt = (
+                    prompt
+                    + total_text
+                    + ""
+                )
+                approx_used = len(cont_prompt) // 3  # ~3 znaki/token (PL)
+                room = int(self._ctx_len * 0.9) - approx_used
+                if room < 64:
+                    break
+                cont_max = int(min(eff_max, max(96, room)))
+
+                more = self._gen_ctransformers(
+                    cont_prompt, cont_max, temperature, top_p, stops, seed
+                )
+                more = _post_process(more, stops)
+
+                if not more or not more.strip():
+                    break
+
+                joiner = "" if (total_text.endswith(" ") or more.startswith(" ")) else " "
+                if total_text and total_text[-1].isalnum() and more[:1].isalnum():
+                    joiner = ""
+                total_text = (total_text + joiner + more).strip()
+
+            text = total_text
+
+        if LLM_ENABLE_RETRY and not self._ends_naturally(text):
             too_short = len(text) < self._min_chars
-            looks_cut = bool(text) and text[-1] in ",;:-"
-            if (too_short or looks_cut) and temperature <= 0.7:
+            if too_short and temperature <= 0.7:
                 text2 = self._gen_ctransformers(
                     prompt,
-                    max_new_tokens=min(int(max_new_tokens * 1.2), max_new_tokens + 192),
+                    max_new_tokens=min(int(eff_max * 1.2), eff_max + 192),
                     temperature=min(0.7, max(0.35, temperature + 0.10)),
                     top_p=min(0.98, max(0.90, top_p + 0.02)),
                     stops=stops,
@@ -524,4 +592,12 @@ class LLMManager:
                 text2 = _post_process(text2, stops)
                 if len(text2) > len(text):
                     text = text2
+
         return text
+
+    def is_busy(self) -> bool:
+        acquired = self._gen_lock.acquire(blocking=False)
+        if acquired:
+            self._gen_lock.release()
+            return False
+        return True

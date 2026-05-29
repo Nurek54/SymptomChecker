@@ -4,25 +4,27 @@ import os
 import re
 import json
 import unicodedata
+import logging
 from typing import List, Dict, Set, Optional
+
+log = logging.getLogger("symptomchecker.symptom_matcher")
 
 from config import (
     SYMPTOMS_DICT_PATH, EMB_USE_DICTIONARY, EMB_RULE_FIRST, EMB_RULE_MIN_LEN,
     NEGATION_PATTERNS,
+    MATCHER_MIN_TOKEN_LEN, MATCHER_NEG_WINDOW_CHARS,
 )
 
-MIN_TOKEN_LEN = 3
+MIN_TOKEN_LEN = MATCHER_MIN_TOKEN_LEN
+NEG_WINDOW_CHARS = MATCHER_NEG_WINDOW_CHARS
 FUZZY_MIN_SCORE_TOKEN = 80
 FUZZY_MIN_SCORE_PHRASE = 78
-NEG_WINDOW_CHARS = 14
 
-# ───── Generyczne (nie są objawami same w sobie) ─────
 GENERIC_SYMPTOM_WORDS: Set[str] = {
     "objaw","objawy","objawow","objawami","objawach","objawie",
     "symptom","symptomy","symptomow","symptomami","symptomach",
 }
 
-# ───── Słowa pytające / modalne ─────
 QUESTION_WORDS: Set[str] = {
     "jak","jaki","jaka","jakie","jacy","jakich","jakiego","jakiej","jakim","jakimi",
     "ktory","ktora","ktore","ktorzy","ktorych","ktorego","ktorej","ktorym","którą",
@@ -30,7 +32,6 @@ QUESTION_WORDS: Set[str] = {
     "what","which","how","where","when","why","who"
 }
 
-# ───── Meta-intencje (wykrywanie pytań „o poradę”, nie o objawy) ─────
 META_INTENT_PATTERNS: List[re.Pattern] = [
     re.compile(r"\bzalecen"),                 # zalecenia, zalecenie
     re.compile(r"\bpilnos"),                  # pilność
@@ -129,12 +130,6 @@ def _has_negation(fragment: str, alias_like: str) -> bool:
 
 
 class SymptomMatcher:
-    """
-    XGB-aware matcher (rules-only):
-    - aliasy/contains/approx/fuzzy + negacje,
-    - bez modeli embeddingowych.
-    """
-
     def __init__(self, features: List[str], device: str = "cpu") -> None:
         self.features: List[str] = [str(f).strip().lower() for f in (features or [])]
         self._feat_set: Set[str] = set(self.features)
@@ -160,8 +155,6 @@ class SymptomMatcher:
             self._build_default_alias_index_from_features()
 
         self.ready = True
-
-    # ───────────────────────── budowa indeksów ─────────────────────────
 
     def _build_default_alias_index_from_features(self) -> None:
         added = 0
@@ -201,13 +194,13 @@ class SymptomMatcher:
             except re.error:
                 self._alias_regex = None
 
-        print(f"[DICT/FALLBACK] features={len(self._feat_set)} | aliasów={len(self.alias_to_feature)} | med_tokens={len(self._med_tokens)}")
+        log.info("DICT/FALLBACK features=%d | aliasów=%d | med_tokens=%d", len(self._feat_set), len(self.alias_to_feature), len(self._med_tokens))
 
     def _build_alias_index(self, dict_path: str) -> bool:
         try:
             data = json.load(open(dict_path, "r", encoding="utf-8"))
         except Exception as e:
-            print(f"[DICT] Błąd wczytywania {dict_path}: {e}")
+            log.warning("DICT błąd wczytywania %s: %s", dict_path, e)
             return False
 
         added = 0
@@ -282,10 +275,8 @@ class SymptomMatcher:
             except re.error:
                 self._alias_regex = None
 
-        print(f"[DICT] Wpisów:{added} | aliasów:{len(self.alias_to_feature)} | keys:{len(self._alias_keys)} | cat:{len(self._feat_category)} | med_tokens:{len(self._med_tokens)}")
+        log.info("DICT Wpisów:%d | aliasów:%d | keys:%d | cat:%d | med_tokens:%d", added, len(self.alias_to_feature), len(self._alias_keys), len(self._feat_category), len(self._med_tokens))
         return True
-
-    # ───────────────────────── translacje/kategorie ─────────────────────────
 
     def to_pl(self, xgb_or_alias: str) -> str:
         k = _canonize(xgb_or_alias)
@@ -301,8 +292,6 @@ class SymptomMatcher:
     def get_category(self, xgb_or_alias: str) -> str:
         canon = self.alias_to_feature.get(_canonize(xgb_or_alias), _canonize(xgb_or_alias))
         return self._feat_category.get(canon, "Other")
-
-    # ───────────────────────── fuzzy/negacje ─────────────────────────
 
     def _fuzzy_on_fragment(self, frag: str) -> Set[str]:
         hits: Set[str] = set()
@@ -320,7 +309,6 @@ class SymptomMatcher:
         grams = [g for g in grams if not _all_generic(g)]
         grams = [g for g in grams if (" " in g) or (len(g) >= 5)]
 
-        # ⬇️ n-gram musi zawierać ≥1 med-token (lub whitelisted 'bol')
         grams_keep = []
         for g in grams:
             gtoks = [t for t in _tokens(g) if t not in MED_BLACKLIST_TOKENS]
@@ -414,16 +402,12 @@ class SymptomMatcher:
                 return True
         return False
 
-    # ───────────────────────── Meta-bramka ─────────────────────────
-
     def _looks_like_meta(self, text: str) -> bool:
         tx = _strip_accents(_canonize(text))
         has_med = any(tok in self._med_tokens for tok in tx.split() if tok not in MED_BLACKLIST_TOKENS)
         if has_med:
             return False
         return any(p.search(tx) for p in META_INTENT_PATTERNS)
-
-    # ───────────────────────── RULES-ONLY ─────────────────────────
 
     def _extract_rules_only(self, raw: str) -> List[str]:
         if not (raw or "").strip():

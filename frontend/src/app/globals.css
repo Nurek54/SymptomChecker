@@ -1,25 +1,23 @@
 @import "tailwindcss";
 
-/* ── Motyw przez zmienne (light/dark) ── */
 :root {
     color-scheme: light;
 
-    /* Word / Paper White */
-    --surface: 255 255 255;      /* #FFFFFF – czysta biel Worda */
-    --card:    255 255 255;      /* jednolite, zero różnic */
-    --input:   255 255 255;      /* textarea również biała */
-    --border:  220 220 220;      /* subtelna ramka jak w Word */
-    --text:    20 20 20;         /* ciemny tekst (Word-like) */
+    --surface: 255 255 255;
+    --card:    255 255 255;
+    --input:   255 255 255;
+    --border:  220 220 220;
+    --text:    20 20 20;
     --muted:   120 120 120;
 
     --chip-bg:   245 245 245;
     --chip-text: 30 30 30;
 
-    --btn-bg:     250 250 250;   /* Word style */
+    --btn-bg:     250 250 250;
     --btn-text:   20 20 20;
     --btn-border: 210 210 210;
 
-    --bubble-user-bg:     255 255 255;  /* bąbelek jak kartka Worda */
+    --bubble-user-bg:     255 255 255;
     --bubble-user-text:   20 20 20;
     --bubble-user-border: 210 210 210;
 
@@ -40,26 +38,26 @@
 }
 
 :root.dark {
-  color-scheme: dark;         /* spójne natywne kolory kontrolek w ciemnym */
-  --surface: 23 23 23;        /* neutral-900 */
-  --card:    38 38 38;        /* neutral-800 */
-  --text:    245 245 245;     /* neutral-100 */
-  --muted:   163 163 163;     /* neutral-400 */
-  --border:  64 64 64;        /* neutral-700 */
-  --input:   38 38 38;        /* neutral-800 */
+  color-scheme: dark;
+  --surface: 23 23 23;
+  --card:    38 38 38;
+  --text:    245 245 245;
+  --muted:   163 163 163;
+  --border:  64 64 64;
+  --input:   38 38 38;
 
   --chip-bg:   38 38 38;
   --chip-text: 245 245 245;
 
   /* PRZYCISK „Wyślij” – ciemny */
-  --btn-bg:     64 64 64;     /* neutral-700 */
-  --btn-text:   245 245 245;  /* neutral-100 */
-  --btn-border: 82 82 82;     /* neutral-600 */
+  --btn-bg:     64 64 64;
+  --btn-text:   245 245 245;
+  --btn-border: 82 82 82;
 
   /* Dymek użytkownika – ciemny */
-  --bubble-user-bg:     52 52 52;      /* neutral-700-ish */
-  --bubble-user-text:   245 245 245;   /* neutral-100 */
-  --bubble-user-border: 82 82 82;      /* neutral-600 */
+  --bubble-user-bg:     52 52 52;
+  --bubble-user-text:   245 245 245;
+  --bubble-user-border: 82 82 82;
 }
 
 /* ── Guard na czas przełączania motywu (bez migania) ── */
@@ -172,4 +170,51 @@ html, body, #__next { height: 100%; }
   0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, .35); }
   70%  { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
   100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* Trzy kropki w bąblu "asystent pisze..." */
+@keyframes sc-typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+/* Pulsacja "heartbeat" wokół zielonej kropki statusu OK */
+@keyframes sc-heartbeat {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Subtelne wejście dla sugerowanych promptów */
+@keyframes sc-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tailwind-style helper class (gdyby `animate-in fade-in` z tailwindcss-animate
+   nie był zainstalowany — fallback wystarczający) */
+.animate-in.fade-in {
+  animation: sc-fade-in 0.5s ease-out;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes sc-typing { 0%, 100% { transform: none; opacity: 0.6; } }
+  @keyframes sc-heartbeat { 0%, 100% { transform: none; opacity: 0.6; } }
+  .animate-in.fade-in { animation: none; }
 }

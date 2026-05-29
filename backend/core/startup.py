@@ -1,13 +1,17 @@
 # backend/core/startup.py
+from __future__ import annotations
 import logging
+
 import torch
-from backend.core.state import AppState
-from backend.models.xgb_manager import XGBManager
-from backend.models.llm_manager import LLMManager
-from backend.services.symptom_matcher import SymptomMatcher
-from backend.services.session_store import SessionStore
+
+from core.state import AppState
+from models.xgb_manager import XGBManager
+from models.llm_manager import LLMManager
+from services.symptom_matcher import SymptomMatcher
+from services.session_store import SessionStore
 
 log = logging.getLogger("symptomchecker.startup")
+
 
 class StartupManager:
     async def run(self) -> AppState:
@@ -17,7 +21,8 @@ class StartupManager:
         xgb = XGBManager()
         log.info("🔧 Trening/ładowanie XGBoost…")
         xgb.train()
-        assert xgb.features, "Brak cech XGB — sprawdź dataset i trening."
+        if not xgb.features:
+            raise RuntimeError("Brak cech XGB — sprawdź dataset i trening.")
 
         llm = LLMManager()
         log.info("🧠 Ładowanie LLM…")
@@ -27,4 +32,17 @@ class StartupManager:
         matcher = SymptomMatcher(xgb.features, device=str(device))
 
         sessions = SessionStore()
-        return AppState(device=device, xgb=xgb, llm=llm, matcher=matcher, sessions=sessions)
+        if hasattr(sessions, "start_janitor"):
+            try:
+                sessions.start_janitor()
+            except Exception:
+                log.warning("SessionStore janitor nie wystartował.", exc_info=True)
+
+        return AppState(
+            device=device,
+            xgb=xgb,
+            llm=llm,
+            matcher=matcher,
+            sessions=sessions,
+            river=None,
+        )

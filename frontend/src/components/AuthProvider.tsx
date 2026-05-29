@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/store/chatStore";
-import { api, getMe, supabase, exchangeSession } from "@/lib/api";
+import { api, getMe, supabase, exchangeSession, API_BASE } from "@/lib/api";
 
 export type User = {
     id: number;
@@ -55,8 +55,6 @@ type Ctx = {
 const AuthCtx = createContext<Ctx>(null as any);
 export const useAuth = () => useContext(AuthCtx);
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
@@ -66,7 +64,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const [authMode, setAuthMode] = useState<AuthMode>("login");
     const [guest, setGuest] = useState<boolean>(false);
 
-    // re-entrancy guards
     const refreshing = useRef<Promise<void> | null>(null);
     const loggingOut = useRef<Promise<void> | null>(null);
 
@@ -76,12 +73,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     };
     const closeAuth = () => setAuthOpen(false);
 
+    const _getSessionWithTimeout = async (ms = 4000) => {
+        return Promise.race([
+            supabase.auth.getSession(),
+            new Promise<never>((_, rej) =>
+                setTimeout(() => rej(new Error("getSession timeout")), ms)
+            ),
+        ]).catch(() => ({ data: { session: null } as any }));
+    };
+
     const refreshMe = async () => {
         if (refreshing.current) return refreshing.current;
-        refreshing.current = (async () => {
+        const work = (async () => {
             setLoading(true);
             try {
-                const { data: sess } = await supabase.auth.getSession();
+                const { data: sess } = await _getSessionWithTimeout(4000);
 
                 if (!sess.session) {
                     setUser(null);
@@ -92,7 +98,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 }
 
                 try {
-                    await exchangeSession(); // cookie backendu
+                    await exchangeSession();
                 } catch {}
 
                 try {
@@ -107,9 +113,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 }
             } finally {
                 setLoading(false);
-                refreshing.current = null;
             }
         })();
+
+        const timeout = new Promise<void>((res) =>
+            setTimeout(() => {
+                setLoading(false);
+                res();
+            }, 15_000)
+        );
+
+        refreshing.current = Promise.race([work, timeout]).finally(() => {
+            refreshing.current = null;
+        });
+
         return refreshing.current;
     };
 
@@ -120,13 +137,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         } catch {}
         void refreshMe();
 
-        const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (session) {
-                try {
-                    await exchangeSession();
-                } catch {}
-            }
-            await refreshMe();
+        const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === "INITIAL_SESSION") return; // mount-effect już to obsłużył
+
+            // synchroniczny return — lock zwolniony natychmiast
+            setTimeout(() => {
+                void (async () => {
+                    if (session) {
+                        try { await exchangeSession(); } catch {}
+                    }
+                    await refreshMe();
+                })();
+            }, 0);
         });
 
         return () => {
@@ -137,7 +159,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 401 z backendu → pokaż panel
+    // 401 → pokaż panel
     useEffect(() => {
         const onUnauthorized = () => openAuth("login");
         window.addEventListener("auth:unauthorized", onUnauthorized as EventListener);
@@ -149,19 +171,42 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!loading && !user && !guest) openAuth("login");
     }, [loading, user, guest]);
 
+    const _withTimeout = <T,>(p: Promise<T>, ms: number, label: string): Promise<T> =>
+        Promise.race([
+            p,
+            new Promise<T>((_, rej) =>
+                setTimeout(() => rej(new Error(`${label}: timeout po ${Math.round(ms / 1000)}s`)), ms)
+            ),
+        ]);
+
     const login = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        // Supabase signInWithPassword: max 12s
+        const { error } = await _withTimeout(
+            supabase.auth.signInWithPassword({ email, password }),
+            12_000,
+            "Logowanie do Supabase"
+        );
         if (error) throw new Error(error.message);
 
+        // exchangeSession: max 8s
         try {
-            await exchangeSession();
+            await _withTimeout(exchangeSession(), 8_000, "Wymiana sesji");
         } catch {}
 
         try {
             localStorage.removeItem("sc_guest");
         } catch {}
 
-        await refreshMe();
+        // refreshMe ma już swój wewnętrzny race(15s) — ale daję dodatkową
+        // ochronę 16s na wypadek, gdyby dedup z onAuthStateChange odziedziczył
+        // utknięte refreshing.current.
+        try {
+            await _withTimeout(refreshMe(), 16_000, "Odświeżanie profilu");
+        } catch {
+            // nawet jeśli refreshMe wisi — zamykamy panel; user zaloguje się,
+            // a getMe odpali się przy następnej akcji
+        }
+
         closeAuth();
     };
 
@@ -173,24 +218,35 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         last_name?: string,
         date_of_birth?: string
     ) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { data: { username, first_name, last_name, date_of_birth } },
-        });
+        const { data, error } = await _withTimeout(
+            supabase.auth.signUp({
+                email,
+                password,
+                options: { data: { username, first_name, last_name, date_of_birth } },
+            }),
+            12_000,
+            "Rejestracja"
+        );
         if (error) throw new Error(error.message);
 
         if (!data.session?.access_token) {
             try {
-                await supabase.auth.signInWithPassword({ email, password });
+                await _withTimeout(
+                    supabase.auth.signInWithPassword({ email, password }),
+                    12_000,
+                    "Logowanie po rejestracji"
+                );
             } catch {}
         }
 
         try {
-            await exchangeSession();
+            await _withTimeout(exchangeSession(), 8_000, "Wymiana sesji");
         } catch {}
 
-        await refreshMe();
+        try {
+            await _withTimeout(refreshMe(), 16_000, "Odświeżanie profilu");
+        } catch {}
+
         closeAuth();
     };
 
@@ -200,47 +256,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return u;
     };
 
-    /** Czyści BIEŻĄCY czat (oraz bezpiecznie fallbackuje do full clear, jeśli brak API) */
-    const clearCurrentChatUI = () => {
+    const clearChatUI = () => {
         try {
-            const st = useChatStore.getState() as any;
-
-            // preferowane metody, jeśli istnieją
-            if (typeof st.clearCurrent === "function") return st.clearCurrent();
-            if (typeof st.resetActive === "function") return st.resetActive();
-
-            // łagodny fallback: wyczyść aktualny wątek
-            if ("messages" in st || "input" in st || "activeSessionId" in st) {
-                useChatStore.setState({
-                    messages: [],
-                    input: "",
-                    activeSessionId: null,
-                } as any);
-            }
-
-            // twardy fallback: wyczyść całość (gdyby struktura była inna)
-            if (typeof st.clearAll === "function") return st.clearAll();
-            useChatStore.setState({ bySession: {}, summary: {} } as any);
+            useChatStore.getState().clearAll();
         } catch {
             /* ignore */
         }
     };
 
     const clearAfterLogout = () => {
-        // czat
-        clearCurrentChatUI();
+        clearChatUI();
 
-        // identyfikator sesji czatu
         try {
             localStorage.removeItem("sc_session_id");
         } catch {}
 
-        // flaga guest
         try {
             localStorage.removeItem("sc_guest");
         } catch {}
 
-        // eventy UI
         try {
             window.dispatchEvent(new CustomEvent("sc:logout"));
         } catch {}
@@ -253,34 +287,29 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 credentials: "include",
             });
         } catch {
-            // w dev backend może nie odpowiedzieć – to ok
+            // dev backend może nie odpowiedzieć — ok
         }
     };
 
     const logout = async () => {
         if (loggingOut.current) return loggingOut.current;
         loggingOut.current = (async () => {
-            // 1) Supabase sesja
             try {
-                await supabase.auth.signOut();
+                // v10c: timeout 8s — signOut też może paść w deadlock teoretycznie
+                await _withTimeout(supabase.auth.signOut(), 8_000, "Wylogowywanie");
             } catch {}
 
-            // 2) Cookie backendu
             await hardBackendLogout();
 
-            // 3) Czyść lokalny stan (przede wszystkim AKTUALNY czat)
             clearAfterLogout();
 
-            // 4) Zgaś usera i otwórz panel logowania
             setUser(null);
             setGuest(false);
 
-            // Przenieś na / (opcjonalnie — lekko odświeża layout), ale BEZ twardego reloadu
             try {
                 router.push("/");
             } catch {}
 
-            // pokaż od razu panel logowania
             openAuth("login");
         })().finally(() => {
             loggingOut.current = null;
@@ -293,7 +322,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         try {
             localStorage.setItem("sc_guest", "1");
         } catch {}
-        clearCurrentChatUI();
+        clearChatUI();
         setUser(null);
         setGuest(true);
         closeAuth();
