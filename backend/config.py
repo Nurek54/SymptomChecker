@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 
 # ───────────────────────── .env loader (root lub backend) ─────────────────────────
@@ -201,6 +202,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES  = _env_int("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
 SESSION_COOKIE_NAME          = _env_str("SESSION_COOKIE_NAME", "sc_session")
 SESSION_COOKIE_SECURE        = _env_bool("SESSION_COOKIE_SECURE", False)
 SESSION_COOKIE_SAMESITE      = _env_str("SESSION_COOKIE_SAMESITE", "lax")
+
+# Spojnosc ciasteczka sesji: SameSite=None wymaga Secure=True,
+# inaczej nowoczesne przegladarki odrzuca ciasteczko (logowanie nie zadziala).
+if SESSION_COOKIE_SAMESITE.strip().lower() == "none" and not SESSION_COOKIE_SECURE:
+    logging.getLogger("symptomchecker.config").warning(
+        "SESSION_COOKIE_SAMESITE=none wymaga SESSION_COOKIE_SECURE=true - "
+        "przegladarki odrzuca ciasteczko sesji. Ustaw SECURE=true (HTTPS) albo SAMESITE=lax."
+    )
 
 # ───────────────────────── SessionStore (in-memory) ─────────────────────────
 SESSION_STORE_TTL_SECONDS   = _env_int("SESSION_STORE_TTL_SECONDS", 4 * 60 * 60)

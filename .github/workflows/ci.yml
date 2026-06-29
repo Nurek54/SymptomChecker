@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# Anuluj starsze przebiegi tego samego brancha/PR-a
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Wartości-atrapy: config.py i database/db.py rzucają wyjątek bez nich przy imporcie.
+      # Testy podmieniają realne modele i bazę na atrapy (conftest.py), więc nic nie łączy się naprawdę.
+      AUTH_SECRET_KEY: ci-dummy-secret
+      SUPABASE_JWT_SECRET: ci-dummy-secret
+      DATABASE_URL: postgresql+psycopg://ci:ci@db.ci.supabase.co:5432/postgres?sslmode=require
+      FRONTEND_ORIGIN: http://localhost:3000
+      APP_ENV: ci
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install PyTorch (CPU build — mniejszy, bez CUDA)
+        run: pip install "torch==2.10.0" --index-url https://download.pytorch.org/whl/cpu || pip install "torch==2.10.0"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+  frontend:
+    name: Frontend (lint + unit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      # Atrapy publicznych zmiennych Next.js, żeby import klienta Supabase nie wywalał testów.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests (vitest)
+        run: npm run test:unit:run

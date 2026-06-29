@@ -1,55 +1,59 @@
 # =================================================================
-#  SymptomChecker — backend requirements
+#  SymptomChecker - backend requirements
 #  Python 3.11+
+#
+#  Wersje zapiete (==) do srodowiska referencyjnego (.venv, Python 3.11.0),
+#  aby zapewnic powtarzalna instalacje. Pakiety oznaczone (>=) nie byly
+#  obecne w .venv referencyjnym - po pierwszej instalacji warto je tez zapiac.
 # =================================================================
 
-# ───── Web framework ─────
-fastapi
-uvicorn[standard]
-python-multipart
+# ----- Web framework -----
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+python-multipart>=0.0.9          # brak w .venv referencyjnym
 
-# ───── Configuration / .env ─────
-python-dotenv
+# ----- Configuration / .env -----
+python-dotenv==1.2.2
 
-# ───── Validation / serialization ─────
-pydantic
-pydantic[email]            # EmailStr support
-email-validator
+# ----- Validation / serialization -----
+pydantic[email]==2.12.5          # EmailStr support
+email-validator==2.3.0
 
-# ───── Auth / sessions ─────
-python-jose[cryptography]  # JWT (HS256 + JWKS for Supabase)
-passlib[bcrypt]            # password hashing
+# ----- Auth / sessions -----
+python-jose[cryptography]==3.5.0 # JWT (HS256 + JWKS for Supabase)
+passlib[bcrypt]==1.7.4           # password hashing
 
-# ───── Database ─────
-sqlalchemy>=2.0
+# ----- Database -----
+sqlalchemy==2.0.48
+psycopg[binary]==3.3.3           # sterownik PostgreSQL (wymagany przez database/db.py)
 
-# ───── Data / utils ─────
-pandas
-numpy
-joblib
+# ----- Data / utils -----
+pandas==2.3.3
+numpy==2.4.2
+joblib==1.5.3
 
-# ───── Classical ML ─────
-scikit-learn
-xgboost
-scikit-optimize            # Bayesian search for XGB hyperparams
+# ----- Classical ML -----
+scikit-learn==1.8.0
+xgboost==3.2.0
+scikit-optimize==0.10.2          # Bayesian search for XGB hyperparams
 
-# ───── Online learning ─────
-river                      # OVR + FTRL
+# ----- Online learning -----
+river==0.23.0                    # OVR + FTRL
 
-# ───── Visualization (ML validation reports) ─────
-matplotlib
+# ----- Visualization (ML validation reports) -----
+matplotlib==3.10.9
 
-# ───── PyTorch + Transformers (embeddings, fallback path) ─────
-torch
-transformers
-accelerate
-sentence-transformers
+# ----- PyTorch + Transformers (embeddings, fallback path) -----
+torch==2.10.0
+transformers==5.3.0
+accelerate==1.13.0
+sentence-transformers==5.2.3
 
-# ───── LLM loader (GGUF — Bielik) ─────
-ctransformers              # primary GGUF backend
-# bitsandbytes             # 8-bit quant; problematic on Windows — uncomment on Linux
+# ----- LLM loader (GGUF - Bielik) -----
+ctransformers==0.2.27            # primary GGUF backend
+# bitsandbytes                   # 8-bit quant; problematic on Windows - uncomment on Linux
 
-# ───── Testing ─────
-pytest
-pytest-asyncio
-httpx                      # FastAPI TestClient / async calls
+# ----- Testing -----
+pytest>=8.0                      # brak w .venv referencyjnym
+pytest-asyncio>=0.23             # brak w .venv referencyjnym
+httpx==0.28.1                    # FastAPI TestClient / async calls
