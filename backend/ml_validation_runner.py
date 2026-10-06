@@ -71,6 +71,7 @@ class _DummyState:
 
     xgb: XGBManager
     river: RiverManager
+    ensemble_T: float = 1.0  # temperatura fuzji z services/ensemble_calibration.py
 
 
 class MLValidationRunner:
@@ -152,6 +153,13 @@ class MLValidationRunner:
         river.train()  # przy istniejących artefaktach: load + ewentualna kalibracja
 
         st = _DummyState(xgb=xgb, river=river)
+        # ta sama temperatura ensemble co w backendzie (cache ml/ensemble_calibration.json)
+        try:
+            from services.ensemble_calibration import ensure_ensemble_calibration
+            ensure_ensemble_calibration(st)
+            logger.info(f"  • Temperatura ensemble T_ens={st.ensemble_T:.4f}.")
+        except Exception as e:  # walidacja ma działać także bez kalibracji ensemble
+            logger.warning(f"  • Brak kalibracji ensemble (T_ens=1): {e}")
         ens = EnsembleTopK(st)
 
         self.xgb = xgb
