@@ -1,62 +1,220 @@
 <p align="center">
-  <br />
-  <strong>⚕</strong>
-  <br />
-  <br />
+  <img src="frontend/public/logo.png" alt="Symptom Checker logo" width="88" />
 </p>
 
-<h1 align="center">SYMPTOM CHECKER</h1>
+<h1 align="center">Symptom Checker</h1>
 
 <p align="center">
-  <em>A Polish-language diagnostic chat assistant powered by classical ML and a local LLM</em>
+  <strong>A Polish-language symptom assessment chat</strong><br />
+  classical ML ensemble (XGBoost + River) + a local LLM (Bielik 11B), no data leaves the machine
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-blue?style=flat-square" alt="Python" />
-  <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square" alt="Next.js" />
-  <img src="https://img.shields.io/badge/XGBoost-2.x-orange?style=flat-square" alt="XGBoost" />
-  <img src="https://img.shields.io/badge/Bielik-11B-purple?style=flat-square" alt="Bielik LLM" />
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <br />
+  <img src="https://img.shields.io/badge/XGBoost-GPU-EB6E25?style=flat-square" alt="XGBoost" />
+  <img src="https://img.shields.io/badge/River-online_learning-1F6FEB?style=flat-square" alt="River" />
+  <img src="https://img.shields.io/badge/LLM-Bielik_11B_(GGUF)-8B5CF6?style=flat-square" alt="Bielik" />
+  <img src="https://img.shields.io/badge/Supabase-auth-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/License-All_Rights_Reserved-red?style=flat-square" alt="License" />
 </p>
 
-<br />
-
 <p align="center">
-  <img src="preview.png" alt="SymptomChecker - Hero" width="720" />
+  <a href="#see-it-in-action">Demo</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#api-endpoints">API</a> ·
+  <a href="#configuration">Configuration</a>
 </p>
 
----
+<p align="center">
+  <img src="docs/hero.png" alt="Symptom Checker: chat with follow-up questions, collected symptoms and Top-3 diagnoses, light and dark theme" width="100%" />
+</p>
+
+> [!WARNING]
+> **Educational / research project, not a medical device.** The output is not a diagnosis. If symptoms worsen or red flags appear, contact a doctor or emergency services (112).
 
 ## About
 
-**SymptomChecker** is a research-grade diagnostic chat assistant developed as part of an engineering thesis (*praca inżynierska*). The user describes their symptoms in Polish (English also supported), the system extracts them through a hybrid dictionary + multilingual embedding matcher, asks adaptive follow-up questions, and finally returns the **Top-3 most probable conditions** with a short clinical-style summary generated locally by a Polish LLM (Bielik 11B).
+**Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish, the app recognizes the symptoms (including inflection and negation, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation written by a Polish LLM running locally.
 
-The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) - letting the model both leverage strong batch training and adapt to drift over time.
+Under the hood, predictions come from a **calibrated ensemble** of XGBoost (offline, Bayesian-tuned on GPU) and River OVR / FTRL-Proximal (online, can keep learning), fused in log space with confidence-based weights.
 
-> ⚠️ **Disclaimer.** This is an educational / research project. **It is NOT a substitute for professional medical advice.** The output is not a medical diagnosis. If your symptoms worsen or red flags appear, contact a doctor or emergency services.
+## See it in action
 
-## User Flow
+<p align="center">
+  <img src="docs/demo.gif" alt="Demo: the user describes symptoms, answers follow-up questions, gets the Top-3 and an urgency assessment, then opens the per-model breakdown" width="100%" />
+</p>
 
-```
-Symptom input (PL/EN)  →  Dictionary + embedding match  →  Follow-up loop  →  Ensemble Top-3  →  LLM summary
-```
+<p align="center"><sub>One conversation from first message to Top-3, a quick action (<em>Pilność</em>) and the XGBoost / River / Ensemble breakdown.</sub></p>
 
-The user never sees raw probabilities or model internals - only the chat, the running symptom list, and the final diagnosis card.
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/02-followup.png" alt="Follow-up questions" />
+      <p align="center"><b>Adaptive follow-up questions</b><br /><sub>Recognized symptoms appear on the right as you type.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/01-assessment.png" alt="Assessment with Top-3" />
+      <p align="center"><b>Assessment with Top-3</b><br /><sub>LLM explanation in Polish, probabilities from the ensemble.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/03-model-split.png" alt="XGBoost vs River vs Ensemble" />
+      <p align="center"><b>Look inside the ensemble</b><br /><sub>XGBoost, River and the fused result side by side, with the weights used.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/04-symptom-picker.png" alt="Symptom picker" />
+      <p align="center"><b>Symptom picker</b><br /><sub>Hundreds of Polish symptom names grouped by body system; add or remove by hand.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/06-history.png" alt="Conversation history" />
+      <p align="center"><b>Conversation history</b><br /><sub>Saved chats with extracted symptoms and the diagnoses at that time.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/05-dark.png" alt="Dark theme" />
+      <p align="center"><b>Dark theme</b><br /><sub>Remembered per browser, no flash on reload.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary><b>More screens</b> (visit preparation, help, account, login)</summary>
+<br />
+
+| Prepare a description for the doctor | Built-in guide |
+|:---:|:---:|
+| <img src="docs/screenshots/08-prep.png" alt="Visit preparation" /> | <img src="docs/screenshots/09-howto.png" alt="How to use" /> |
+| **Account menu** | **Login or guest mode** |
+| <img src="docs/screenshots/07-user-menu.png" alt="Account menu" /> | <img src="docs/screenshots/10-login.png" alt="Login" /> |
+
+</details>
+
+<sub>Screenshots and the demo come from the real frontend; the backend responses in them are scripted so the example is reproducible.</sub>
 
 ## Features
 
-- **Bilingual symptom extraction** - multilingual `sentence-transformers` matcher backed by a curated PL/EN dictionary, with rule-first fallback for short / ambiguous tokens
-- **Adaptive follow-up** - model-split selector picks the next best question based on which features would most reduce ensemble disagreement
-- **Hybrid ensemble** - XGBoost (Bayesian-tuned, 32 iters × 3-fold CV, GPU-accelerated) fused with River OVR Logistic / FTRL (online learning) using dynamic confidence-gap weights
-- **Local LLM** - Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers`, no external API calls, no data leaves the machine
-- **Calibrated probabilities** - temperature scaling on both XGBoost and River outputs for honest confidence
-- **Stateful sessions** - server-side session store tracks symptoms, follow-ups asked, and prediction history per user
-- **Auth** - Supabase JWT (HS256 + JWKS fallback) with local profile sync, plus optional guest mode
-- **Persistent history** - SQLAlchemy 2.x ORM stores conversations, messages, extracted symptoms and triage results
-- **Validation pipeline** - `ml_validation_runner` produces full reports: confusion matrices, per-class F1, top-50 frequent/rare slices, all rendered as SVG
-- **Production-leaning hygiene** - CORS, secure cookies, request validation, sensitive-data masking in logs
-- **Comprehensive test suite** - pytest for backend (units + API), vitest for component logic, Playwright for end-to-end flows
+- **Polish symptom understanding** - dictionary + multilingual embeddings, aware of inflection (*boli mnie głowa* / *ból głowy*) and negation (*nie mam gorączki*, *gorączka już minęła*)
+- **Smart follow-up questions** - asks about the symptom that best separates the currently likely diseases, never about near-duplicates, and stops after a limit with an indicative assessment instead of asking forever
+- **Calibrated ensemble** - XGBoost and River are each temperature-calibrated on held-out data, and the fused distribution gets its own temperature; quality is measured on a leak-free test set ([details](#calibration-and-quality-report))
+- **Local LLM** - Bielik 11B v2.3 Instruct (GGUF) via `ctransformers`; answers in natural Polish prose, no external API
+- **Quick actions** - one click for *diagnosis*, *recommendations*, *urgency*, *OTC medicines*, *prevention*, *summary*
+- **Transparent predictions** - per-model Top-3 and fusion weights available in the UI
+- **Accounts or guest mode** - Supabase auth, persistent history for logged-in users
+- **Validation reports** - `ml_validation_runner` writes confusion matrices, per-class F1 and frequent / rare slices as SVG
+- **Progress with ETA during training** - every long step logs elapsed and remaining time
+- **Tests** - pytest (unit, API, regressions), vitest, Playwright end-to-end
+
+## How it works
+
+### One chat turn
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant FE as Next.js UI
+    participant API as FastAPI /chat
+    participant M as Symptom matcher
+    participant E as Ensemble (XGB + River)
+    participant Q as Follow-up selector
+    participant L as Bielik 11B
+
+    U->>FE: "Od wczoraj mam gorączkę i boli mnie gardło"
+    FE->>API: POST /chat {session_id, user_input}
+    API->>M: extract symptoms (+ negations)
+    M-->>API: fever, sore_throat
+    API->>E: posterior over ~570 diseases
+    alt fewer than MIN_SYMPTOMS or not confident yet
+        API->>Q: most informative next symptom
+        Q-->>API: swollen_lymph_nodes
+        API-->>FE: "Czy masz powiększone węzły chłonne?"
+    else enough evidence
+        API->>L: prompt with symptoms + Top-3
+        L-->>API: explanation in Polish
+        API-->>FE: answer + Top-3 + symptoms
+    end
+    FE-->>U: chat bubble, symptom chips, Top-3 bars
+```
+
+### Architecture
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend · Next.js 15"]
+        UI["ChatUI · SidePanel<br/>History · Overlays"]
+        ST[("Zustand store")]
+    end
+    subgraph BE["Backend · FastAPI"]
+        R["Routers<br/>chat · sessions · history<br/>dicts · river · auth"]
+        CS["ChatService"]
+        MA["SymptomMatcher<br/>dictionary + embeddings"]
+        FS["Follow-up selector<br/>P(symptom | disease)"]
+        subgraph ENS["Calibrated ensemble"]
+            X["XGBoost<br/>T + prior correction"]
+            RV["River OVR / FTRL<br/>(λ, T)"]
+            F["log-linear fusion<br/>+ T_ens"]
+        end
+        LLM["Bielik 11B GGUF"]
+    end
+    DB[("PostgreSQL / SQLite")]
+    SB["Supabase Auth"]
+
+    UI <--> ST
+    UI -- "REST + JWT" --> R
+    UI -. login .-> SB
+    R --> CS
+    CS --> MA
+    CS --> FS
+    CS --> ENS
+    X --> F
+    RV --> F
+    CS --> LLM
+    R --> DB
+```
+
+### Training pipeline (first start)
+
+```mermaid
+flowchart LR
+    A["Data split<br/>build_datasets.py"] --> B["1 · XGBoost<br/>Bayes search<br/>+ calibration"]
+    B --> C["2 · Bielik LLM"]
+    C --> D["3 · Symptom<br/>statistics"]
+    D --> E["4 · River<br/>online pass<br/>+ (λ, T)"]
+    E --> F["5 · Ensemble<br/>T_ens + test<br/>metrics"]
+    F --> G[("training_report<br/>.json")]
+```
+
+Every stage logs elapsed and remaining time, so a long first run is never a black box:
+
+```text
+[XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
+[XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
+[River/trening]  31.3% (35571/113416) 52.1 wierszy/s | minęło 11m22s | zostało ~25m
+```
+
+### Calibrated probabilities
+
+Example from a 100-disease subset of the v2 data (held-out test set). Full numbers for your run are written to `backend/ml/training_report.json`.
+
+| Model | Top-1 | NLL before → after | ECE before → after |
+|---|:---:|:---:|:---:|
+| XGBoost | 98.3% | 0.064 → **0.044** | 2.1% → **0.4%** |
+| River | 96.6% | 0.441 → **0.091** | 22.6% → **1.3%** |
+| **Ensemble** | **98.6%** | **0.040** | **0.5%** |
+
+<sub>NLL = negative log-likelihood, ECE = expected calibration error (15 bins). Lower is better.</sub>
 
 ## Tech Stack
 
@@ -64,42 +222,13 @@ The user never sees raw probabilities or model internals - only the chat, the ru
 |-------|-----------|
 | Backend | Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.x |
 | Frontend | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Zustand |
-| Classical ML | XGBoost 2.x (`hist` + GPU), scikit-learn, scikit-optimize |
-| Online learning | River (OVR Logistic / FTRL) |
+| Classical ML | XGBoost (`hist`, CUDA), scikit-learn, scikit-optimize |
+| Online learning | River 0.23 (OneVsRest LogisticRegression, FTRL-Proximal) |
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
 | Embeddings | `sentence-transformers` (multilingual MiniLM) |
-| Auth | Supabase JWT (HS256 + JWKS), python-jose, passlib/bcrypt |
-| Persistence | SQLite / PostgreSQL via SQLAlchemy |
+| Auth | Supabase JWT (HS256 + JWKS), python-jose |
+| Persistence | PostgreSQL (Supabase) or SQLite via SQLAlchemy |
 | Testing | pytest, pytest-asyncio, vitest, Playwright |
-
-## High-level Architecture
-
-```
-┌─────────────────┐     POST /chat       ┌──────────────────────────────────┐
-│  Next.js (3000) │ ───────────────────► │  FastAPI (8000)                  │
-│  ChatUI / Auth  │ ◄─── JSON {top3,…} ─ │                                  │
-└─────────────────┘                      │  SymptomMatcher (dict + embed)   │
-                                         │           │                       │
-                                         │           ▼                       │
-                                         │  ┌──────────────────────────┐    │
-                                         │  │ Ensemble                 │    │
-                                         │  │  XGBoost  ─┐             │    │
-                                         │  │           ├─► Top-K      │    │
-                                         │  │  River    ─┘   diagnoses │    │
-                                         │  └──────────┬───────────────┘    │
-                                         │             ▼                     │
-                                         │  Followup selector (model split) │
-                                         │             │                     │
-                                         │             ▼                     │
-                                         │  PromptBuilder ► LLM (Bielik)    │
-                                         │             │                     │
-                                         │             ▼                     │
-                                         │  PromptLocalizer (PL/EN)         │
-                                         └──────────────────────────────────┘
-                                                       │
-                                                       ▼
-                                              SQLite / Postgres
-```
 
 ## Project Structure
 
@@ -121,6 +250,7 @@ SymptomChecker/
 │   ├── ml_validation_runner.py
 │   └── requirements.txt
 ├── database/                 # SQLAlchemy: models, CRUD, security, db init
+├── docs/                     # README images: hero, demo.gif, screenshots/
 ├── frontend/
 │   └── src/
 │       ├── app/              # Next.js App Router pages
@@ -350,31 +480,31 @@ Same schema as the main training CSV. Used by `ml_validation_runner` for end-to-
 
 ### 5. Symptom dictionary - `symptoms_pl_en.json`
 
-Maps Polish symptom phrases to English keys (which become CSV column names). Already shipped in the repo. Format:
+A list of entries mapping Polish symptom names (and synonyms) to feature columns. Already shipped in the repo. Format:
 
 ```json
-{
-  "gorączka": "fever",
-  "kaszel": "cough",
-  "ból głowy": "headache",
-  "ból gardła": "sore_throat",
-  ...
-}
+[
+  {
+    "en": "Sore throat",
+    "pl": "ból gardła",
+    "xgb_label": ["sore_throat"],
+    "synonyms_pl": ["drapanie w gardle", "ból przy przełykaniu"],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  }
+]
 ```
 
-If you add new symptoms to your CSV, you also need to add the PL↔EN mapping here so the symptom matcher can extract them from user input.
+`xgb_label` must match CSV column names. When it lists several columns, the matcher picks the one with the most training data and skips columns that never occur in the training set (`build_datasets.py` reports dictionary entries without data).
 
 ### 6. Disease dictionary - `diseases_pl_en.json`
 
-Same idea, but for diseases - used by the LLM prompt localizer to translate Top-3 results into Polish. Format:
+Same idea for diseases, used to show Polish names in the UI and in LLM prompts:
 
 ```json
-{
-  "Influenza": "Grypa",
-  "Migraine": "Migrena",
-  "Pneumonia": "Zapalenie płuc",
-  ...
-}
+[
+  { "en": "Strep throat", "pl": "Angina paciorkowcowa", "xgb_label": "strep_throat" }
+]
 ```
 
 ## API Endpoints

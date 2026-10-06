@@ -212,7 +212,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
     const pieces: string[] = [];
 
     if (selected.length) {
-      pieces.push(`Zgłaszam objawy: ${joinPolish(selected)}.`);
+      pieces.push(`Zgłaszam objawy: ${joinPolish(selected.map(humanFor))}.`);
     } else {
       pieces.push("Nie wskazano objawów.");
     }
@@ -228,7 +228,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
     pieces.push(`Nasilenie subiektywne: ${severity}/10.`);
 
     if (notes.trim()) {
-      pieces.push(`Dodatkowe informacje: ${notes.trim()}.`);
+      pieces.push(`Dodatkowe informacje: ${notes.trim().replace(/[.!?…]+$/, "")}.`);
     }
 
     return pieces.join(" ");
