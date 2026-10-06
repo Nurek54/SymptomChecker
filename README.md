@@ -1,13 +1,10 @@
-<p align="center">
-  <img src="frontend/public/logo.png" alt="Symptom Checker logo" width="88" />
-</p>
-
-<h1 align="center">Symptom Checker</h1>
-
-<p align="center">
-  <strong>A Polish-language symptom assessment chat</strong><br />
-  classical ML ensemble (XGBoost + River) + a local LLM (Bielik 11B), no data leaves the machine
-</p>
+<a href="#see-it-in-action">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/banner-light.svg" />
+    <img src="docs/banner-light.svg" alt="Symptom Checker: describe how you feel in Polish, get the three most likely causes, explained" width="100%" />
+  </picture>
+</a>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
@@ -16,35 +13,27 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <br />
   <img src="https://img.shields.io/badge/XGBoost-GPU-EB6E25?style=flat-square" alt="XGBoost" />
   <img src="https://img.shields.io/badge/River-online_learning-1F6FEB?style=flat-square" alt="River" />
   <img src="https://img.shields.io/badge/LLM-Bielik_11B_(GGUF)-8B5CF6?style=flat-square" alt="Bielik" />
   <img src="https://img.shields.io/badge/Supabase-auth-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/License-All_Rights_Reserved-red?style=flat-square" alt="License" />
 </p>
 
 <p align="center">
-  <a href="#see-it-in-action">Demo</a> ·
-  <a href="#screenshots">Screenshots</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="#getting-started">Getting started</a> ·
-  <a href="#api-endpoints">API</a> ·
-  <a href="#configuration">Configuration</a>
-</p>
-
-<p align="center">
-  <img src="docs/hero.png" alt="Symptom Checker: chat with follow-up questions, collected symptoms and Top-3 diagnoses, light and dark theme" width="100%" />
+  <a href="#see-it-in-action"><b>Demo</b></a> &nbsp;·&nbsp;
+  <a href="#highlights"><b>Highlights</b></a> &nbsp;·&nbsp;
+  <a href="#screenshots"><b>Screenshots</b></a> &nbsp;·&nbsp;
+  <a href="#how-it-works"><b>How it works</b></a> &nbsp;·&nbsp;
+  <a href="#getting-started"><b>Getting started</b></a> &nbsp;·&nbsp;
+  <a href="#api-endpoints"><b>API</b></a>
 </p>
 
 > [!WARNING]
 > **Educational / research project, not a medical device.** The output is not a diagnosis. If symptoms worsen or red flags appear, contact a doctor or emergency services (112).
 
-## About
+**Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish; the app recognizes the symptoms (inflection and negation included, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation from a Polish LLM running on your own GPU.
 
-**Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish, the app recognizes the symptoms (including inflection and negation, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation written by a Polish LLM running locally.
-
-Under the hood, predictions come from a **calibrated ensemble** of XGBoost (offline, Bayesian-tuned on GPU) and River OVR / FTRL-Proximal (online, can keep learning), fused in log space with confidence-based weights.
+Predictions come from a **calibrated ensemble** of XGBoost (offline, Bayesian-tuned on GPU) and River OVR / FTRL-Proximal (online, can keep learning), fused in log space with confidence-based weights.
 
 ## See it in action
 
@@ -52,9 +41,69 @@ Under the hood, predictions come from a **calibrated ensemble** of XGBoost (offl
   <img src="docs/demo.gif" alt="Demo: the user describes symptoms, answers follow-up questions, gets the Top-3 and an urgency assessment, then opens the per-model breakdown" width="100%" />
 </p>
 
-<p align="center"><sub>One conversation from first message to Top-3, a quick action (<em>Pilność</em>) and the XGBoost / River / Ensemble breakdown.</sub></p>
+<p align="center"><sub>First message → follow-up questions → Top-3 with explanation → quick action <em>Pilność</em> → XGBoost / River / Ensemble breakdown.</sub></p>
+
+## Highlights
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/languages.svg" width="44" alt="" /><br />
+      <b>Understands Polish</b><br />
+      <sub>Dictionary + multilingual embeddings, aware of inflection (<i>boli mnie głowa</i>) and negation (<i>gorączka już minęła</i>).</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/message-circle-question.svg" width="44" alt="" /><br />
+      <b>Asks the right question</b><br />
+      <sub>Picks the symptom that best separates the likely diseases, skips near-duplicates and stops after a limit instead of asking forever.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/layers.svg" width="44" alt="" /><br />
+      <b>Calibrated ensemble</b><br />
+      <sub>XGBoost and River are each temperature-calibrated on held-out data, then the fusion gets its own temperature.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/cpu.svg" width="44" alt="" /><br />
+      <b>Local LLM</b><br />
+      <sub>Bielik 11B v2.3 (GGUF) via <code>ctransformers</code> writes the explanation in natural Polish prose. No external AI API.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/eye.svg" width="44" alt="" /><br />
+      <b>Transparent</b><br />
+      <sub>Per-model Top-3 and the fusion weights are one click away in the UI; full metrics land in <code>training_report.json</code>.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/zap.svg" width="44" alt="" /><br />
+      <b>Quick actions</b><br />
+      <sub>One click for diagnosis, recommendations, urgency, OTC medicines, prevention or a summary.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/user-round-check.svg" width="44" alt="" /><br />
+      <b>Accounts or guest mode</b><br />
+      <sub>Supabase auth with saved history, or start chatting right away as a guest.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/timer.svg" width="44" alt="" /><br />
+      <b>Training with ETA</b><br />
+      <sub>Every long step logs elapsed and remaining time; startup is split into 5 timed stages.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/flask-conical.svg" width="44" alt="" /><br />
+      <b>Tested</b><br />
+      <sub>pytest (unit, API, regressions), vitest and Playwright end-to-end; leak-free train / calibration / test split.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Screenshots
+
+<p align="center">
+  <img src="docs/hero.png" alt="Light and dark theme side by side" width="100%" />
+</p>
 
 <table>
   <tr>
@@ -63,28 +112,18 @@ Under the hood, predictions come from a **calibrated ensemble** of XGBoost (offl
       <p align="center"><b>Adaptive follow-up questions</b><br /><sub>Recognized symptoms appear on the right as you type.</sub></p>
     </td>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/01-assessment.png" alt="Assessment with Top-3" />
-      <p align="center"><b>Assessment with Top-3</b><br /><sub>LLM explanation in Polish, probabilities from the ensemble.</sub></p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
       <img src="docs/screenshots/03-model-split.png" alt="XGBoost vs River vs Ensemble" />
       <p align="center"><b>Look inside the ensemble</b><br /><sub>XGBoost, River and the fused result side by side, with the weights used.</sub></p>
     </td>
-    <td width="50%" valign="top">
-      <img src="docs/screenshots/04-symptom-picker.png" alt="Symptom picker" />
-      <p align="center"><b>Symptom picker</b><br /><sub>Hundreds of Polish symptom names grouped by body system; add or remove by hand.</sub></p>
-    </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/06-history.png" alt="Conversation history" />
-      <p align="center"><b>Conversation history</b><br /><sub>Saved chats with extracted symptoms and the diagnoses at that time.</sub></p>
+      <img src="docs/screenshots/04-symptom-picker.png" alt="Symptom picker" />
+      <p align="center"><b>Symptom picker</b><br /><sub>Hundreds of Polish symptom names grouped by body system.</sub></p>
     </td>
     <td width="50%" valign="top">
-      <img src="docs/screenshots/05-dark.png" alt="Dark theme" />
-      <p align="center"><b>Dark theme</b><br /><sub>Remembered per browser, no flash on reload.</sub></p>
+      <img src="docs/screenshots/06-history.png" alt="Conversation history" />
+      <p align="center"><b>Conversation history</b><br /><sub>Saved chats with extracted symptoms and the diagnoses at that time.</sub></p>
     </td>
   </tr>
 </table>
@@ -102,19 +141,6 @@ Under the hood, predictions come from a **calibrated ensemble** of XGBoost (offl
 </details>
 
 <sub>Screenshots and the demo come from the real frontend; the backend responses in them are scripted so the example is reproducible.</sub>
-
-## Features
-
-- **Polish symptom understanding** - dictionary + multilingual embeddings, aware of inflection (*boli mnie głowa* / *ból głowy*) and negation (*nie mam gorączki*, *gorączka już minęła*)
-- **Smart follow-up questions** - asks about the symptom that best separates the currently likely diseases, never about near-duplicates, and stops after a limit with an indicative assessment instead of asking forever
-- **Calibrated ensemble** - XGBoost and River are each temperature-calibrated on held-out data, and the fused distribution gets its own temperature; quality is measured on a leak-free test set ([details](#calibration-and-quality-report))
-- **Local LLM** - Bielik 11B v2.3 Instruct (GGUF) via `ctransformers`; answers in natural Polish prose, no external API
-- **Quick actions** - one click for *diagnosis*, *recommendations*, *urgency*, *OTC medicines*, *prevention*, *summary*
-- **Transparent predictions** - per-model Top-3 and fusion weights available in the UI
-- **Accounts or guest mode** - Supabase auth, persistent history for logged-in users
-- **Validation reports** - `ml_validation_runner` writes confusion matrices, per-class F1 and frequent / rare slices as SVG
-- **Progress with ETA during training** - every long step logs elapsed and remaining time
-- **Tests** - pytest (unit, API, regressions), vitest, Playwright end-to-end
 
 ## How it works
 
@@ -196,7 +222,7 @@ flowchart LR
     F --> G[("training_report<br/>.json")]
 ```
 
-Every stage logs elapsed and remaining time, so a long first run is never a black box:
+Every stage logs elapsed and remaining time, so a long first run is never a black box ([more](#progress-and-remaining-time)):
 
 ```text
 [XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
@@ -370,7 +396,7 @@ The very first time you start the backend, **the system trains the ML models fro
 
 If any of the XGB artifacts are missing, the full pipeline runs:
 
-1. **Load training data** from `DATA_CSV` (default: `train_remainder.csv` if present, otherwise `Final_Dataset_Diseases_and_Symptoms.csv`)
+1. **Load training data** from `DATA_CSV` (default: `data/v2/train.csv` when present, see [Training datasets](#training-datasets))
 2. **Bayesian hyperparameter search** - `XGB_N_ITER_BAYES` × `XGB_CV_SPLITS`-fold CV (default: 32 × 3 = 96 fits)
 3. **Final training** on the training set with the best params
 4. **Temperature calibration** on held-out data the model has never seen (`calibration.csv`; if it is missing, a stratified hold-out is cut from the training set *before* training)
@@ -382,14 +408,7 @@ After that, every subsequent startup just **loads the saved models** (~5–10 s)
 
 ### Progress and remaining time
 
-Every long step logs its progress with elapsed time and an estimate of the remaining time, for example:
-
-```
-[XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
-[XGB][Bayes] 9% (3/32) loss=0.21 best=0.20 ... | minęło 21m | zostało ~3h02m
-[XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
-[River/trening]  31.3% (35571/113416) 52.1 wierszy/s | minęło 11m22s | zostało ~25m
-```
+Every long step logs its progress with elapsed time and an estimate of the remaining time (see the example in [How it works](#training-pipeline-first-start)).
 
 Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. The River bootstrap is a single online pass over the training set (one update per class per row), so with ~570 classes it takes roughly 15–40 min, once.
 
@@ -416,6 +435,9 @@ Bielik 11B Q6_K is **not trained** - only loaded into memory:
 Once loaded, generation is fast (a few seconds per Top-3 summary on GPU).
 
 ## Dataset Format
+
+<details>
+<summary><b>Expected CSV and dictionary formats</b></summary>
 
 If you don't have the original training data and want to use your own, the CSV files must follow the schema below. Match the schema and the entire training, calibration and evaluation pipeline will work without code changes.
 
@@ -507,7 +529,12 @@ Same idea for diseases, used to show Polish names in the UI and in LLM prompts:
 ]
 ```
 
+</details>
+
 ## API Endpoints
+
+<details>
+<summary><b>All endpoints</b></summary>
 
 ### Chat
 | Method | Endpoint | Description |
@@ -561,7 +588,12 @@ Read endpoints (`status`, `features`, `predict_topk`) are open. Endpoints that c
 
 Full Swagger docs at `http://127.0.0.1:8000/docs` once the backend is running.
 
+</details>
+
 ## Configuration
+
+<details>
+<summary><b>All settings</b></summary>
 
 All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides come from `.env`. Below are the most relevant settings - full list in the file itself.
 
@@ -632,6 +664,8 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `STOP_FOLLOWUPS_AT` | `4` | After N follow-up questions without reaching `MIN_SYMPTOMS`, give an indicative (low-confidence) assessment instead of asking forever |
 | `TOPN_DIAGNOSES` | `3` | Number of diagnoses returned |
 | `SUMMARY_MODE` | `"llm"` | `"llm"` or `"template"` |
+
+</details>
 
 ## License
 
