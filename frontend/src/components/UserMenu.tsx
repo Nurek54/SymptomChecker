@@ -103,8 +103,8 @@ export default function UserMenu() {
         date_of_birth: dob || undefined,
       });
       setOk("Zapisano zmiany.");
-    } catch (e: any) {
-      setErr(e?.message || "Nie udało się zapisać.");
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : "") || "Nie udało się zapisać.");
     } finally {
       setBusy(false);
     }

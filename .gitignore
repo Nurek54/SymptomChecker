@@ -66,7 +66,9 @@ backend/data/Final_Dataset_Diseases_and_Symptoms.csv
 backend/data/Final_Augmented_dataset_Diseases_and_Symptoms.csv
 backend/data/train_remainder.csv
 backend/data/calibration.csv
+backend/data/v2/*.csv
 backend/ml/Backup/
+backend/ml/symptom_given_disease.npz
 
 # ───── Logi runtime ─────
 logs/*

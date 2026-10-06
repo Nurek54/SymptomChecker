@@ -15,12 +15,29 @@ try:
 except Exception:
     pass
 
+_BACKEND_DIR = Path(__file__).resolve().parent
+
 # ───────────────────────── helpers do env ─────────────────────────
 def _env_str(name: str, default: str | None = None, *, required: bool = False) -> str:
     v = os.getenv(name, default if default is not None else "")
     if required and str(v).strip() == "":
         raise RuntimeError(f"Brak wymaganej zmiennej środowiskowej: {name}")
     return v
+
+def _env_path(name: str, default: str) -> str:
+    """Ścieżka z env; względna jest liczona od katalogu backend/ (niezależnie od cwd)."""
+    v = _env_str(name, default).strip()
+    if not v:
+        return v
+    p = Path(v)
+    return str(p if p.is_absolute() else (_BACKEND_DIR / p))
+
+def rel_to_backend(path: str) -> str:
+    """Ścieżka względem backend/ (do metadanych modeli - przenośna między komputerami)."""
+    try:
+        return Path(os.path.relpath(path, _BACKEND_DIR)).as_posix()
+    except ValueError:
+        return Path(path).as_posix()
 
 def _env_int(name: str, default: int) -> int:
     try:
@@ -46,13 +63,26 @@ DEBUG              = _env_bool("DEBUG", APP_ENV.lower() != "prod")
 GLOBAL_SEED        = _env_int("GLOBAL_SEED", 42)
 
 # ───────────────────────── Ścieżki i pliki (ML) ─────────────────────────
-MODEL_PATH         = _env_str("MODEL_PATH", "ml/xgb_model.joblib")
-LE_PATH            = _env_str("LE_PATH", "ml/label_encoder.joblib")
-BEST_PARAMS_PATH   = _env_str("BEST_PARAMS_PATH", "ml/xgb_best_params.joblib")
+MODEL_PATH         = _env_path("MODEL_PATH", "ml/xgb_model.joblib")
+LE_PATH            = _env_path("LE_PATH", "ml/label_encoder.joblib")
+BEST_PARAMS_PATH   = _env_path("BEST_PARAMS_PATH", "ml/xgb_best_params.joblib")
 
-DATA_CSV           = _env_str("DATA_CSV", "data/Final_Dataset_Diseases_and_Symptoms.csv")
-TEST_CSV           = _env_str("TEST_CSV", "data/Final_Testset_for_Eval.csv")
-CLASS_WEIGHT_CSV   = _env_str("CLASS_WEIGHT_CSV", "data/Final_Dataset_Diseases_and_Symptoms.class_weight.csv")
+# Zbiory danych. Preferowany jest komplet z data/v2 (data/build_datasets.py):
+# train/calibration/test bez wspólnych wektorów objawów, scalone zduplikowane
+# etykiety, bez mikro-klas, wagi klas obcięte do [0.5, 5].
+# Bez v2: stary układ (train_remainder.csv = pełny zbiór BEZ calibration.csv).
+def _first_existing(*cands: str) -> str:
+    for c in cands:
+        if (_BACKEND_DIR / c).exists():
+            return c
+    return cands[-1]
+
+_V2 = (_BACKEND_DIR / "data" / "v2" / "train.csv").exists()
+DATA_CSV           = _env_path("DATA_CSV", _first_existing(
+    "data/v2/train.csv", "data/train_remainder.csv", "data/Final_Dataset_Diseases_and_Symptoms.csv"))
+TEST_CSV           = _env_path("TEST_CSV", "data/v2/test.csv" if _V2 else "data/Final_Testset_for_Eval.csv")
+CLASS_WEIGHT_CSV   = _env_path("CLASS_WEIGHT_CSV", "data/v2/class_weight.csv" if _V2
+                               else "data/Final_Dataset_Diseases_and_Symptoms.class_weight.csv")
 
 # ───────────────────────── Frontend (CORS) ─────────────────────────
 FRONTEND_ORIGIN    = _env_str("FRONTEND_ORIGIN", "http://localhost:3000")
@@ -133,11 +163,11 @@ FORCE_SECTIONS_ORDER    = [
 ]
 
 # ───────────────────────── Słownik objawów ─────────────────────────
-SYMPTOMS_DICT_PATH  = _env_str("SYMPTOMS_DICT_PATH", "data/symptoms_pl_en.json")
+SYMPTOMS_DICT_PATH  = _env_path("SYMPTOMS_DICT_PATH", "data/symptoms_pl_en.json")
 EMB_USE_DICTIONARY  = _env_bool("EMB_USE_DICTIONARY", True)
 EMB_RULE_FIRST      = _env_bool("EMB_RULE_FIRST", True)
 EMB_RULE_MIN_LEN    = _env_int("EMB_RULE_MIN_LEN", 3)
-DISEASES_DICT_PATH  = _env_str("DISEASES_DICT_PATH", "data/diseases_pl_en.json")
+DISEASES_DICT_PATH  = _env_path("DISEASES_DICT_PATH", "data/diseases_pl_en.json")
 
 MATCHER_FUZZY_MIN_LEN     = _env_int("MATCHER_FUZZY_MIN_LEN", 6)
 MATCHER_NEG_WINDOW_CHARS  = _env_int("MATCHER_NEG_WINDOW_CHARS", 30)
@@ -149,18 +179,20 @@ XGB_RANDOM_STATE    = GLOBAL_SEED
 XGB_CV_SPLITS       = _env_int("XGB_CV_SPLITS", 3)
 XGB_USE_GPU         = _env_bool("XGB_USE_GPU", True)
 XGB_TREE_METHOD     = _env_str("XGB_TREE_METHOD", "hist")
+# Kalibracja = temperature scaling na odłożonym zbiorze (nie na danych treningowych).
 XGB_CALIBRATE             = _env_bool("XGB_CALIBRATE", True)
-XGB_CALIBRATION_METHOD    = _env_str("XGB_CALIBRATION_METHOD", "sigmoid")
 
 # ───────────────────────── Sterowanie przepływem w czacie ─────────────────────────
+# Po tylu pytaniach uzupełniających (bez osiągnięcia MIN_SYMPTOMS) przestajemy
+# dopytywać i podajemy ocenę orientacyjną z wyraźnym zastrzeżeniem.
 STOP_FOLLOWUPS_AT   = _env_int("STOP_FOLLOWUPS_AT", 4)
 PREDICT_ONLY_ON_NEW = _env_bool("PREDICT_ONLY_ON_NEW", True)
 TOPN_DIAGNOSES      = _env_int("TOPN_DIAGNOSES", 3)
 
 # ───────────────────────── River OVR Logistic (FTRL) ─────────────────────────
-RIVER_MODEL_PATH       = _env_str("RIVER_MODEL_PATH", "ml/river_ovr_ftrl.joblib")
-RIVER_CALIB_PATH       = _env_str("RIVER_CALIB_PATH", "ml/river_ovr_ftrl.calibration.joblib")
-RIVER_FEATURES_PATH    = _env_str("RIVER_FEATURES_PATH", "ml/river_ovr_ftrl.features.json")
+RIVER_MODEL_PATH       = _env_path("RIVER_MODEL_PATH", "ml/river_ovr_ftrl.joblib")
+RIVER_CALIB_PATH       = _env_path("RIVER_CALIB_PATH", "ml/river_ovr_ftrl.calibration.joblib")
+RIVER_FEATURES_PATH    = _env_path("RIVER_FEATURES_PATH", "ml/river_features.json")
 RIVER_ALPHA            = _env_float("RIVER_ALPHA", 0.1)
 RIVER_BETA             = _env_float("RIVER_BETA", 1.0)
 RIVER_L1               = _env_float("RIVER_L1", 1e-6)
@@ -169,14 +201,17 @@ RIVER_CLIP_GRADIENT    = _env_float("RIVER_CLIP_GRADIENT", 5.0)
 RIVER_WEIGHT_MEDIAN_NORM = _env_bool("RIVER_WEIGHT_MEDIAN_NORM", True)
 RIVER_WEIGHT_CAP         = _env_float("RIVER_WEIGHT_CAP", 25.0)
 RIVER_WEIGHT_MIN         = _env_float("RIVER_WEIGHT_MIN", 0.2)
-RIVER_CALIBRATION_CSV    = _env_str("RIVER_CALIBRATION_CSV", "data/calibration.csv")
+RIVER_CALIBRATION_CSV    = _env_path("RIVER_CALIBRATION_CSV", "data/v2/calibration.csv" if _V2 else "data/calibration.csv")
+XGB_CALIBRATION_CSV      = _env_path("XGB_CALIBRATION_CSV", RIVER_CALIBRATION_CSV)
 RIVER_CALIBRATE_ON_START = _env_bool("RIVER_CALIBRATE_ON_START", True)
 
-# ───────────────────────── Ensemble (XGB + River) – LEKKO MOCNIEJSZY RIVER ────────
+# ───────────────────────── Ensemble (XGB + River) – XGB dominuje, River koryguje ────
 ENSEMBLE_W_XGB       = _env_float("ENSEMBLE_W_XGB", 0.8)
 ENSEMBLE_W_RIVER     = _env_float("ENSEMBLE_W_RIVER", 0.2)
 
-ENSEMBLE_K_FUSE      = _env_int("ENSEMBLE_K_FUSE", 9)
+# 0 = fuzja na pełnych rozkładach (wszystkie klasy) - zalecane.
+# >0 = tylko Top-K z każdego modelu (brakujące klasy dostają minimum z listy).
+ENSEMBLE_K_FUSE      = _env_int("ENSEMBLE_K_FUSE", 0)
 
 ENSEMBLE_MIN_XGB_WEIGHT   = _env_float("ENSEMBLE_MIN_XGB_WEIGHT", 0.55)
 ENSEMBLE_MIN_RIVER_WEIGHT = _env_float("ENSEMBLE_MIN_RIVER_WEIGHT", 0.15)
@@ -202,6 +237,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES  = _env_int("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
 SESSION_COOKIE_NAME          = _env_str("SESSION_COOKIE_NAME", "sc_session")
 SESSION_COOKIE_SECURE        = _env_bool("SESSION_COOKIE_SECURE", False)
 SESSION_COOKIE_SAMESITE      = _env_str("SESSION_COOKIE_SAMESITE", "lax")
+
+# Token do endpointów administracyjnych /river/* (douczanie, ewaluacja z CSV).
+# Pusty = endpointy wyłączone (403).
+ADMIN_API_TOKEN              = _env_str("ADMIN_API_TOKEN", "").strip()
 
 # Spojnosc ciasteczka sesji: SameSite=None wymaga Secure=True,
 # inaczej nowoczesne przegladarki odrzuca ciasteczko (logowanie nie zadziala).

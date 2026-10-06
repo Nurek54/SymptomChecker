@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from core.state import AppState
 from services.prompt_localizer import PromptLocalizer
 from services.ensemble import EnsembleTopK
-from config import MIN_SYMPTOMS
+from config import MIN_SYMPTOMS, TOPN_DIAGNOSES
 
 from database.db import get_db
 from database import crud
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/sessions", tags=["SessionOps"])
 def get_state(req: Request) -> AppState:
     st = getattr(req.app.state, "app_state", None)
     if st is None:
-        raise HTTPException(500, "Brak AppState w aplikacji.")
+        raise HTTPException(503, "Aplikacja w trakcie startu.")
     return st
 
 
@@ -37,6 +37,9 @@ class SymptomsPatch(BaseModel):
     remove: List[str] = Field(default_factory=list)
     replace: Optional[List[str]] = None
     lang: Optional[str] = "pl"
+    # Objawy, które pamięta frontend - używane tylko, gdy backend nie zna sesji
+    # (np. po restarcie serwera), żeby "dodaj objaw" nie kasowało pozostałych.
+    current: Optional[List[str]] = None
 
 
 class SymptomsPatchResponse(BaseModel):
@@ -95,10 +98,7 @@ def patch_session_symptoms(
     sessions = st.sessions
     xgb = st.xgb
     if not xgb or not xgb.model:
-        raise HTTPException(500, "Model XGB niezaładowany.")
-
-    if not sessions.exists(session_id):
-        sessions.init_session(session_id)
+        raise HTTPException(503, "Model XGB niezaładowany.")
 
     def _canon(s: str) -> str:
         return str(s or "").strip().lower()
@@ -116,11 +116,22 @@ def patch_session_symptoms(
             return items
         return [s for s in items if s in known_canons]
 
+    if not sessions.exists(session_id):
+        sessions.init_session(session_id)
+        restored = filter_known(canon_all(patch.current or []))
+        if restored:
+            sessions.set_symptoms(session_id, restored)
+
+    if not sessions.claim_owner(session_id, uid):
+        raise HTTPException(403, "Ta sesja należy do innego użytkownika.")
+
     cur = set(_canon(s) for s in (sessions.get_symptoms(session_id) or []))
 
     if patch.replace is not None:
         replaced = canon_all(patch.replace or [])
         cur = set(filter_known(replaced))
+        if not cur:
+            sessions.reset_flow(session_id)  # "wyczyść wszystko" = nowa ocena od zera
     else:
         for s in filter_known(canon_all(patch.add or [])):
             cur.add(s)
@@ -129,9 +140,12 @@ def patch_session_symptoms(
                 cur.remove(s)
 
     new_symptoms_sorted = sorted(cur)
+    for s in canon_all(patch.remove or []):
+        if s not in cur:
+            sessions.add_negated_symptom(session_id, s)  # usunięty ręcznie = nie pytaj o niego ponownie
     sessions.set_symptoms(session_id, new_symptoms_sorted)
 
-    lang = (patch.lang or "pl").lower()
+    lang = "pl"  # słowniki i nazwy chorób są polskie
     loc = PromptLocalizer(st.matcher)
 
     # Za mało objawów → tylko zapis ekstrakcji, brak top-3
@@ -167,7 +181,7 @@ def patch_session_symptoms(
 
     ens = EnsembleTopK(st)
     try:
-        raw_top = ens.predict_topk([vec[0]], k=3)
+        raw_top = ens.predict_topk([vec[0]], k=int(TOPN_DIAGNOSES))
     except Exception:
         raw_top = []
 
@@ -251,7 +265,12 @@ def get_top3_split(
 ):
     sessions = st.sessions
     if not sessions.exists(session_id):
-        sessions.init_session(session_id)
+        # nieznana sesja = brak objawów; nie tworzymy jej przy zwykłym odczycie
+        return Top3SplitResponse(
+            xgb_enabled=bool(getattr(st, "xgb", None) and getattr(st.xgb, "model", None)),
+            river_enabled=bool(getattr(st, "river", None) and getattr(st.river, "model", None)),
+            symptoms=[],
+        )
 
     selected = list(sessions.get_symptoms(session_id) or [])
     vec = _make_feature_vector(st, selected)
@@ -260,9 +279,9 @@ def get_top3_split(
     xgb_enabled = bool(getattr(st, "xgb", None) and getattr(st.xgb, "model", None))
     river_enabled = bool(getattr(st, "river", None) and getattr(st.river, "model", None))
 
-    split = ens.predict_split([vec], k=max(1, int(k)))
+    split = ens.predict_split([vec], k=max(1, min(int(k), 20)))
     loc = PromptLocalizer(st.matcher)
-    lang = (lang or "pl").lower()
+    lang = "pl"
 
     def _with_pl(lst: List[Dict[str, Any]]) -> List[TopItem]:
         out: List[TopItem] = []

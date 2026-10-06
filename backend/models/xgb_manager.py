@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import threading
 import json
 import time
 import joblib
@@ -19,7 +20,8 @@ from skopt.space import Real, Integer
 from config import (
     MODEL_PATH, LE_PATH, BEST_PARAMS_PATH, DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     XGB_N_ITER_BAYES, XGB_CV_SPLITS, XGB_RANDOM_STATE,
-    XGB_USE_GPU, XGB_TREE_METHOD, XGB_CALIBRATE, XGB_CALIBRATION_METHOD,
+    XGB_USE_GPU, XGB_TREE_METHOD, XGB_CALIBRATE, XGB_CALIBRATION_CSV,
+    rel_to_backend,
 )
 
 # Dodatkowe flagi inference (bezpieczne defaulty gdy brak w config.py)
@@ -60,6 +62,7 @@ if not logging.getLogger().handlers:
 FEATURES_PATH = os.path.join(os.path.dirname(MODEL_PATH), "features.json")
 TRAIN_PARAMS_PATH = os.path.splitext(MODEL_PATH)[0] + ".train_params.json"   # parametry bazowego treningu
 CALIB_PATH = os.path.splitext(MODEL_PATH)[0] + ".calibration.joblib"        # kalibrator temperatury
+META_PATH = os.path.splitext(MODEL_PATH)[0] + ".meta.json"                   # na jakich danych trenowano
 
 # kolumny specjalne, które NIGDY nie mogą być cechami
 SPECIAL_COLS = {"diseases", "xgb_label", "weight"}
@@ -567,6 +570,70 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
     return None
 
 
+def _calibration_csv_available() -> bool:
+    """Zbiór kalibracyjny musi istnieć i być rozłączny z DATA_CSV (inny plik)."""
+    if not XGB_CALIBRATION_CSV or not os.path.exists(XGB_CALIBRATION_CSV):
+        return False
+    try:
+        if os.path.samefile(XGB_CALIBRATION_CSV, DATA_CSV):
+            return False
+    except OSError:
+        pass
+    return True
+
+
+def _load_calibration_frame(
+    le: LabelEncoder, features: List[str]
+) -> Optional[Tuple[pd.DataFrame, np.ndarray, Optional[np.ndarray]]]:
+    """Wczytuje odłożony zbiór kalibracyjny (np. data/calibration.csv) -> (X, y_enc, w)."""
+    if not _calibration_csv_available():
+        return None
+    df = pd.read_csv(XGB_CALIBRATION_CSV)
+    df.columns = [str(c).strip().lower().lstrip("\ufeff") for c in df.columns]
+    if "diseases" not in df.columns:
+        log.warning("[XGB][Cal] %s bez kolumny 'diseases' - pomijam.", XGB_CALIBRATION_CSV)
+        return None
+    for c in features:
+        if c not in df.columns:
+            df[c] = 0
+    df = df[df["diseases"].isin(set(le.classes_.tolist()))]
+    if df.empty:
+        return None
+    X = df[features].astype(np.uint8)
+    y = le.transform(df["diseases"])
+    w = df["weight"].astype(float).to_numpy() if "weight" in df.columns else None
+    return X, y, w
+
+
+def _save_meta(calibration_source: str) -> None:
+    try:
+        with open(META_PATH, "w", encoding="utf-8") as f:
+            json.dump(
+                {"data_csv": rel_to_backend(DATA_CSV), "calibration": calibration_source},
+                f, ensure_ascii=False, indent=2,
+            )
+    except Exception as e:
+        log.warning("[XGB] Nie zapisano metadanych modelu: %s", e)
+
+
+def _warn_if_trained_on_other_data(has_calibrator: bool) -> None:
+    try:
+        with open(META_PATH, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        trained_on = str(meta.get("data_csv") or "")
+    except Exception:
+        trained_on = ""
+    if trained_on != rel_to_backend(DATA_CSV):
+        log.warning(
+            "[XGB] Model nie ma metadanych albo był trenowany na innym zbiorze (%s) niż DATA_CSV=%s. "
+            "Starsze wersje kalibrowały temperaturę na danych treningowych, więc prawdopodobieństwa "
+            "mogą być zawyżone%s. Usuń %s, %s i %s, aby przetrenować model.",
+            trained_on or "brak informacji", DATA_CSV,
+            "" if has_calibrator else " (kalibrator nieobecny)",
+            MODEL_PATH, LE_PATH, CALIB_PATH,
+        )
+
+
 # ───────────────────────── Manager ─────────────────────────
 class XGBManager:
     def __init__(self):
@@ -583,6 +650,8 @@ class XGBManager:
         # cache konfiguracji inferencji + warmup flaga
         self._infer_cfg_cache: Optional[tuple[str, int]] = None  # (device, nthread)
         self._warmed: bool = False
+        # /chat działa w puli wątków: predykcja + cache muszą być atomowe
+        self._lock = threading.Lock()
 
     # ───────────────────────── helpers ─────────────────────────
     def _final_params(self, best: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, Any], int]:
@@ -768,6 +837,7 @@ class XGBManager:
                 self.le = joblib.load(LE_PATH)
                 self.features = _recover_features(self.model)
                 self.calibrator = _load_calibrator()
+                _warn_if_trained_on_other_data(self.calibrator is not None)
                 log.info("[XGB] Załadowano istniejący model (Booster).")
             except Exception as e:
                 log.warning("[XGB] Nie udało się wczytać modelu: %s. Trenuję od nowa.", e)
@@ -800,8 +870,42 @@ class XGBManager:
             log.info("[XGB] Final train_params: %s | num_boost_round=%d", train_params, num_rounds)
             _save_train_params(train_params)
 
+            # Kalibracja temperatury MUSI odbywać się na danych, których booster nie widział.
+            # 1) preferowany: odłożony plik (XGB_CALIBRATION_CSV, domyślnie data/calibration.csv),
+            # 2) awaryjnie: stratyfikowany hold-out wycięty z TRAIN przed treningiem.
+            X_tr, y_tr, w_tr = X_full, y_full_enc, w_full
+            cal_holdout: Optional[Tuple[Any, np.ndarray, Optional[np.ndarray]]] = None
+            cal_source = "none"
+            if bool(XGB_CALIBRATE):
+                try:
+                    cal_holdout = _load_calibration_frame(le_full, list(features))
+                    if cal_holdout is not None:
+                        cal_source = rel_to_backend(XGB_CALIBRATION_CSV)
+                except Exception as e:
+                    log.warning("[XGB][Cal] Nie udało się wczytać zbioru kalibracyjnego: %s", e)
+                    cal_holdout = None
+                if cal_holdout is None:
+                    try:
+                        min_class = int(pd.Series(y_full_enc).value_counts().min())
+                        n_splits = max(2, min(10, min_class))
+                        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=XGB_RANDOM_STATE)
+                        tr_idx, va_idx = next(skf.split(X_full, y_full_enc))
+                        cal_holdout = (
+                            X_full.iloc[va_idx],
+                            y_full_enc[va_idx],
+                            w_full[va_idx] if w_full is not None else None,
+                        )
+                        X_tr = X_full.iloc[tr_idx]
+                        y_tr = y_full_enc[tr_idx]
+                        w_tr = w_full[tr_idx] if w_full is not None else None
+                        cal_source = "holdout_from_train"
+                        log.info("[XGB][Cal] Brak osobnego zbioru - odkładam hold-out (N=%d) przed treningiem.", len(va_idx))
+                    except Exception as e:
+                        log.warning("[XGB][Cal] Nie da się wydzielić hold-outu (%s) - bez kalibracji.", e)
+                        cal_holdout = None
+
             # finalny trening (z wagami, GPU jeśli włączone)
-            dtrain = _make_dmatrix(X_full, y_full_enc, for_gpu=bool(XGB_USE_GPU), weight=w_full)
+            dtrain = _make_dmatrix(X_tr, y_tr, for_gpu=bool(XGB_USE_GPU), weight=w_tr)
             booster_progress = _BoosterProgress(total_rounds=num_rounds, label="Train", step_pct=1)
             dev = train_params.get("device", "cpu")
             tm = train_params.get("tree_method", None)
@@ -828,17 +932,11 @@ class XGBManager:
             self.features = list(features)
             _save_artifacts(booster, le_full, self.features)
 
-            # opcjonalna kalibracja (na wydzielonej walidacji)
+            # kalibracja na danych NIEWIDZIANYCH przy treningu
             self.calibrator = None
-            if bool(XGB_CALIBRATE):
+            if bool(XGB_CALIBRATE) and cal_holdout is not None:
                 try:
-                    min_class = int(pd.Series(y_full_enc).value_counts().min())
-                    n_splits = max(2, min(10, min_class))
-                    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=XGB_RANDOM_STATE)
-                    _, va_idx = next(skf.split(X_full, y_full_enc))
-                    X_va = X_full.iloc[va_idx]
-                    y_va = y_full_enc[va_idx]
-                    w_va = w_full[va_idx] if w_full is not None else None
+                    X_va, y_va, w_va = cal_holdout
 
                     # marginy → kalibrator temperatury
                     self._set_inference_device()
@@ -853,8 +951,17 @@ class XGBManager:
                     cal.fit(margins, y_va, w=w_va)
                     self.calibrator = cal
                     _save_calibrator(cal)
+                    log.info("[XGB][Cal] T=%.4f (źródło: %s, N=%d)", cal.T, cal_source, len(y_va))
                 except Exception as e:
                     log.warning("[XGB][Cal] Kalibracja nieudana: %s", e)
+            if self.calibrator is None:
+                cal_source = "none"
+                try:
+                    if os.path.exists(CALIB_PATH):
+                        os.remove(CALIB_PATH)  # stary kalibrator nie pasuje do nowego modelu
+                except Exception:
+                    pass
+            _save_meta(cal_source)
 
             did_train = True  # NEW: świeżo trenowaliśmy
 
@@ -1066,7 +1173,10 @@ class XGBManager:
         """
         if self.model is None or self.le is None or not self.features:
             raise RuntimeError("Model/encoder/features niegotowe.")
+        with self._lock:
+            return self._predict_topk_locked(x, k)
 
+    def _predict_topk_locked(self, x: Any, k: int = 3) -> List[Dict[str, Any]]:
         self._set_inference_device()
         t0 = time.perf_counter()
 
@@ -1081,7 +1191,7 @@ class XGBManager:
         # mini-cache: najczęstszy przypadek: ten sam wektor i to samo K
         vt = tuple(float(v) for v in arr[0].tolist())
         if self._last_pred_key == (vt, int(k)) and self._last_pred_val is not None:
-            return self._last_pred_val
+            return [dict(d) for d in self._last_pred_val]
 
         # --- ustalenie liczby rund, jak wcześniej ---
         try:
@@ -1116,7 +1226,7 @@ class XGBManager:
 
         # cache
         self._last_pred_key = (vt, int(k))
-        self._last_pred_val = res
+        self._last_pred_val = [dict(d) for d in res]
 
         rounds_used = self._limit_iteration_end(it_end)
         log.info(

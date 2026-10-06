@@ -13,9 +13,10 @@ export default function ClientWarmup() {
     }, []);
 
     // dogrzej przy każdej zmianie trasy / query
+    const searchKey = search?.toString() ?? "";
     useEffect(() => {
         void prewarmAuth();
-    }, [pathname, search?.toString()]);
+    }, [pathname, searchKey]);
 
     return null;
 }

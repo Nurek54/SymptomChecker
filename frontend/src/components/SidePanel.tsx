@@ -250,7 +250,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     setBusy(true);
     try {
       const canon = (en || "").toLowerCase();
-      const res = await patchSessionSymptoms(sessionId, { add: [canon], lang });
+      const res = await patchSessionSymptoms(sessionId, { add: [canon], lang, current: symptoms ?? [] });
       onPatched(res);
       setQuery("");
       setActiveIdx(-1);
@@ -265,7 +265,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     setBusy(true);
     try {
       const canon = (en || "").toLowerCase();
-      const res = await patchSessionSymptoms(sessionId, { remove: [canon], lang });
+      const res = await patchSessionSymptoms(sessionId, { remove: [canon], lang, current: symptoms ?? [] });
       onPatched(res);
     } finally {
       setBusy(false);
@@ -596,13 +596,10 @@ export function TopDiagCard({
 
       {items && items.length ? (
         <ul className="space-y-2">
-          {items.map((d, i) => {
-            const label =
-              (d as any).diagnosis_pl ??
-              (d as any).diagnosis_en ??
-              (d as any).label ??
-              "—";
-            const p = pct((d as any).probability);
+          {items.map((item, i) => {
+            const d = item as TopDiagnosis & { label?: string };
+            const label = d.diagnosis_pl ?? d.diagnosis_en ?? d.label ?? "-";
+            const p = pct(d.probability);
             return (
               <li
                 key={`${label}-${i}`}
@@ -640,7 +637,7 @@ export function TopDiagCard({
                       <span className="truncate">{label}</span>
                       <span className="shrink-0 tabular-nums">{p ? `${p}%` : ""}</span>
                     </div>
-                    {typeof (d as any).probability === "number" && <ProbBar value={p} />}
+                    {typeof d.probability === "number" && <ProbBar value={p} />}
                   </div>
                 </div>
               </li>

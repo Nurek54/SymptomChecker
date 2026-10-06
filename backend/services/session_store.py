@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 from collections import OrderedDict
-from typing import Dict, List, Set, Optional, Iterable, Any
+from typing import Dict, List, Set, Optional, Iterable, Any, Tuple
 
 from config import SESSION_STORE_TTL_SECONDS, SESSION_STORE_MAX_SESSIONS
 
@@ -22,6 +22,11 @@ class _SessionData:
         "followups",
         "last_top3",
         "last_seen",
+        "asked",
+        "followup_count",
+        "stop_warned",
+        "last_pred",
+        "owner",
     )
 
     def __init__(self) -> None:
@@ -34,6 +39,16 @@ class _SessionData:
         self.followups: List[str] = []
         self.last_top3: List[str] = []
         self.last_seen: float = time.monotonic()
+        # wszystkie zadane pytania uzupełniające (żeby nie pytać drugi raz)
+        self.asked: Set[str] = set()
+        # ile pytań uzupełniających zadaliśmy w tej sesji
+        self.followup_count: int = 0
+        # użytkownik raz napisał "to wszystko" przy zbyt małej liczbie objawów
+        self.stop_warned: bool = False
+        # cache predykcji: (wektor cech, k, wynik)
+        self.last_pred: Optional[Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]] = None
+        # id zalogowanego użytkownika, który pierwszy użył sesji
+        self.owner: Optional[int] = None
 
 
 class SessionStore:
@@ -137,9 +152,10 @@ class SessionStore:
 
     # === Objawy ===
     def get_symptoms(self, session_id: str) -> Set[str]:
+        """Zwraca KOPIĘ zbioru objawów (zmiany tylko przez metody store'a)."""
         with self._lock:
             s = self._get_or_create(session_id)
-            return s.symptoms
+            return set(s.symptoms)
 
     def get_symptoms_list(self, session_id: str) -> List[str]:
         with self._lock:
@@ -153,7 +169,14 @@ class SessionStore:
             s = self._get_or_create(session_id)
             for x in items:
                 if x:
-                    s.symptoms.add(str(x).strip().lower())
+                    key = str(x).strip().lower()
+                    s.symptoms.add(key)
+                    s.negated.discard(key)
+
+    def remove_negated_symptom(self, session_id: str, feat_en: str) -> None:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            s.negated.discard((feat_en or "").strip().lower())
 
     def remove_symptoms(self, session_id: str, items: Iterable[str] | None) -> None:
         if not items:
@@ -169,6 +192,7 @@ class SessionStore:
         with self._lock:
             s = self._get_or_create(session_id)
             s.symptoms = {str(x).strip().lower() for x in (items or []) if x}
+            s.negated -= s.symptoms  # potwierdzony objaw przestaje być zaprzeczony
 
     def replace_symptoms(self, session_id: str, items: Iterable[str] | None) -> None:
         self.set_symptoms(session_id, items)
@@ -229,6 +253,7 @@ class SessionStore:
             key = (feat_en or "").strip().lower()
             if key:
                 s.negated.add(key)
+                s.symptoms.discard(key)  # zaprzeczony objaw nie może jednocześnie być potwierdzony
 
     def get_negated(self, session_id: str) -> Set[str]:
         with self._lock:
@@ -242,6 +267,8 @@ class SessionStore:
             f = (feat_en or "").strip().lower()
             if not f:
                 return
+            s.asked.add(f)
+            s.followup_count += 1
             arr = s.followups
             arr.append(f)
             # deduplikacja z zachowaniem kolejności + przycięcie
@@ -257,6 +284,66 @@ class SessionStore:
         with self._lock:
             s = self._get_or_create(session_id)
             return list(s.followups[-n:])
+
+    def get_asked(self, session_id: str) -> Set[str]:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            return set(s.asked)
+
+    def get_followup_count(self, session_id: str) -> int:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            return int(s.followup_count)
+
+    def set_stop_warned(self, session_id: str, value: bool = True) -> None:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            s.stop_warned = bool(value)
+
+    def reset_flow(self, session_id: str) -> None:
+        """Pacjent zaczyna od nowa (np. wyczyścił objawy): zerujemy stan dopytywania."""
+        with self._lock:
+            s = self._get_or_create(session_id)
+            s.stopped = False
+            s.stop_warned = False
+            s.followup_count = 0
+            s.asked.clear()
+            s.followups.clear()
+            s.negated.clear()
+            s.pending_symptom = None
+            s.last_pred = None
+
+    def is_stop_warned(self, session_id: str) -> bool:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            return bool(s.stop_warned)
+
+    # === Cache predykcji ===
+    def get_last_pred(self, session_id: str) -> Optional[Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]]:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            return s.last_pred
+
+    def set_last_pred(self, session_id: str, vec: Tuple[int, ...], k: int, top: List[Dict[str, Any]]) -> None:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            s.last_pred = (tuple(vec), int(k), [dict(d) for d in top])
+
+    # === Właściciel sesji ===
+    def claim_owner(self, session_id: str, user_id: Optional[int]) -> bool:
+        """
+        Pierwszy zalogowany użytkownik "przejmuje" sesję. Zwraca False, jeśli
+        sesja należy już do INNEGO zalogowanego użytkownika.
+        Anonimowe żądania (user_id=None) nie zmieniają właściciela.
+        """
+        with self._lock:
+            s = self._get_or_create(session_id)
+            if user_id is None:
+                return True
+            if s.owner is None:
+                s.owner = int(user_id)
+                return True
+            return s.owner == int(user_id)
 
     # === Top-3 ===
     def get_last_top3(self, session_id: str) -> List[str]:

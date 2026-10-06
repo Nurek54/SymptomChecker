@@ -141,7 +141,14 @@ function _isChatEndpoint(path: string): boolean {
 }
 
 /** Ujednolicony wrapper na fetch (Bearer + COOKIES) z timeoutem i selektywnym retry. */
-export async function apiFetch<T = any>(
+/** Wyciąga komunikat z dowolnego błędu (catch daje `unknown`). */
+export function errorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    if (typeof e === "string") return e;
+    return String((e as { message?: unknown } | null)?.message ?? "");
+}
+
+export async function apiFetch<T = unknown>(
     path: string,
     init: RequestInit = {},
     opts: { timeoutMs?: number } = {}
@@ -188,9 +195,9 @@ export async function apiFetch<T = any>(
         let res: Response;
         try {
             res = await doFetch();
-        } catch (e: any) {
+        } catch (e: unknown) {
             // Rozróżniamy timeout od innych błędów sieciowych
-            if (e?.name === "AbortError") {
+            if ((e as { name?: string } | null)?.name === "AbortError") {
                 if (localCtrl.signal.aborted && !externalSignal?.aborted) {
                     throw new Error(
                         `API timeout po ${Math.round(timeoutMs / 1000)}s: ${path}. ` +
@@ -210,7 +217,7 @@ export async function apiFetch<T = any>(
         }
 
         const text = await res.text().catch(() => "");
-        let data: any = null;
+        let data: unknown = null;
         try {
             data = text ? JSON.parse(text) : null;
         } catch {
@@ -219,8 +226,9 @@ export async function apiFetch<T = any>(
 
         if (!res.ok) {
             if (res.status === 401) emitUnauthorized();
+            const obj = data && typeof data === "object" ? (data as { detail?: unknown; message?: unknown }) : null;
             const detail =
-                (data && (data.detail || data.message)) ||
+                (obj && (obj.detail || obj.message)) ||
                 (typeof data === "string" ? data : "") ||
                 res.statusText;
             throw new Error(`API ${res.status}: ${detail}`);
@@ -247,10 +255,9 @@ export async function prewarmAuth(force = false): Promise<boolean> {
 export function installSessionGuards() {
     if (typeof window === "undefined") return;
     // uniknij wielokrotnej instalacji
-    // @ts-ignore
-    if ((window as any).__scGuardsInstalled) return;
-    // @ts-ignore
-    (window as any).__scGuardsInstalled = true;
+    const w = window as Window & { __scGuardsInstalled?: boolean };
+    if (w.__scGuardsInstalled) return;
+    w.__scGuardsInstalled = true;
 
     // v9: bez force — TTL cache zadba, żeby nie spamić.
     const warm = () => { void prewarmAuth(false); };
@@ -269,9 +276,10 @@ export function installSessionGuards() {
    ======== AUTH =========
    ======================= */
 
-let _exchangeSessionPromise: Promise<any | null> | null = null;
+let _exchangeSessionPromise: Promise<unknown> | null = null;
 
-export async function exchangeSession(): Promise<any | null> {
+/** Zwraca UserOut z backendu albo null (brak sesji Supabase). */
+export async function exchangeSession(): Promise<unknown> {
     if (_exchangeSessionPromise) return _exchangeSessionPromise;
     _exchangeSessionPromise = (async () => {
         const access = await getTokenWait(2000);
@@ -328,7 +336,7 @@ export async function logout(): Promise<void> {
     await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
 }
 
-export async function getMe<T = any>(): Promise<T | null> {
+export async function getMe<T = unknown>(): Promise<T | null> {
     // v10: po Ctrl+R AuthProvider robi tu pierwsze sprawdzenie kim jest user.
     // Jeśli to padnie (401, timing race z exchangeSession), AuthProvider
     // myśli że user nie jest zalogowany — nawigacja idzie na login, wszystko
@@ -337,8 +345,8 @@ export async function getMe<T = any>(): Promise<T | null> {
         try {
             const { data } = await api.get<T>("/auth/me");
             return (data as T) ?? null;
-        } catch (e: any) {
-            const status = e?.response?.status;
+        } catch (e: unknown) {
+            const status = axios.isAxiosError(e) ? e.response?.status : undefined;
             if (status === 401 && attempt < 2) {
                 try { await ensureBackendSession(true); } catch {}
                 await new Promise(r => setTimeout(r, 400 * Math.pow(2, attempt)));
@@ -350,7 +358,7 @@ export async function getMe<T = any>(): Promise<T | null> {
     return null;
 }
 
-export async function me<T = any>(): Promise<T> {
+export async function me<T = unknown>(): Promise<T> {
     const { data } = await api.get<T>("/auth/me");
     return data;
 }
@@ -358,10 +366,20 @@ export async function me<T = any>(): Promise<T> {
 /* =======================
    ========= CHAT ========
    ======================= */
-export async function sendChat(user_input: string, session_id: string, signal?: AbortSignal): Promise<ChatApiResponse> {
-    const raw = await apiFetch<any>("/chat", {
+/**
+ * `clientSymptoms` = objawy, które pamięta frontend. Backend używa ich tylko wtedy,
+ * gdy nie zna sesji (np. po restarcie serwera), żeby rozmowa nie zaczynała się od zera.
+ */
+export async function sendChat(
+    user_input: string,
+    session_id: string,
+    signal?: AbortSignal,
+    clientSymptoms?: string[]
+): Promise<ChatApiResponse> {
+    type RawChat = Partial<ChatApiResponse> & { content?: string };
+    const raw = await apiFetch<RawChat | null>("/chat", {
         method: "POST",
-        body: JSON.stringify({ user_input, session_id }),
+        body: JSON.stringify({ user_input, session_id, client_symptoms: clientSymptoms ?? null }),
         signal,
     } as RequestInit);
     return {
@@ -385,7 +403,7 @@ export function listSymptomsDict(): Promise<SymptomDictItem[]> {
    ======================= */
 export function patchSessionSymptoms(
     sessionId: string,
-    payload: { add?: string[]; remove?: string[]; replace?: string[]; lang?: "pl" | "en" },
+    payload: { add?: string[]; remove?: string[]; replace?: string[]; lang?: "pl" | "en"; current?: string[] },
     signal?: AbortSignal
 ): Promise<SymptomsPatchResponse> {
     return apiFetch<SymptomsPatchResponse>(`/sessions/${encodeURIComponent(sessionId)}/symptoms`, {
@@ -441,7 +459,7 @@ export function getHealthDetailed(): Promise<HealthStatus> {
     // getTokenRaw() + buildHeaders bywa wolniejsze, a 10s wystarczało żeby
     // pojedyncze opóźnienie wystrzeliło status "Błąd" w UI, mimo że backend
     // żyje. Status w UI ma być sygnałem realnego problemu, nie spike'ów.
-    return apiFetch<HealthStatus>("/health", { cache: "no-store" as any }, { timeoutMs: 30_000 });
+    return apiFetch<HealthStatus>("/health", { cache: "no-store" }, { timeoutMs: 30_000 });
 }
 
 /* =======================
@@ -505,14 +523,14 @@ async function _withAuthRetry<T>(
     signal?: AbortSignal,
     maxAttempts = 3
 ): Promise<T> {
-    let lastErr: any = null;
+    let lastErr: unknown = null;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         if (signal?.aborted) throw new Error("Aborted");
         try {
             return await fn();
-        } catch (e: any) {
+        } catch (e: unknown) {
             lastErr = e;
-            const msg = String(e?.message || "");
+            const msg = errorMessage(e);
             // Tylko 401 retryujemy z wymuszonym prewarm. 4xx (inne) i 5xx —
             // przekazujemy wyżej bez retry (powtarzanie i tak nie pomoże).
             const is401 = msg.includes("API 401:");

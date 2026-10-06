@@ -9,7 +9,7 @@ import {
     type ElementType,
 } from "react";
 import { ChatMessage, ChatApiResponse, TopDiagUI } from "@/lib/types";
-import { sendChat } from "@/lib/api";
+import { sendChat, errorMessage } from "@/lib/api";
 import MessageBubble from "./MessageBubble";
 import Header from "./Header";
 import { SymptomsCard, TopDiagCard } from "./SidePanel";
@@ -24,7 +24,6 @@ import {
     ShieldCheck,
     Sparkles,
 } from "lucide-react";
-import Spinner from "./Spinner";
 import { useChatStore } from "@/store/chatStore";
 
 function newSessionId() {
@@ -34,7 +33,6 @@ function newSessionId() {
 }
 
 // Wyraźniejsza „aurora” (emerald → sky → violet)
-const AURORA = "linear-gradient(120deg, rgba(52,211,153,.35), rgba(56,189,248,.35), rgba(167,139,250,.35))";
 const AURORA_SOFT = "linear-gradient(120deg, rgba(52,211,153,.25), rgba(56,189,248,.25), rgba(167,139,250,.25))";
 const AURORA_HALO = "linear-gradient(120deg, rgba(52,211,153,.55), rgba(56,189,248,.55), rgba(167,139,250,.55))";
 
@@ -128,9 +126,9 @@ export default function ChatUI() {
         measure();
 
         let ro: ResizeObserver | undefined;
-        if (typeof window !== "undefined" && (window as any).ResizeObserver) {
-            ro = new (window as any).ResizeObserver(measure);
-            ro?.observe(el);
+        if (typeof window !== "undefined" && typeof window.ResizeObserver !== "undefined") {
+            ro = new window.ResizeObserver(measure);
+            ro.observe(el);
         }
 
         const onResize = () => measure();
@@ -257,7 +255,8 @@ export default function ChatUI() {
             }, SAFETY_MS);
 
             try {
-                const data: ChatApiResponse = await sendChat(trimmed, sessionId, ctrl.signal);
+                const knownSymptoms = useChatStore.getState().summary[sessionId]?.symptoms ?? [];
+                const data: ChatApiResponse = await sendChat(trimmed, sessionId, ctrl.signal, knownSymptoms);
                 const reply = data.response || "(brak odpowiedzi)";
 
                 addMsg(sessionId, {
@@ -278,16 +277,17 @@ export default function ChatUI() {
                     symptoms: Array.isArray(data.symptoms) ? data.symptoms : [],
                     topDiag: mappedTop,
                 });
-            } catch (e: any) {
+            } catch (e: unknown) {
+                const msg = errorMessage(e);
                 const isAbort =
-                    e?.name === "AbortError" ||
-                    String(e?.message || "").toLowerCase().includes("timeout") ||
-                    String(e?.message || "").toLowerCase().includes("anulowane");
+                    (e as { name?: string } | null)?.name === "AbortError" ||
+                    msg.toLowerCase().includes("timeout") ||
+                    msg.toLowerCase().includes("anulowane");
                 addMsg(sessionId, {
                     role: "assistant",
                     content: isAbort
-                        ? "Backend nie odpowiedział na czas. Spróbuj jeszcze raz — jeśli powtórzy się kilka razy, sprawdź logi serwera (możliwy wyścig na LLM)."
-                        : `Niestety, coś poszło nie tak: ${e?.message || "nieznany błąd"}`,
+                        ? "Backend nie odpowiedział na czas. Spróbuj jeszcze raz. Jeśli powtórzy się kilka razy, sprawdź logi serwera."
+                        : `Niestety, coś poszło nie tak: ${msg || "nieznany błąd"}`,
                     createdAt: new Date().toISOString(),
                 });
             } finally {
@@ -338,8 +338,8 @@ export default function ChatUI() {
         if (!el) return;
 
         let ro: ResizeObserver | undefined;
-        if (typeof window !== "undefined" && (window as any).ResizeObserver) {
-            ro = new (window as any).ResizeObserver(() => {
+        if (typeof window !== "undefined" && typeof window.ResizeObserver !== "undefined") {
+            ro = new window.ResizeObserver(() => {
                 if (isNearBottom(el)) scrollToEnd(false);
                 updateScrollBtn();
             });
@@ -416,7 +416,7 @@ export default function ChatUI() {
                             style={{
                                 scrollbarGutter: "stable both-edges",
                                 overscrollBehavior: "contain",
-                                overflowAnchor: "none" as any,
+                                overflowAnchor: "none",
                             }}
                         >
                             {messages.map((m, i) => (
@@ -631,7 +631,7 @@ export default function ChatUI() {
                                 lang="pl"
                             />
                             <TopDiagCard
-                                items={summary?.topDiag ?? (null as any)}
+                                items={summary?.topDiag ?? null}
                                 onInfo={() => setShowSplit(true)}
                             />
                         </div>

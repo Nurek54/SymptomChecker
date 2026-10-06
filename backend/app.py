@@ -1,24 +1,32 @@
 import os
-import logging
 import sys
+import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
-from backend.core.startup import StartupManager
-from backend.core.state import AppState
-from backend.config import FRONTEND_ORIGIN, LOG_LEVEL
-
+# ── Ścieżki importów ──────────────────────────────────────────────────────────
+# Cały backend używa krótkich importów (config, core, services, models, api)
+# oraz pakietu "database" z katalogu głównego. Ustawiamy oba katalogi na
+# sys.path ZANIM zaimportujemy cokolwiek z projektu, dzięki czemu aplikacja
+# startuje tak samo z "python main.py", "uvicorn app:create_app --factory"
+# (w backend/) oraz "uvicorn backend.app:create_app --factory" (w katalogu głównym).
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+for _p in (str(PROJECT_ROOT), str(BASE_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# Ścieżki w config.py są względne względem backend/
 os.chdir(BASE_DIR)
 
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
-PROJECT_ROOT = BASE_DIR.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.append(str(PROJECT_ROOT))
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+
+from config import FRONTEND_ORIGIN, LOG_LEVEL  # noqa: E402
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
@@ -33,7 +41,9 @@ def create_app() -> FastAPI:
         # === STARTUP ===
         from database.db import engine
         from sqlalchemy import inspect
-        from backend.api.routers.auth import prewarm_auth
+        from core.startup import StartupManager
+        from core.state import AppState
+        from api.routers.auth import prewarm_auth
 
         try:
             insp = inspect(engine)
@@ -53,7 +63,7 @@ def create_app() -> FastAPI:
 
         # 3) River
         try:
-            from backend.models.river_manager import RiverManager
+            from models.river_manager import RiverManager
             river = RiverManager()
 
             xgb_feats = getattr(getattr(state, "xgb", None), "features", None)
@@ -85,7 +95,7 @@ def create_app() -> FastAPI:
         log.info("👋 Shutdown zakończony.")
 
     app = FastAPI(
-        title="SymptomChatBot (PL/EN, XGBoost+BayesOpt, LLM, River OVR)",
+        title="SymptomChatBot (PL, XGBoost+BayesOpt, LLM, River OVR)",
         lifespan=lifespan,
     )
 
@@ -99,17 +109,16 @@ def create_app() -> FastAPI:
     )
 
     from api.routers.errors import validation_exception_handler
-    from fastapi.exceptions import RequestValidationError
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     # === Routery ===
-    from backend.api.routers.chat import router as chat_router
-    from backend.api.routers.health import router as health_router
-    from backend.api.routers.auth import router as auth_router
-    from backend.api.routers.history import router as history_router
-    from backend.api.routers.dicts import router as dicts_router
-    from backend.api.routers.session_ops import router as session_ops_router
-    from backend.api.routers.river_router import router as river_router
+    from api.routers.chat import router as chat_router
+    from api.routers.health import router as health_router
+    from api.routers.auth import router as auth_router
+    from api.routers.history import router as history_router
+    from api.routers.dicts import router as dicts_router
+    from api.routers.session_ops import router as session_ops_router
+    from api.routers.river_router import router as river_router
 
     app.include_router(health_router)
     app.include_router(auth_router)
@@ -120,5 +129,3 @@ def create_app() -> FastAPI:
     app.include_router(river_router)
 
     return app
-
-app = create_app()

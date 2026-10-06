@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime, date
 
 # —— AUTH / USER —— #
@@ -13,8 +13,7 @@ class UserOut(BaseModel):
     age: int | None = None
     auth_provider: str = "local"
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RegisterIn(BaseModel):
     username: str = Field(min_length=3, max_length=50)
@@ -61,5 +60,5 @@ class ConversationDetail(BaseModel):
     id: int
     title: str
     messages: list[MessageOut]
-    symptoms: list[SymptomOut] = []
-    diagnoses: list[DiagnosisOut] = []
+    symptoms: list[SymptomOut] = Field(default_factory=list)
+    diagnoses: list[DiagnosisOut] = Field(default_factory=list)

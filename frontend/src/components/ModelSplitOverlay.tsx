@@ -84,8 +84,8 @@ export default function ModelSplitOverlay({
             try {
                 const res = await getTop3Split(sessionId, k, ac.signal);
                 setData(res);
-            } catch (e: any) {
-                setErr(e?.message || "Błąd pobierania");
+            } catch (e: unknown) {
+                setErr((e instanceof Error ? e.message : "") || "Błąd pobierania");
             } finally {
                 if (!ac.signal.aborted) setLoading(false);
             }

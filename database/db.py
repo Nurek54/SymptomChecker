@@ -10,7 +10,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 
 # wczytaj .env (z root projektu)
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=True)
+# override=False: zmienne ustawione w systemie/CI mają pierwszeństwo przed .env (tak samo jak w config.py)
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
 
 DB_URL = os.getenv("DATABASE_URL", "").strip()
 if not DB_URL:

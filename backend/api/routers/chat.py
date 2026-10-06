@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from typing import Optional, Dict, Any, List
 from datetime import date
 
@@ -6,28 +7,23 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from schemas import ChatRequest, ChatResponse
-from services.chat_service import ChatService
+from services.chat_service import ChatService, LANG
 from services.prompt_localizer import PromptLocalizer
 
 from database.db import get_db
 from database import crud
 from database.models import User as UserModel
 
-# FIX #8: zamiast lokalnego _uid() używamy wspólnego dependency.
 from api.deps import get_current_user_id
 
 router = APIRouter(tags=["Chat"])
+log = logging.getLogger("symptomchecker.chat")
 
 
 def _resp_to_dict(resp: ChatResponse | Dict[str, Any]) -> Dict[str, Any]:
     if hasattr(resp, "model_dump"):
         try:
             return resp.model_dump()
-        except Exception:
-            pass
-    if hasattr(resp, "dict"):
-        try:
-            return resp.dict()
         except Exception:
             pass
     if isinstance(resp, dict):
@@ -39,11 +35,14 @@ def _age(dob: date | None) -> int | None:
     if not dob:
         return None
     today = date.today()
-    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    return max(0, today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)))
 
 
+# Zwykłe "def" (nie async): generowanie odpowiedzi LLM trwa sekundy, a w "async def"
+# blokowałoby pętlę zdarzeń i cały serwer (/health, historia, panel objawów).
+# FastAPI uruchamia "def" w puli wątków; LLMManager ma własną blokadę generowania.
 @router.post("/chat", response_model=ChatResponse)
-async def chat(
+def chat(
     req_body: ChatRequest,
     request: Request,
     db: Session = Depends(get_db),
@@ -53,18 +52,21 @@ async def chat(
     if st is None:
         raise HTTPException(status_code=503, detail="Aplikacja w trakcie startu.")
 
+    if not st.sessions.claim_owner(req_body.session_id, uid):
+        raise HTTPException(status_code=403, detail="Ta sesja należy do innego użytkownika.")
+
     try:
-        service = ChatService(st)
-
         patient_age: int | None = None
-        conv = None
-
         if uid:
             user = db.get(UserModel, uid)
             if user:
-                dob = getattr(user, "date_of_birth", None)
-                patient_age = _age(dob)
+                patient_age = _age(getattr(user, "date_of_birth", None))
 
+        resp: ChatResponse = ChatService(st).handle_chat(req_body, patient_age=patient_age)
+
+        # zapis rozmowy (wiadomość użytkownika + odpowiedź razem, po udanej odpowiedzi)
+        if uid:
+            rd = _resp_to_dict(resp)
             title_hint = (req_body.user_input or "").strip()[:80] or "Rozmowa"
             conv = crud.get_or_create_conversation(
                 db,
@@ -73,47 +75,27 @@ async def chat(
                 title_hint=title_hint,
             )
             crud.add_message(db, conv, "user", req_body.user_input)
-            db.commit()
-
-        # odpowiedź
-        resp: ChatResponse = service.handle_chat(req_body, patient_age=patient_age)
-
-        # snapshot + smart tytuł
-        if uid and conv:
-            rd = _resp_to_dict(resp)
-            reply_text = rd.get("response") or ""
-            symptoms: List[str] = rd.get("symptoms") or []
-            top: List[Dict[str, Any]] = (
-                rd.get("top_diagnoses")
-                or rd.get("diagnoses")
-                or rd.get("top_diagnosis")
-                or []
-            )
-
-            crud.add_message(db, conv, "assistant", reply_text)
+            crud.add_message(db, conv, "assistant", rd.get("response") or "")
 
             loc = PromptLocalizer(st.matcher)
-            lang = "pl"
-            symptoms_sorted = sorted({str(s).strip().lower() for s in (symptoms or []) if s})
-            pl_labels = loc.localize_symptoms(symptoms_sorted, lang)
-
-            extraction_items = [
-                {"pl": pl, "canonical": en, "lang": lang}
+            symptoms_sorted = sorted({str(s).strip().lower() for s in (rd.get("symptoms") or []) if s})
+            pl_labels = loc.localize_symptoms(symptoms_sorted, LANG)
+            crud.replace_extractions(db, conv.id, [
+                {"pl": pl, "canonical": en, "lang": LANG}
                 for en, pl in zip(symptoms_sorted, pl_labels)
-            ]
-            crud.replace_extractions(db, conv.id, extraction_items)
+            ])
 
-            triage_items = []
-            for i, d in enumerate(top or []):
-                triage_items.append(
-                    {
-                        "diagnosis_pl": d.get("diagnosis_pl"),
-                        "diagnosis_en": d.get("diagnosis_en"),
-                        "probability": d.get("probability"),
-                        "rank": i + 1,
-                    }
-                )
-            crud.replace_triage(db, conv.id, triage_items)
+            # stan zawsze odzwierciedla bieżącą odpowiedź (pusta lista = brak oceny)
+            top: List[Dict[str, Any]] = rd.get("top_diagnoses") or []
+            crud.replace_triage(db, conv.id, [
+                {
+                    "diagnosis_pl": d.get("diagnosis_pl"),
+                    "diagnosis_en": d.get("diagnosis_en"),
+                    "probability": d.get("probability"),
+                    "rank": i + 1,
+                }
+                for i, d in enumerate(top)
+            ])
 
             crud.smart_update_conversation_title(db, conv.id)
             db.commit()
@@ -122,5 +104,13 @@ async def chat(
 
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+    except Exception:
+        log.exception("Błąd /chat (session=%s)", req_body.session_id)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=500,
+            detail="Nie udało się przygotować odpowiedzi. Spróbuj ponownie za chwilę.",
+        )

@@ -1,14 +1,20 @@
 # backend/services/followup_selector.py
 from __future__ import annotations
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 import os
-
-from core.state import AppState
+import logging
+import threading
 
 try:
     from config import FOLLOWUP_BLOCKLIST_TOKENS as _CFG_BLOCKLIST
 except Exception:
     _CFG_BLOCKLIST = None
+
+log = logging.getLogger("symptomchecker.followup")
+
+# Ranking ważności cech liczymy raz na model (get_score przechodzi po wszystkich drzewach).
+_RANK_CACHE: Dict[int, List[str]] = {}
+_RANK_LOCK = threading.Lock()
 
 
 def _normalize(s: str) -> str:
@@ -16,11 +22,41 @@ def _normalize(s: str) -> str:
     return s.replace("_", " ")
 
 
+def _importance_ranking(xgb_mgr) -> List[str]:
+    """
+    Cechy posortowane wg ważności XGBoost (total_gain). Booster nie ma atrybutu
+    `feature_importances_` (to API sklearn), więc używamy get_score().
+    Gdy się nie da - kolejność z listy cech.
+    """
+    feats = [str(f).strip().lower() for f in (getattr(xgb_mgr, "features", None) or [])]
+    model = getattr(xgb_mgr, "model", None)
+    key = id(model)
+    with _RANK_LOCK:
+        if key in _RANK_CACHE:
+            return _RANK_CACHE[key]
+    ranked = feats
+    try:
+        score: Dict[str, float] = {}
+        if hasattr(model, "get_score"):
+            score = model.get_score(importance_type="total_gain") or {}
+        elif hasattr(model, "feature_importances_"):
+            score = {f: float(v) for f, v in zip(feats, list(model.feature_importances_))}
+        if score:
+            def _val(i: int, f: str) -> float:
+                # booster trenowany na numpy ma nazwy f0..fN, na DataFrame - nazwy kolumn
+                return float(score.get(f, score.get(f"f{i}", 0.0)))
+            ranked = [f for _, f in sorted(((-_val(i, f), f) for i, f in enumerate(feats)))]
+    except Exception as e:
+        log.warning("[Followup] Ranking ważności niedostępny: %s", e)
+    with _RANK_LOCK:
+        _RANK_CACHE[key] = ranked
+    return ranked
+
+
 class FollowupSelector:
-    def __init__(self, state: AppState):
+    def __init__(self, state):
         self.st = state
 
-        # bloklista z configa i env
         bl: Set[str] = set()
         if isinstance(_CFG_BLOCKLIST, (set, list, tuple)):
             bl |= {str(x).lower() for x in _CFG_BLOCKLIST}
@@ -28,24 +64,6 @@ class FollowupSelector:
         if env:
             bl |= {t.strip().lower() for t in env.split(",") if t.strip()}
         self._blocklist = bl
-        feats = [str(f).strip().lower() for f in (self.st.xgb.features or [])]
-        try:
-            imps = list(getattr(self.st.xgb.model, "feature_importances_", []))
-        except Exception:
-            imps = []
-        if imps and len(imps) == len(feats):
-            pairs = sorted(zip(feats, imps), key=lambda x: x[1], reverse=True)
-            self._ranked_feats: List[str] = [f for f, _ in pairs]
-        else:
-            self._ranked_feats = feats
-
-    def _recent_asked(self, sess_id: str, n: int = 3) -> Set[str]:
-        if hasattr(self.st.sessions, "get_recent_followups"):
-            try:
-                return set(self.st.sessions.get_recent_followups(sess_id, n=n))
-            except Exception:
-                return set()
-        return set()
 
     def _blocked(self, name: str) -> bool:
         n = (name or "").lower()
@@ -58,43 +76,61 @@ class FollowupSelector:
         pl = matcher.to_pl(feat_name)
         return _normalize(pl) != _normalize(feat_name)
 
-    def choose_next(self, sess_id: str, current_syms: List[str], lang: str = "pl") -> Optional[str]:
-        have = set((s or "").lower().strip() for s in (current_syms or []))
+    def _candidates(self, sess_id: str, have: Set[str]) -> List[str]:
+        sessions = self.st.sessions
         try:
-            neg = set(self.st.sessions.get_negated(sess_id))
+            neg = set(sessions.get_negated(sess_id))
         except Exception:
             neg = set()
-        asked_recent = self._recent_asked(sess_id, n=3)
+        try:
+            asked = set(sessions.get_asked(sess_id))
+        except Exception:
+            asked = set(sessions.get_recent_followups(sess_id, n=50)) if hasattr(sessions, "get_recent_followups") else set()
 
-        matcher = self.st.matcher
-        get_cat = getattr(matcher, "get_category", None)
-        active_cats = {get_cat(s) for s in have} if callable(get_cat) else set()
+        feats = _importance_ranking(self.st.xgb)
+        out = [
+            f for f in feats
+            if f and f not in have and f not in neg and f not in asked and not self._blocked(f)
+        ]
+        # pytamy tylko o objawy z sensownym polskim tłumaczeniem
+        with_pl = [c for c in out if self._good_pl(c)]
+        return with_pl or out
 
-        # zbuduj kandydatów bez wywołań modelu
-        candidates: List[str] = []
-        for f in self._ranked_feats:
-            if not f:
-                continue
-            if f in have or f in neg or f in asked_recent or self._blocked(f):
-                continue
-            candidates.append(f)
-            if len(candidates) >= 80:  # twardy limit rozważanych kandydatów
-                break
-
+    def choose_next(
+        self,
+        sess_id: str,
+        current_syms: List[str],
+        lang: str = "pl",
+        posterior: Optional[Dict[str, float]] = None,
+    ) -> Optional[str]:
+        have = {(s or "").lower().strip() for s in (current_syms or [])}
+        candidates = self._candidates(sess_id, have)
         if not candidates:
             return None
 
-        # preferuj te z „aktywnych” kategorii (jeśli są znane)
-        if active_cats and callable(get_cat):
-            in_cat = [c for c in candidates if get_cat(c) in active_cats]
-            if in_cat:
-                candidates = in_cat
+        sessions = self.st.sessions
+        try:
+            reference = sorted(have | set(sessions.get_negated(sess_id)) | set(sessions.get_asked(sess_id)))
+        except Exception:
+            reference = sorted(have)
 
-        # dla PL preferuj takie z sensownym tłumaczeniem
-        if (lang or "pl").lower().startswith("pl"):
-            with_pl = [c for c in candidates if self._good_pl(c)]
-            if with_pl:
-                candidates = with_pl
+        # 1) najlepiej: pytanie, które najbardziej rozróżnia aktualnie prawdopodobne choroby
+        stats = getattr(self.st, "symptom_stats", None)
+        if stats is not None and posterior:
+            try:
+                best = stats.best_question(posterior, candidates, reference)
+                if best:
+                    return best
+            except Exception as e:
+                log.warning("[Followup] best_question błąd: %s", e)
 
-        # ostatecznie: pierwszy z listy (już przefiltrowanej wg rangi)
-        return candidates[0] if candidates else None
+        # 2) awaryjnie: najważniejsza cecha modelu, preferując kategorię już zgłoszonych objawów
+        matcher = self.st.matcher
+        get_cat = getattr(matcher, "get_category", None)
+        if callable(get_cat) and have:
+            active = {get_cat(s) for s in have} - {"Other", "Ogólny"}
+            if active:
+                in_cat = [c for c in candidates if get_cat(c) in active]
+                if in_cat:
+                    return in_cat[0]
+        return candidates[0]

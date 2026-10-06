@@ -2564,7 +2564,11 @@
     "xgb_label": [
       "loss_of_appetite"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "brak apetytu",
+      "nie mam apetytu",
+      "brak łaknienia"
+    ],
     "synonyms_en": [],
     "category": "Ogólny"
   },

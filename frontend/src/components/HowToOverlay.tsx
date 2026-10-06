@@ -335,7 +335,7 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
 
           {/* Body */}
           <div className="max-h-[78vh] overflow-y-auto p-4 text-sm leading-6 space-y-2">
-            {sections.map((s, idx) => (
+            {sections.map((s) => (
               <SectionItem
                 key={s.key}
                 id={`howto-${s.key}`}

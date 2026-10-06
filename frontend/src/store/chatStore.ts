@@ -95,18 +95,19 @@ export const useChatStore = create<ChatState>()(
             name: "sc-chat",
             // FIX #15: localStorage zamiast sessionStorage
             storage: createJSONStorage(() =>
-                typeof window !== "undefined" ? window.localStorage : (undefined as any)
+                // przy SSR nie ma localStorage; persist działa tylko w przeglądarce
+                typeof window !== "undefined" ? window.localStorage : (undefined as unknown as Storage)
             ),
             partialize: (s) => ({ bySession: s.bySession, summary: s.summary }),
             version: 2,
-            migrate: (persisted: any, fromVersion: number) => {
+            migrate: (persisted: unknown, fromVersion: number) => {
                 // Przy migracji ze starego sessionStorage → nowego localStorage
                 // nie mamy dostępu do starych danych w obrębie tego storage'a.
                 // Zostawiamy puste — użytkownik dostanie pusty stan jednorazowo.
                 if (fromVersion < 2 || !persisted) {
                     return { bySession: {}, summary: {} };
                 }
-                return persisted;
+                return persisted as Pick<ChatState, "bySession" | "summary">;
             },
         }
     )

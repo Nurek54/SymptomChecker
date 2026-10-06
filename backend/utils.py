@@ -29,10 +29,14 @@ def mask_sensitive(msg: str) -> str:
 
 
 def contains_stop_phrase(text: str) -> bool:
+    """
+    Czy pacjent kończy wymienianie objawów ("to wszystko", "koniec", ...).
+    Dopasowanie całych słów: "stop" nie może łapać "39 stopni", a "end" słowa "trend".
+    """
     t = (text or "").strip().lower()
     for p in (STOP_PHRASES or []):
-        p = (p or "").strip().lower()
-        if p and p in t:
+        p = (p or "").strip().lower().rstrip(".!")
+        if p and re.search(r"(?<!\w)" + re.escape(p) + r"(?!\w)", t):
             return True
     return any(re.search(p, t) for p in STOP_PATTERNS)
 

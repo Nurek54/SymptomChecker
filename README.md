@@ -191,6 +191,15 @@ The application expects the following files at the paths defined in `backend/con
 | `backend/data/train_remainder.csv` | River incremental updates (optional) | ~100 MB |
 | `backend/data/Final_Testset_for_Eval.csv` | Held-out evaluation (already in repo) | ~13 MB |
 
+**Recommended: rebuild the splits once** with `python data/build_datasets.py` (run in `backend/`). It writes `backend/data/v2/` (`train.csv`, `calibration.csv`, `test.csv`, `class_weight.csv`, `build_report.json`), which `config.py` uses automatically when present. The rebuild fixes problems found in the original files:
+
+- every row of `Final_Testset_for_Eval.csv` also appears in `train_remainder.csv` or `calibration.csv` (test metrics were inflated); the new splits share no symptom vector,
+- duplicate labels for the same disease coming from the second source dataset (e.g. `bronchial_asthma`/`asthma`, `dengue`/`dengue_fever`) are merged,
+- diseases with fewer than 10 examples are removed (`--min-rows`),
+- class weights are `sqrt(N / (K * n_c))` clipped to `[0.5, 5]` instead of reaching ~200.
+
+After rebuilding, delete the old model artifacts (see [What happens on first start](#what-happens-on-first-start)) so the models are retrained on the new data.
+
 If you want to use **your own dataset** instead, see the [Dataset Format](#dataset-format) section below - as long as your CSVs match the expected schema, the pipeline will train, calibrate, and evaluate without any code changes.
 
 ### Frontend
@@ -231,11 +240,13 @@ The very first time you start the backend, **the system trains the ML models fro
 
 If any of the XGB artifacts are missing, the full pipeline runs:
 
-1. **Load training data** from `DATA_CSV` (default: `Final_Dataset_Diseases_and_Symptoms.csv`)
+1. **Load training data** from `DATA_CSV` (default: `train_remainder.csv` if present, otherwise `Final_Dataset_Diseases_and_Symptoms.csv`)
 2. **Bayesian hyperparameter search** - `XGB_N_ITER_BAYES` × `XGB_CV_SPLITS`-fold CV (default: 32 × 3 = 96 fits)
-3. **Final training** on the full dataset with the best params
-4. **Temperature calibration** for probability outputs
-5. **Save artifacts** to `backend/ml/`
+3. **Final training** on the training set with the best params
+4. **Temperature calibration** on held-out data the model has never seen (`calibration.csv`; if it is missing, a stratified hold-out is cut from the training set *before* training)
+5. **Save artifacts** to `backend/ml/` (plus `xgb_model.meta.json` recording which data the model was trained on)
+
+> `train_remainder.csv` + `calibration.csv` together form `Final_Dataset_Diseases_and_Symptoms.csv`. Training on the remainder keeps calibration honest. Models trained by older versions (on the full dataset, calibrated on training rows) are still loaded, but the backend logs a warning. To retrain, delete `backend/ml/xgb_model.joblib`, `label_encoder.joblib`, `xgb_model.calibration.joblib`, `river_ovr_ftrl.joblib` and `river_ovr_ftrl.calibration.joblib`.
 
 After that, every subsequent startup just **loads the saved models** (~5–10 s).
 
@@ -394,15 +405,18 @@ Same idea, but for diseases - used by the LLM prompt localizer to translate Top-
 | `GET` | `/dicts/symptoms` | Full PL/EN symptom dictionary |
 
 ### River (online learning)
+
+Read endpoints (`status`, `features`, `predict_topk`) are open. Endpoints that change the model or read CSV files require the `X-Admin-Token` header matching `ADMIN_API_TOKEN` (they are disabled when the variable is empty) and accept only `.csv` files from `backend/data/`. They operate on the same River model the chat ensemble uses.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/river/status` | Model status, sample counts, calibration state |
 | `GET` | `/river/features` | Current River feature list |
 | `POST` | `/river/predict_topk` | Predict from a feature vector |
-| `POST` | `/river/train_one` | Single-sample online update |
-| `POST` | `/river/incremental_batch` | Mini-batch online update |
-| `POST` | `/river/fit_from_csv` | Fit/re-fit from a CSV |
-| `GET` | `/river/evaluate` | Evaluate against the test set |
+| `POST` | `/river/train_one` | Single-sample online update (admin) |
+| `POST` | `/river/incremental_batch` | Mini-batch online update (admin) |
+| `POST` | `/river/fit_from_csv` | Incremental fit from a CSV in `backend/data/` (admin) |
+| `GET` | `/river/evaluate` | Evaluate against the test set (admin) |
 
 ### Health
 | Method | Endpoint | Description |
@@ -433,6 +447,7 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `SUPABASE_JWT_SECRET` | env | - | Supabase HS256 JWT secret |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | env | `60` | JWT lifetime |
 | `SESSION_COOKIE_SECURE` | env | `false` | set `true` over HTTPS |
+| `ADMIN_API_TOKEN` | env | empty | Token for `/river/*` admin endpoints (empty = disabled) |
 
 ### XGBoost training
 
@@ -442,7 +457,8 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `XGB_CV_SPLITS` | `3` | CV folds |
 | `XGB_USE_GPU` | `True` | Use CUDA |
 | `XGB_TREE_METHOD` | `"hist"` | Fastest tree algorithm |
-| `XGB_CALIBRATE` | `True` | Apply temperature scaling |
+| `XGB_CALIBRATE` | `True` | Apply temperature scaling (fitted on held-out data) |
+| `XGB_CALIBRATION_CSV` | `data/calibration.csv` | Held-out calibration set (must differ from `DATA_CSV`) |
 
 ### River
 
@@ -458,17 +474,17 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `ENSEMBLE_W_XGB` / `ENSEMBLE_W_RIVER` | `0.8` / `0.2` | Base weights |
-| `ENSEMBLE_K_FUSE` | `9` | Top-K from each model before merge |
-| `ENSEMBLE_MIN_XGB_WEIGHT` | `0.55` | XGB floor (River never fully dominates) |
-| `ENSEMBLE_CONF_GAP` | `0.20` | "One model is clearly more confident" threshold |
+| `ENSEMBLE_K_FUSE` | `0` | `0` = fuse full probability distributions (recommended); `>0` = only Top-K from each model |
+| `ENSEMBLE_MIN_XGB_WEIGHT` / `ENSEMBLE_MIN_RIVER_WEIGHT` | `0.55` / `0.15` | Minimum share of each model |
+| `ENSEMBLE_CONF_GAP` | `0.20` | When one model is more confident by this much, it gets its maximum allowed share |
 
 ### LLM generation
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `LLM_MAX_NEW_TOKENS` | `2000` | Max generated tokens |
-| `LLM_TEMP` | `0.55` | Sampling temperature |
-| `LLM_TOP_P` / `LLM_TOP_K` | `0.9` / `40` | Nucleus / top-k sampling |
+| `LLM_TEMP` | `0.72` | Sampling temperature |
+| `LLM_TOP_P` / `LLM_TOP_K` | `0.92` / `40` | Nucleus / top-k sampling |
 | `LLM_CONTEXT_LEN` | `8192` | Context window |
 | `LLM_GPU_LAYERS` | `999` | Layers offloaded to GPU (`999` = all) |
 
@@ -477,7 +493,7 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `MIN_SYMPTOMS` | `3` | Minimum symptoms before allowing diagnosis |
-| `STOP_FOLLOWUPS_AT` | `4` | Force diagnosis after N follow-up turns |
+| `STOP_FOLLOWUPS_AT` | `4` | After N follow-up questions without reaching `MIN_SYMPTOMS`, give an indicative (low-confidence) assessment instead of asking forever |
 | `TOPN_DIAGNOSES` | `3` | Number of diagnoses returned |
 | `SUMMARY_MODE` | `"llm"` | `"llm"` or `"template"` |
 

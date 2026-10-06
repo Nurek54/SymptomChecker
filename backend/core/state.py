@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import torch
 
@@ -21,3 +21,5 @@ class AppState:
     matcher: SymptomMatcher
     sessions: SessionStore
     river: Optional["RiverManager"] = field(default=None)
+    # P(objaw | choroba) do wyboru pytań uzupełniających (services.symptom_stats.SymptomStats)
+    symptom_stats: Optional[Any] = field(default=None)

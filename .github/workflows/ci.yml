@@ -72,3 +72,9 @@ jobs:
 
       - name: Unit tests (vitest)
         run: npm run test:unit:run
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Production build
+        run: npm run build

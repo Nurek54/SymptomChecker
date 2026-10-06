@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 import json
 import time
+import threading
 import joblib
 import logging
 import warnings
@@ -17,7 +18,7 @@ from river.multiclass import OneVsRestClassifier
 from config import (
     DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     RIVER_MODEL_PATH, RIVER_CALIB_PATH, RIVER_CALIBRATION_CSV,
-    RIVER_CALIBRATE_ON_START,
+    RIVER_CALIBRATE_ON_START, RIVER_FEATURES_PATH, rel_to_backend,
     RIVER_ALPHA, RIVER_BETA, RIVER_L1, RIVER_L2, RIVER_CLIP_GRADIENT,
     XGB_RANDOM_STATE,
 )
@@ -33,7 +34,7 @@ log = logging.getLogger("symptomchecker.river")
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 
-RIVER_FEATURES_PATH = os.path.join(os.path.dirname(RIVER_MODEL_PATH), "river_features.json")
+RIVER_META_PATH = os.path.splitext(RIVER_MODEL_PATH)[0] + ".meta.json"
 SPECIAL_COLS = {"diseases", "xgb_label", "weight"}
 
 def _learn_in_place(model: OneVsRestClassifier, x: Dict[str, int], y: str, w: Optional[float] = None) -> OneVsRestClassifier:
@@ -163,6 +164,12 @@ def _save_artifacts(model: OneVsRestClassifier, features: List[str]) -> None:
     joblib.dump(model, RIVER_MODEL_PATH)
     with open(RIVER_FEATURES_PATH, "w", encoding="utf-8") as f:
         json.dump(features, f, ensure_ascii=False, indent=2)
+    try:
+        meta = {"data_csv": rel_to_backend(DATA_CSV), "calibration_csv": rel_to_backend(RIVER_CALIBRATION_CSV) if RIVER_CALIBRATION_CSV else ""}
+        with open(RIVER_META_PATH, "w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        log.warning("[River][ART] Nie zapisano metadanych modelu: %s", e)
     log.info("[River][ART] Zapisano model i features (D=%d) w %.2fs.", len(features), time.time() - t0)
 
 def _load_artifacts() -> Tuple[Optional[OneVsRestClassifier], List[str]]:
@@ -181,10 +188,44 @@ def _load_artifacts() -> Tuple[Optional[OneVsRestClassifier], List[str]]:
             features = []
         log.info("[River][ART] Załadowano artefakty w %.2fs (features=%d).",
                  time.time() - t0, len(features))
+        _warn_if_trained_on_other_data()
         return model, features
     except Exception as e:
         log.warning("[River][ART] Nie udało się wczytać modelu: %s", e)
         return None, []
+
+def _calibration_csv_available() -> bool:
+    if not RIVER_CALIBRATION_CSV or not os.path.exists(RIVER_CALIBRATION_CSV):
+        return False
+    try:
+        if os.path.samefile(RIVER_CALIBRATION_CSV, DATA_CSV):
+            log.warning("[River][Cal] RIVER_CALIBRATION_CSV wskazuje na DATA_CSV - pomijam kalibrację.")
+            return False
+    except OSError:
+        pass
+    return True
+
+
+def _warn_if_trained_on_other_data() -> None:
+    """
+    Kalibracja ma sens tylko na danych, których model nie widział przy treningu.
+    Jeśli model był trenowany na innym pliku niż obecny DATA_CSV (np. na pełnym
+    zbiorze, który zawiera też calibration.csv), ostrzegamy.
+    """
+    try:
+        with open(RIVER_META_PATH, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        trained_on = str(meta.get("data_csv") or "")
+    except Exception:
+        trained_on = ""
+    if trained_on != rel_to_backend(DATA_CSV):
+        log.warning(
+            "[River][ART] Model nie ma metadanych albo był trenowany na innym zbiorze (%s) niż DATA_CSV=%s. "
+            "Jeśli zbiór treningowy zawierał calibration.csv, kalibracja jest zawyżona. "
+            "Usuń %s oraz %s, aby przetrenować model na właściwym zbiorze.",
+            trained_on or "brak informacji", DATA_CSV, RIVER_MODEL_PATH, RIVER_CALIB_PATH,
+        )
+
 
 class RiverTemperatureCalibrator:
     def __init__(self, T: float = 1.0, classes: Optional[List[str]] = None):
@@ -296,6 +337,8 @@ class RiverManager:
         self._feat_index: Optional[Dict[str, int]] = None
         self._forced_features: List[str] = []  # wymuszone przez set_features()
         self._base_proba: Optional[Dict[str, float]] = None  # cache P(y|{})
+        # Chroni model przed równoczesnym uczeniem (router /river) i predykcją (czat).
+        self.lock = threading.RLock()
 
     def set_features(self, feats: Optional[List[str]]) -> None:
         fs = [str(f).strip().lower() for f in (feats or []) if str(f).strip()]
@@ -373,20 +416,23 @@ class RiverManager:
         if self.model is None or not self.features:
             raise RuntimeError("Najpierw uruchom train().")
 
+        # Kalibrujemy WYŁĄCZNIE na danych odłożonych (calibration.csv). Zbiór testowy
+        # służy do ewaluacji, a próbka z TRAIN była widziana przy uczeniu,
+        # więc oba dałyby zawyżoną (zbyt pewną) kalibrację.
         path = csv_path
         if not path:
-            if RIVER_CALIBRATION_CSV and os.path.exists(RIVER_CALIBRATION_CSV):
-                path = RIVER_CALIBRATION_CSV
-            elif TEST_CSV and os.path.exists(TEST_CSV):
-                path = TEST_CSV
-        log.info("[River][Cal] Źródło kalibracji: %s", path if path else "<10% TRAIN fallback>")
+            if not _calibration_csv_available():
+                raise RuntimeError(
+                    "Brak odłożonego zbioru kalibracyjnego (RIVER_CALIBRATION_CSV) "
+                    "rozłącznego z DATA_CSV. Pomijam kalibrację."
+                )
+            path = RIVER_CALIBRATION_CSV
+        log.info("[River][Cal] Źródło kalibracji: %s", path)
 
-        if path and os.path.exists(path):
-            df = pd.read_csv(path)
-            df.columns = [str(c).strip().lower() for c in df.columns]
-        else:
-            df_full = _load_train_dataframe()
-            df = df_full.sample(frac=0.10, random_state=int(XGB_RANDOM_STATE or 42)).copy()
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Brak pliku kalibracyjnego: {path}")
+        df = pd.read_csv(path)
+        df.columns = [str(c).strip().lower() for c in df.columns]
 
         if "diseases" not in df.columns:
             raise ValueError("CSV do kalibracji musi zawierać kolumnę 'diseases'.")
@@ -582,7 +628,7 @@ class RiverManager:
         log.info("[River][INC] Doleczono %d rekordów w %.2fs.", n, time.time() - t0)
 
         try:
-            if RIVER_CALIBRATE_ON_START and ((RIVER_CALIBRATION_CSV and os.path.exists(RIVER_CALIBRATION_CSV)) or (TEST_CSV and os.path.exists(TEST_CSV))):
+            if RIVER_CALIBRATE_ON_START and _calibration_csv_available():
                 log.info("[River][Cal] Re-kalibracja po incremental")
                 self.calibrate()
             else:
@@ -632,6 +678,10 @@ class RiverManager:
         return x, active
 
     def predict_topk(self, vec: List[List[int]], k: int = 3) -> List[Dict[str, Any]]:
+        with self.lock:
+            return self._predict_topk_locked(vec, k)
+
+    def _predict_topk_locked(self, vec: List[List[int]], k: int = 3) -> List[Dict[str, Any]]:
         import heapq, hashlib
         log.debug("[River][Predict] ▶ predict_topk(k=%d)", k)
         t0 = time.perf_counter()
@@ -794,7 +844,7 @@ class RiverIncrementalTrainer:
         log.info("[River][INC][Trainer] Doleczono %d rekordów w %.2fs.", n, time.time() - t0)
 
         try:
-            if RIVER_CALIBRATE_ON_START and ((RIVER_CALIBRATION_CSV and os.path.exists(RIVER_CALIBRATION_CSV)) or (TEST_CSV and os.path.exists(TEST_CSV))):
+            if RIVER_CALIBRATE_ON_START and _calibration_csv_available():
                 log.info("[River][Cal][Trainer] Re-kalibracja po fit_from_csv")
                 self.mgr.calibrate()
             else:
@@ -817,6 +867,7 @@ class RiverIncrementalTrainer:
         weight: float = 1.0,
         allow_new_classes: bool = True,
         allow_new_features: bool = False,
+        recalibrate: bool = False,
     ) -> None:
         log.info("[River][INC][Trainer] ▶ Start train_one(label=%s, weight=%.4f, allow_new_classes=%s, allow_new_features=%s)",
                  str(label), float(weight), str(allow_new_classes), str(allow_new_features))
@@ -843,9 +894,11 @@ class RiverIncrementalTrainer:
         self.mgr.warmup()
         self.mgr._base_proba = None
 
+        # Pełna re-kalibracja to przejście po całym calibration.csv (dziesiątki sekund),
+        # więc po pojedynczym kroku robimy ją tylko na żądanie.
         try:
-            if RIVER_CALIBRATE_ON_START and ((RIVER_CALIBRATION_CSV and os.path.exists(RIVER_CALIBRATION_CSV)) or (TEST_CSV and os.path.exists(TEST_CSV))):
-                log.info("[River][Cal][Trainer] Re-kalibracja po train_one]")
+            if recalibrate and _calibration_csv_available():
+                log.info("[River][Cal][Trainer] Re-kalibracja po train_one")
                 self.mgr.calibrate()
         except Exception as e:
             log.warning("[River][Cal][Trainer] Re-kalibracja po train_one nieudana: %s", e)
