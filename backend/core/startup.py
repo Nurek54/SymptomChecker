@@ -29,11 +29,20 @@ class StartupManager:
         log.info("🧠 Ładowanie LLM…")
         llm.load()
 
-        log.info("🧩 Buduję matcher…")
-        matcher = SymptomMatcher(xgb.features, device=str(device))
-
-        log.info("📊 Statystyki objawów do pytań uzupełniających…")
+        log.info("📊 Statystyki objawów (pytania uzupełniające, cechy bez danych)…")
         symptom_stats = SymptomStats.load_or_build(xgb.features)
+
+        log.info("🧩 Buduję matcher…")
+        matcher = SymptomMatcher(
+            xgb.features,
+            device=str(device),
+            # liczby tylko gdy statystyki są sensowne (inaczej wszystkie cechy uznane za martwe)
+            feature_counts=(
+                symptom_stats.feature_counts
+                if symptom_stats is not None and any(symptom_stats.feature_counts.values())
+                else None
+            ),
+        )
 
         sessions = SessionStore()
         if hasattr(sessions, "start_janitor"):

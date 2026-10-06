@@ -3,7 +3,7 @@ import json
 import logging
 import threading
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Callable, List, Dict, Any, Optional, Tuple
 from fastapi import APIRouter, HTTPException, Request
 
 from core.state import AppState
@@ -54,8 +54,14 @@ def _load_dict_cached(path: Path) -> List[Dict[str, Any]]:
 def _project_to_xgb_features(
     raw: List[Dict[str, Any]],
     feat_set: set[str],
+    resolve: Optional[Callable[[List[str]], Optional[str]]] = None,
+    count: Optional[Callable[[str], int]] = None,
 ) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
+    """
+    Wpisy słownika -> cechy modelu. `resolve` (SymptomMatcher.resolve_labels) wybiera
+    cechę z danymi treningowymi, więc w panelu nie ma objawów, o których model nic nie wie.
+    """
+    by_label: Dict[str, Dict[str, Any]] = {}
     for row in raw:
         if not isinstance(row, dict):
             continue
@@ -68,15 +74,23 @@ def _project_to_xgb_features(
         else:
             xgb_list = [str(x).strip().lower() for x in (xgb or []) if x]
 
-        canon: Optional[str] = next(
-            (x for x in xgb_list if x in feat_set),
-            (xgb_list[0] if xgb_list else ""),
-        )
+        if resolve is not None:
+            canon: Optional[str] = resolve(xgb_list)
+        else:
+            canon = next((x for x in xgb_list if x in feat_set), None)
 
         if not canon or canon not in feat_set:
             continue
 
-        out.append({"en": canon, "pl": pl or canon.replace("_", " "), "category": cat})
+        label = pl or canon.replace("_", " ")
+        key = label.lower()
+        prev = by_label.get(key)
+        # ta sama etykieta PL w kilku wpisach (np. "wzdęcie brzucha"): zostaje cecha z większą liczbą danych
+        if prev is not None and (count is None or count(prev["en"]) >= count(canon)):
+            continue
+        by_label[key] = {"en": canon, "pl": label, "category": cat}
+
+    out = list(by_label.values())
 
     out.sort(key=lambda x: ((x.get("pl") or x["en"]).lower(), x["en"].lower()))
     return out
@@ -90,4 +104,7 @@ def list_symptoms(request: Request, lang: str = "pl"):
 
     feat_set = {str(f).strip().lower() for f in (st.xgb.features or [])}
     raw = _load_dict_cached(Path(SYMPTOMS_DICT_PATH).resolve())
-    return _project_to_xgb_features(raw, feat_set)
+    matcher = getattr(st, "matcher", None)
+    resolve = getattr(matcher, "resolve_labels", None)
+    count = getattr(matcher, "_count", None)
+    return _project_to_xgb_features(raw, feat_set, resolve, count)

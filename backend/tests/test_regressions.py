@@ -239,3 +239,30 @@ def test_create_app_builds_routes():
     paths = {getattr(r, "path", "") for r in app.routes}
     for p in ("/chat", "/health", "/history", "/river/status", "/sessions/{session_id}/symptoms"):
         assert p in paths
+
+
+# ───────────────────────── słownik vs dane (cechy bez danych) ─────────────────────────
+def test_matcher_skips_dead_features_and_prefers_feature_with_data():
+    feats = ["sharp_abdominal_pain", "abdominal_pain", "belly_pain", "fever"]
+    counts = {"sharp_abdominal_pain": 14000, "abdominal_pain": 30, "belly_pain": 0, "fever": 10000}
+    m = SymptomMatcher(features=feats, device="cpu", feature_counts=counts)
+    assert not m.is_alive("belly_pain")
+    pos, _ = m.extract_detailed("boli mnie brzuch")
+    assert pos == ["sharp_abdominal_pain"]
+    # aktywujemy tylko wybraną cechę, nie rzadkie synonimy
+    assert m.expand_to_xgb("sharp_abdominal_pain") == {"sharp_abdominal_pain"}
+
+
+def test_dicts_panel_hides_dead_features_and_dedupes_labels():
+    from backend.api.routers.dicts import _project_to_xgb_features
+
+    feats = ["stomach_bloating", "abdominal_distention", "distention_of_abdomen"]
+    counts = {"stomach_bloating": 1000, "abdominal_distention": 60, "distention_of_abdomen": 0}
+    m = SymptomMatcher(features=feats, device="cpu", feature_counts=counts)
+    raw = [
+        {"pl": "wzdęcie brzucha", "xgb_label": ["abdominal_distention"]},
+        {"pl": "wzdęcie brzucha", "xgb_label": ["distention_of_abdomen"]},
+        {"pl": "wzdęcie brzucha", "xgb_label": ["stomach_bloating"]},
+    ]
+    out = _project_to_xgb_features(raw, set(feats), m.resolve_labels, m._count)
+    assert out == [{"en": "stomach_bloating", "pl": "wzdęcie brzucha", "category": None}]

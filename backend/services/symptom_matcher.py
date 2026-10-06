@@ -205,9 +205,20 @@ def _has_negation(fragment: str, alias_like: str) -> bool:
 
 
 class SymptomMatcher:
-    def __init__(self, features: List[str], device: str = "cpu") -> None:
+    def __init__(
+        self,
+        features: List[str],
+        device: str = "cpu",
+        feature_counts: Optional[Dict[str, int]] = None,
+    ) -> None:
         self.features: List[str] = [str(f).strip().lower() for f in (features or [])]
         self._feat_set: Set[str] = set(self.features)
+        # Liczba wierszy treningowych na cechę (SymptomStats). Gdy podana:
+        #  - cechy z 0 wierszy są pomijane (model nic o nich nie wie),
+        #  - przy kolizji aliasu ("ból brzucha" -> kilka cech) wygrywa cecha z większą liczbą danych.
+        self._counts: Optional[Dict[str, int]] = (
+            {str(k).strip().lower(): int(v) for k, v in feature_counts.items()} if feature_counts else None
+        )
 
         self.alias_to_feature: Dict[str, str] = {}
         self._alias_regex: Optional[re.Pattern] = None
@@ -253,9 +264,39 @@ class SymptomMatcher:
             seen.add(key)
             self._stem_index.append((alias, feat, frozenset(stems)))
 
+    # ───────────── cechy "żywe" i kolizje aliasów ─────────────
+    def _count(self, f: str) -> int:
+        return int(self._counts.get(f, 0)) if self._counts is not None else 0
+
+    def is_alive(self, f: str) -> bool:
+        """Czy cecha ma dane treningowe (bez informacji o liczbach: każda znana cecha)."""
+        f = (f or "").strip().lower()
+        if f not in self._feat_set:
+            return False
+        return self._counts is None or self._count(f) > 0
+
+    def resolve_labels(self, labels: List[str]) -> Optional[str]:
+        """Z listy etykiet słownika wybiera cechę modelu: żywą, z największą liczbą danych."""
+        alive = [x for x in labels if self.is_alive(x)]
+        if not alive:
+            return None
+        if self._counts is None:
+            return alive[0]
+        return max(alive, key=lambda x: (self._count(x), -alive.index(x)))
+
+    def _set_alias(self, a: str, canon: str) -> bool:
+        cur = self.alias_to_feature.get(a)
+        if cur is not None and cur != canon and self._count(cur) > self._count(canon):
+            return False
+        if cur is not None and cur != canon:
+            self._feat_to_aliases.get(cur, set()).discard(a)
+        self.alias_to_feature[a] = canon
+        self._feat_to_aliases.setdefault(canon, set()).add(a)
+        return True
+
     def _build_default_alias_index_from_features(self) -> None:
         added = 0
-        for canon in sorted(self._feat_set):
+        for canon in sorted(f for f in self._feat_set if self.is_alive(f)):
             display_pl = canon.replace("_", " ")
             self._xgb2pl[canon] = display_pl
             self._pl2xgb[_canonize(display_pl)] = canon
@@ -311,17 +352,19 @@ class SymptomMatcher:
             else:
                 xgb_list = [str(x).strip().lower() for x in (xgb or []) if x]
 
-            canon = next((x for x in xgb_list if x in self._feat_set), (xgb_list[0] if xgb_list else ""))
-            if not canon or canon not in self._feat_set:
-                continue
+            canon = self.resolve_labels(xgb_list)
+            if not canon:
+                continue  # wpis wskazuje tylko cechy nieznane modelowi albo bez danych
 
             display_pl = pl_label or canon.replace("_", " ")
-            self._xgb2pl[canon] = display_pl
-            self._pl2xgb[_canonize(display_pl)] = canon
-            self._feat_category[canon] = cat_raw
+            self._xgb2pl.setdefault(canon, display_pl)
+            self._pl2xgb.setdefault(_canonize(display_pl), canon)
+            self._feat_category.setdefault(canon, cat_raw)
 
-            alts = {x for x in xgb_list if x in self._feat_set} or {canon}
-            self._feat2alts[canon] = alts
+            # Ze znanymi liczbami danych aktywujemy tylko wybraną cechę (stare, rzadkie
+            # synonimy z innego źródła danych zaburzałyby wektor). Bez liczb: wszystkie etykiety.
+            alts = {canon} if self._counts is not None else ({x for x in xgb_list if self.is_alive(x)} or {canon})
+            self._feat2alts.setdefault(canon, set()).update(alts)
 
             aliases: Set[str] = set(alts)
             en_raw = (row.get("en") or "").strip()
@@ -343,12 +386,9 @@ class SymptomMatcher:
                 a_no = _strip_accents(a)
                 add_noacc = (len(a) > 4)
 
-                self.alias_to_feature[a] = canon
-                self._feat_to_aliases.setdefault(canon, set()).add(a)
+                self._set_alias(a, canon)
 
-                if add_noacc:
-                    self.alias_to_feature[a_no] = canon
-                    self._feat_to_aliases[canon].add(a_no)
+                if add_noacc and self._set_alias(a_no, canon):
                     self._alias_keys.append(a_no)
                     self._alias_key_to_feat[a_no] = canon
 
@@ -358,6 +398,10 @@ class SymptomMatcher:
                         self._med_tokens.add(tt)
 
             added += 1
+
+        # klucze fuzzy zgodne z ostatecznym przypisaniem aliasów (po rozstrzygnięciu kolizji)
+        self._alias_keys = sorted({k for k in self._alias_keys if k in self.alias_to_feature})
+        self._alias_key_to_feat = {k: self.alias_to_feature[k] for k in self._alias_keys}
 
         alias_uniq = sorted(set(self.alias_to_feature.keys()), key=len, reverse=True)
         alias_parts: List[str] = []

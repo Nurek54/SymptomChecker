@@ -172,10 +172,35 @@ def main() -> None:
     report["class_weight"] = {"min": float(w.min()), "max": float(w.max())}
     report["classes_total"] = int(pool["diseases"].nunique())
 
+    # zgodność słownika objawów z danymi: które wpisy prowadzą do cech bez danych
+    fcount = train[feats].sum()
+    report["features_without_train_data"] = [f for f in feats if int(fcount[f]) == 0]
+    try:
+        sym = json.load(open(DATA_DIR / "symptoms_pl_en.json", encoding="utf-8"))
+        unreachable, covered = [], set()
+        for r in sym:
+            labs = r.get("xgb_label")
+            labs = [labs] if isinstance(labs, str) else list(labs or [])
+            alive = [l for l in labs if l in fcount.index and int(fcount[l]) > 0]
+            if alive:
+                covered.add(max(alive, key=lambda l: int(fcount[l])))
+            else:
+                unreachable.append(r.get("pl"))
+        report["dictionary_entries_without_data"] = unreachable
+        report["features_with_data_but_no_dictionary_entry"] = [
+            f for f in feats if int(fcount[f]) > 0 and f not in covered
+        ]
+    except Exception as e:  # słownik jest opcjonalny dla samego budowania danych
+        report["dictionary_check_error"] = str(e)
+
     with open(out / "build_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    print(json.dumps({k: v for k, v in report.items() if k not in ("dropped_classes", "merged_labels")},
-                     ensure_ascii=False, indent=2))
+    skip = ("dropped_classes", "merged_labels", "features_without_train_data",
+            "dictionary_entries_without_data", "features_with_data_but_no_dictionary_entry")
+    print(json.dumps({k: v for k, v in report.items() if k not in skip}, ensure_ascii=False, indent=2))
+    for k in skip[2:]:
+        if report.get(k):
+            print(f"[uwaga] {k}: {len(report[k])} (szczegóły w build_report.json)")
     assert all(v == 0 for v in report["vector_overlap"].values()), "przeciek między zbiorami!"
     print(f"[ok] zapisano w {out}")
 

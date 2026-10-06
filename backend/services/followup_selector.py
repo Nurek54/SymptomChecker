@@ -88,9 +88,12 @@ class FollowupSelector:
             asked = set(sessions.get_recent_followups(sess_id, n=50)) if hasattr(sessions, "get_recent_followups") else set()
 
         feats = _importance_ranking(self.st.xgb)
+        matcher = self.st.matcher
+        alive = getattr(matcher, "is_alive", None)
         out = [
             f for f in feats
             if f and f not in have and f not in neg and f not in asked and not self._blocked(f)
+            and (alive is None or alive(f))  # nie pytamy o objawy, o których model nic nie wie
         ]
         # pytamy tylko o objawy z sensownym polskim tłumaczeniem
         with_pl = [c for c in out if self._good_pl(c)]

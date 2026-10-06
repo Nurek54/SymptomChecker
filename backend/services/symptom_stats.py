@@ -30,7 +30,8 @@ def _norm(s: str) -> str:
 
 
 class SymptomStats:
-    def __init__(self, features: List[str], classes: List[str], q: np.ndarray):
+    def __init__(self, features: List[str], classes: List[str], q: np.ndarray,
+                 feature_counts: Optional[np.ndarray] = None):
         self.features = [_norm(f) for f in features]
         self.classes = [_norm(c) for c in classes]
         self.q = q.astype(np.float32, copy=False)               # (n_classes, n_features)
@@ -39,6 +40,9 @@ class SymptomStats:
         norms = np.linalg.norm(self.q, axis=0)
         norms[norms == 0] = 1.0
         self.q_unit = (self.q / norms).astype(np.float32)       # profile objawów do wykrywania duplikatów
+        # ile wierszy treningowych ma dany objaw; 0 = cecha "martwa" (model nic o niej nie wie)
+        fc = np.zeros(len(self.features)) if feature_counts is None else np.asarray(feature_counts, dtype=np.float64)
+        self.feature_counts: Dict[str, int] = {f: int(c) for f, c in zip(self.features, fc)}
 
     # ───────────────────────── budowa / cache ─────────────────────────
     @staticmethod
@@ -66,9 +70,9 @@ class SymptomStats:
                 z = np.load(cache_path, allow_pickle=False)
                 c_feats = [str(x) for x in z["features"].tolist()]
                 c_sig = str(z["signature"].tolist())
-                if c_feats == feats and (sig is None or c_sig == sig):
+                if c_feats == feats and (sig is None or c_sig == sig) and "feature_counts" in z.files:
                     log.info("[Stats] Wczytano P(objaw|choroba) z cache (%s).", cache_path)
-                    return cls(c_feats, [str(x) for x in z["classes"].tolist()], z["q"])
+                    return cls(c_feats, [str(x) for x in z["classes"].tolist()], z["q"], z["feature_counts"])
                 log.info("[Stats] Cache nieaktualny (zmiana cech lub danych) - przeliczam.")
             except Exception as e:
                 log.warning("[Stats] Nie udało się wczytać cache %s: %s", cache_path, e)
@@ -110,12 +114,13 @@ class SymptomStats:
                     cache_path,
                     features=np.array(feats), classes=np.array(classes),
                     q=q.astype(np.float32), signature=np.array(sig),
+                    feature_counts=sums.sum(axis=0),
                 )
             except Exception as e:
                 log.warning("[Stats] Nie zapisano cache: %s", e)
 
             log.info("[Stats] Gotowe: klasy=%d, cechy=%d.", len(classes), len(feats))
-            return cls(feats, classes, q)
+            return cls(feats, classes, q, sums.sum(axis=0))
         except Exception as e:
             log.warning("[Stats] Nie udało się policzyć statystyk: %s", e)
             return None
