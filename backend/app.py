@@ -59,9 +59,14 @@ def create_app() -> FastAPI:
             log.debug("Auth prewarm skipped: %s", e)
 
         # 2) Reszta startu (modele itp.)
+        import time as _time
+        from utils import fmt_duration
+        t_start = _time.time()
         state: AppState = await StartupManager().run()
 
         # 3) River
+        t_river = _time.time()
+        log.info("🤖 [ETAP 4/5] Trening/ładowanie River…")
         try:
             from models.river_manager import RiverManager
             river = RiverManager()
@@ -75,13 +80,23 @@ def create_app() -> FastAPI:
                 raise RuntimeError("River model not initialized after train().")
 
             state.river = river
-            log.info("🤖 River gotowy (features=%d).", len(getattr(river, "features", []) or []))
+            log.info("🤖 [ETAP 4/5] River gotowy (features=%d) w %s.",
+                     len(getattr(river, "features", []) or []), fmt_duration(_time.time() - t_river))
         except Exception as e:
             state.river = None
             log.exception("River init failed: %s", e)
 
+        # 4) Kalibracja całego ensemble + raport jakości (tylko gdy modele się zmieniły)
+        log.info("⚖️ [ETAP 5/5] Kalibracja ensemble i raport jakości…")
+        try:
+            from services.ensemble_calibration import ensure_ensemble_calibration
+            ensure_ensemble_calibration(state)
+        except Exception as e:
+            log.exception("Kalibracja ensemble nieudana (T_ens=1): %s", e)
+
         app.state.app_state = state
-        log.info("✅ Startup zakończony.")
+        log.info("✅ Startup zakończony w %s. Raport jakości modeli: ml/training_report.json",
+                 fmt_duration(_time.time() - t_start))
 
         yield
 

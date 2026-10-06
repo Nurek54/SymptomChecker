@@ -1,6 +1,7 @@
 # backend/core/startup.py
 from __future__ import annotations
 import logging
+import time
 
 import torch
 
@@ -10,6 +11,7 @@ from models.llm_manager import LLMManager
 from services.symptom_matcher import SymptomMatcher
 from services.session_store import SessionStore
 from services.symptom_stats import SymptomStats
+from utils import fmt_duration
 
 log = logging.getLogger("symptomchecker.startup")
 
@@ -19,18 +21,24 @@ class StartupManager:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         log.info("Torch device: %s", device)
 
+        t = time.time()
         xgb = XGBManager()
-        log.info("🔧 Trening/ładowanie XGBoost…")
+        log.info("🔧 [ETAP 1/5] Trening/ładowanie XGBoost…")
         xgb.train()
+        log.info("🔧 [ETAP 1/5] XGBoost gotowy w %s", fmt_duration(time.time() - t))
         if not xgb.features:
-            raise RuntimeError("Brak cech XGB — sprawdź dataset i trening.")
+            raise RuntimeError("Brak cech XGB - sprawdź dataset i trening.")
 
+        t = time.time()
         llm = LLMManager()
-        log.info("🧠 Ładowanie LLM…")
+        log.info("🧠 [ETAP 2/5] Ładowanie LLM…")
         llm.load()
+        log.info("🧠 [ETAP 2/5] LLM gotowy w %s", fmt_duration(time.time() - t))
 
-        log.info("📊 Statystyki objawów (pytania uzupełniające, cechy bez danych)…")
+        t = time.time()
+        log.info("📊 [ETAP 3/5] Statystyki objawów (pytania uzupełniające, cechy bez danych)…")
         symptom_stats = SymptomStats.load_or_build(xgb.features)
+        log.info("📊 [ETAP 3/5] gotowe w %s", fmt_duration(time.time() - t))
 
         log.info("🧩 Buduję matcher…")
         matcher = SymptomMatcher(

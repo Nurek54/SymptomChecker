@@ -233,15 +233,19 @@ class EnsembleTopK:
         else:
             wx_dyn, wr_dyn, gated_to = self._compute_weights(mx, mr)
 
+        # temperatura całego ensemble, dobrana na zbiorze kalibracyjnym
+        # (services/ensemble_calibration.py); 1.0 = brak dodatkowej kalibracji
+        T = float(getattr(self.st, "ensemble_T", 1.0) or 1.0)
         fx, fr = self._floor(mx), self._floor(mr)
-        scores: Dict[str, float] = {}
+        logs: Dict[str, float] = {}
         for name in set(mx) | set(mr):
             px = max(mx.get(name, fx), _EPS)
             pr = max(mr.get(name, fr), _EPS)
-            scores[name] = math.exp(wx_dyn * math.log(px) + wr_dyn * math.log(pr))
-        combined = self._normalize(scores)
+            logs[name] = (wx_dyn * math.log(px) + wr_dyn * math.log(pr)) / T
+        top_log = max(logs.values())
+        combined = self._normalize({n: math.exp(v - top_log) for n, v in logs.items()})
 
-        meta.update({"wx_dyn": float(wx_dyn), "wr_dyn": float(wr_dyn), "gated_to": gated_to})
+        meta.update({"wx_dyn": float(wx_dyn), "wr_dyn": float(wr_dyn), "gated_to": gated_to, "T_ens": T})
         log.info(
             "[Ensemble] xgb=%.3fs river=%.3fs fuse=%.3fs | classes=%d | wx=%.2f wr=%.2f conf_x=%.2f conf_r=%.2f gated_to=%s",
             t1 - t0, t2 - t1, time.perf_counter() - t2, len(combined),

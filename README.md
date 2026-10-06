@@ -246,26 +246,32 @@ If any of the XGB artifacts are missing, the full pipeline runs:
 4. **Temperature calibration** on held-out data the model has never seen (`calibration.csv`; if it is missing, a stratified hold-out is cut from the training set *before* training)
 5. **Save artifacts** to `backend/ml/` (plus `xgb_model.meta.json` recording which data the model was trained on)
 
-> `train_remainder.csv` + `calibration.csv` together form `Final_Dataset_Diseases_and_Symptoms.csv`. Training on the remainder keeps calibration honest. Models trained by older versions (on the full dataset, calibrated on training rows) are still loaded, but the backend logs a warning. To retrain, delete `backend/ml/xgb_model.joblib`, `label_encoder.joblib`, `xgb_model.calibration.joblib`, `river_ovr_ftrl.joblib` and `river_ovr_ftrl.calibration.joblib`.
+> To retrain from scratch, delete `backend/ml/xgb_model.joblib`, `label_encoder.joblib`, `xgb_best_params.joblib`, `xgb_model.calibration.joblib`, `river_ovr_ftrl.joblib`, `river_ovr_ftrl.calibration.joblib` and `ensemble_calibration.json`. Models trained by older versions are still loaded, but the backend logs a warning.
 
 After that, every subsequent startup just **loads the saved models** (~5–10 s).
 
-### Approximate training times
+### Progress and remaining time
 
-Estimates assume a dataset on the order of ~100k–1M rows × ~400 binary symptom features. Your mileage will vary.
+Every long step logs its progress with elapsed time and an estimate of the remaining time, for example:
 
-| Hardware | Bayes search | Final training | Total first run |
-|----------|--------------|----------------|-----------------|
-| **CUDA GPU** (RTX 3080+, `XGB_USE_GPU=True`) | ~10–25 min | ~1–3 min | **~15–30 min** |
-| **Modern CPU** (12+ cores) | ~1.5–4 h | ~5–15 min | **~2–4 h** |
-| **Older CPU** (4–8 cores) | ~4–8 h | ~15–30 min | **~5–9 h** |
+```
+[XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
+[XGB][Bayes] 9% (3/32) loss=0.21 best=0.20 ... | minęło 21m | zostało ~3h02m
+[XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
+[River/trening]  31.3% (35571/113416) 52.1 wierszy/s | minęło 11m22s | zostało ~25m
+```
 
-Speed up dev iterations by lowering `XGB_N_ITER_BAYES` to `8–16` in `backend/config.py`.
+Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. The River bootstrap is a single online pass over the training set (one update per class per row), so with ~570 classes it takes roughly 15–40 min, once.
 
-### River calibration
+### Calibration and quality report
 
-- **First start with `RIVER_CALIBRATE_ON_START=True`**: reads `calibration.csv`, fits a temperature scalar - typically **30–90 seconds**
-- **Subsequent starts**: calibrator loaded from disk (~1 s)
+All three predictors are calibrated on `calibration.csv` (never seen in training) and measured on `test.csv`:
+
+- **XGBoost**: `p = softmax((margins - log w_c) / T)`. `T` is fitted by minimum NLL. The class-weight prior correction `log w_c` (training with class weights inflates rare classes) is used only if it lowers NLL on the calibration set.
+- **River (OVR, FTRL-Proximal)**: `p = softmax((z - lam * z_base) / T)`, where `z` are the raw per-class logits and `z_base` the logits for an empty input; `(lam, T)` are fitted together and the same transform is used at prediction time.
+- **Ensemble**: the log-linear fusion of both models (dynamic weights and gating) gets its own temperature `T_ens`, cached in `backend/ml/ensemble_calibration.json` and recomputed only when a model changes.
+
+The metrics (top-1, top-3, NLL, ECE, Brier, mean confidence) before and after calibration are logged as tables and saved to `backend/ml/training_report.json`.
 
 ### LLM loading
 

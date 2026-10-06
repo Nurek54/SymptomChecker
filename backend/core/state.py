@@ -23,3 +23,5 @@ class AppState:
     river: Optional["RiverManager"] = field(default=None)
     # P(objaw | choroba) do wyboru pytań uzupełniających (services.symptom_stats.SymptomStats)
     symptom_stats: Optional[Any] = field(default=None)
+    # temperatura fuzji XGB + River (services/ensemble_calibration.py)
+    ensemble_T: float = field(default=1.0)

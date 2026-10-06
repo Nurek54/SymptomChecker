@@ -266,3 +266,82 @@ def test_dicts_panel_hides_dead_features_and_dedupes_labels():
     ]
     out = _project_to_xgb_features(raw, set(feats), m.resolve_labels, m._count)
     assert out == [{"en": "stomach_bloating", "pl": "wzdęcie brzucha", "category": None}]
+
+
+# ───────────────────────── kalibracja modeli ─────────────────────────
+def _softmax_np(z):
+    z = z - z.max(1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(1, keepdims=True)
+
+
+def test_xgb_calibrator_prior_correction_used_only_when_it_helps():
+    from backend.models.xgb_manager import TemperatureCalibrator
+
+    rng = np.random.default_rng(0)
+    K, N = 4, 4000
+    true_logits = rng.normal(0, 2, size=(N, K))
+    y = np.array([rng.choice(K, p=p) for p in _softmax_np(true_logits)])
+    log_w = np.log(np.array([0.5, 1.0, 3.0, 5.0]))
+    # model trenowany z wagami klas "zawyża" klasy o dużych wagach o log(w_c)
+    biased = true_logits + log_w[None, :]
+    cal = TemperatureCalibrator()
+    cal.fit(biased, y, log_w=log_w)
+    assert cal.log_w is not None and cal.T == pytest.approx(1.0, abs=0.1)
+    # gdy model NIE jest przesunięty, korekta pogarsza NLL -> kalibrator jej nie używa
+    cal2 = TemperatureCalibrator()
+    cal2.fit(true_logits, y, log_w=log_w)
+    assert cal2.log_w is None
+
+
+def test_river_calibrator_transform_matches_fit():
+    from backend.models.river_manager import RiverTemperatureCalibrator
+
+    rng = np.random.default_rng(1)
+    K, N = 5, 3000
+    z_base = rng.normal(-3, 1, size=K)
+    true_logits = rng.normal(0, 1.5, size=(N, K))
+    y = np.array([rng.choice(K, p=p) for p in _softmax_np(true_logits)])
+    Z = 2.0 * (true_logits + z_base[None, :])  # zbyt ostre i przesunięte o intercept
+    cal = RiverTemperatureCalibrator(classes=[str(i) for i in range(K)])
+    lam, T = cal.fit_scores(Z, 2.0 * z_base, y)
+    assert lam == pytest.approx(1.0) and T == pytest.approx(2.0, rel=0.1)
+    P = cal.transform(Z, 2.0 * z_base)
+    np.testing.assert_allclose(P, _softmax_np((Z - lam * 2.0 * z_base[None, :]) / T))
+
+
+def test_vectorized_fusion_matches_ensemble_fuse():
+    from backend.services.ensemble_calibration import fused_log_scores
+
+    rng = np.random.default_rng(2)
+    names = ["a", "b", "c", "d", "e"]
+    for sharp in (0.3, 1.0, 4.0):
+        Px = _softmax_np(rng.normal(0, sharp * 2, size=(1, 5)))
+        Pr = _softmax_np(rng.normal(0, 1, size=(1, 5)))
+        st = _St()
+        st.xgb = _Model([{"diagnosis_en": n, "probability": float(p)} for n, p in zip(names, Px[0])])
+        st.river = _Model([{"diagnosis_en": n, "probability": float(p)} for n, p in zip(names, Pr[0])])
+        st.ensemble_T = 0.8
+        ens = EnsembleTopK(st)
+        got = ens.predict_distribution([[1, 0]])
+        want = _softmax_np(fused_log_scores(Px, Pr, ens) / 0.8)[0]
+        for n, p in zip(names, want):
+            assert got[n] == pytest.approx(p, rel=1e-6, abs=1e-9)
+
+
+def test_progress_eta_and_duration_format():
+    from backend.utils import Progress, fmt_duration
+
+    assert fmt_duration(5) == "5s"
+    assert "min" in fmt_duration(125) or "2m" in fmt_duration(125)
+    lines = []
+
+    class _L:
+        def info(self, msg, *a):
+            lines.append(msg % a if a else msg)
+
+    p = Progress("test", total=10, log=_L(), every_pct=0.0, min_interval=0.0)
+    for i in range(1, 11):
+        p.update(i)
+    p.finish()
+    assert any("zostało" in s for s in lines) and any("KONIEC" in s for s in lines)

@@ -69,6 +69,8 @@ backend/data/calibration.csv
 backend/data/v2/*.csv
 backend/ml/Backup/
 backend/ml/symptom_given_disease.npz
+backend/ml/ensemble_calibration.json
+backend/ml/training_report.json
 
 # ───── Logi runtime ─────
 logs/*

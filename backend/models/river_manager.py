@@ -15,6 +15,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from river import linear_model, optim
 from river.multiclass import OneVsRestClassifier
 
+from utils import Progress, calibration_metrics, fmt_duration
 from config import (
     DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     RIVER_MODEL_PATH, RIVER_CALIB_PATH, RIVER_CALIBRATION_CSV,
@@ -119,7 +120,7 @@ def _load_train_dataframe() -> pd.DataFrame:
 
     if "weight" not in df.columns:
         df["weight"] = 1.0
-        log.info("[River][IO] Brak wag w źródłach — ustawiam weight=1.0 dla wszystkich.")
+        log.info("[River][IO] Brak wag w źródłach - ustawiam weight=1.0 dla wszystkich.")
 
     df["weight"] = _sanitize_weights_series(df["weight"])
 
@@ -136,7 +137,7 @@ def _maybe_load_test(features: List[str]) -> Optional[Tuple[pd.DataFrame, pd.Ser
     log.info("[River][IO] Start: próba wczytania TEST z %s", TEST_CSV)
     t0 = time.time()
     if not TEST_CSV or not os.path.exists(TEST_CSV):
-        log.info("[River][IO] TEST: brak pliku — pomijam ewaluację.")
+        log.info("[River][IO] TEST: brak pliku - pomijam ewaluację.")
         return None
     df = pd.read_csv(TEST_CSV)
     df.columns = [str(c).strip().lower() for c in df.columns]
@@ -176,7 +177,7 @@ def _load_artifacts() -> Tuple[Optional[OneVsRestClassifier], List[str]]:
     log.info("[River][ART] Start: próba wczytania artefaktów z %s", RIVER_MODEL_PATH)
     t0 = time.time()
     if not os.path.exists(RIVER_MODEL_PATH):
-        log.info("[River][ART] Brak pliku modelu — bootstrap będzie wymagany.")
+        log.info("[River][ART] Brak pliku modelu - bootstrap będzie wymagany.")
         return None, []
     try:
         model: OneVsRestClassifier = joblib.load(RIVER_MODEL_PATH)
@@ -228,9 +229,26 @@ def _warn_if_trained_on_other_data() -> None:
 
 
 class RiverTemperatureCalibrator:
-    def __init__(self, T: float = 1.0, classes: Optional[List[str]] = None):
+    """
+    Kalibracja OvR -> rozkład wieloklasowy. Dla każdej klasy bierzemy surowy wynik
+    klasyfikatora binarnego z_c (logit), odejmujemy część "priora" (wynik dla pustego
+    wejścia, czyli intercept) i robimy softmax z temperaturą:
+
+        p = softmax((z - lam * z_base) / T)
+
+    Oba parametry (lam, T) dobieramy na odłożonym zbiorze kalibracyjnym (minimum NLL)
+    i DOKŁADNIE tę samą transformację stosujemy przy predykcji. Wcześniej predykcja
+    używała innego lam (zależnego od liczby objawów) i dodatkowego "wyostrzania",
+    więc wyznaczone T nie odpowiadało temu, co widział użytkownik.
+    """
+
+    LAM_GRID = (0.0, 0.25, 0.5, 0.75, 1.0)
+
+    def __init__(self, T: float = 1.0, classes: Optional[List[str]] = None, lam: float = 1.0):
         self.T: float = float(T)
+        self.lam: float = float(lam)
         self.classes_: List[str] = list(classes) if classes else []
+        self.metrics_: Dict[str, Any] = {}
 
     @staticmethod
     def classes_from_model(model: OneVsRestClassifier) -> List[str]:
@@ -244,89 +262,55 @@ class RiverTemperatureCalibrator:
         ps = np.clip(p[rows, y_idx], 1e-12, 1.0)
         return float(-np.mean(np.log(ps)))
 
-    def fit_from_dataframe(self, mgr: "RiverManager", df: pd.DataFrame) -> Tuple[float, int]:
-        log.info("[River][Cal] Start: dopasowanie temperatury (dataset N=%d)", len(df))
-        t0 = time.time()
-        if mgr.model is None or not mgr.features:
-            raise RuntimeError("RiverManager niegotowy: uruchom train().")
-
-        for f in mgr.features:
-            if f not in df.columns:
-                df[f] = 0
-        df = df[["diseases"] + mgr.features].dropna().copy()
-
-        C = self.classes_from_model(mgr.model)
-        if not C:
-            raise RuntimeError("Brak klas w aktualnym modelu.")
-        self.classes_ = C
-
-        # priory dla pustego x (bias/intercept)
-        base = mgr.model.predict_proba_one({}) or {}
-        base_logits = {c: _logit(float(base.get(c, 1e-9))) for c in C}
-
-        N, K = len(df), len(C)
-        margins = np.zeros((N, K), dtype=np.float64)
-        y_idx = np.full(N, -1, dtype=np.int64)
-
-        for i, row in enumerate(df.itertuples(index=False)):
-            x = {f: int(getattr(row, f)) for f in mgr.features}
-            proba = mgr.model.predict_proba_one(x) or {}
-            for j, c in enumerate(C):
-                margins[i, j] = _logit(float(proba.get(c, 1e-9))) - base_logits[c]
-            try:
-                y_idx[i] = C.index(str(getattr(row, "diseases")))
-            except ValueError:
-                y_idx[i] = -1
-
-        mask = y_idx >= 0
-        margins = margins[mask]
-        y_idx = y_idx[mask]
-        if margins.shape[0] == 0:
-            raise ValueError("Zbiór kalibracyjny nie zawiera znanych klas.")
-
+    @classmethod
+    def _best_T(cls, margins: np.ndarray, y_idx: np.ndarray) -> Tuple[float, float]:
         best_T, best_loss = 1.0, float("inf")
-        grid = np.linspace(-2.0, 2.0, 41)
-        for g in grid:
+        for g in np.linspace(-2.5, 2.5, 51):
             T_try = float(np.exp(g))
-            loss = self._nll(margins, y_idx, T_try)
+            loss = cls._nll(margins, y_idx, T_try)
             if loss < best_loss:
                 best_loss, best_T = loss, T_try
-        for factor in [0.85, 0.9, 0.95, 1.05, 1.10, 1.15]:
+        for factor in (0.9, 0.95, 0.97, 1.03, 1.05, 1.1):
             T_try = best_T * factor
-            loss = self._nll(margins, y_idx, T_try)
+            loss = cls._nll(margins, y_idx, T_try)
             if loss < best_loss:
                 best_loss, best_T = loss, T_try
+        return best_T, best_loss
 
-        self.T = float(best_T)
-        log.info("[River][Cal] Wyznaczono T=%.5f na %d próbkach w %.2fs.",
-                 self.T, margins.shape[0], time.time() - t0)
-        return self.T, int(margins.shape[0])
+    def fit_scores(self, Z: np.ndarray, z_base: np.ndarray, y_idx: np.ndarray) -> Tuple[float, float]:
+        """Z: surowe wyniki (N x K), z_base: wyniki dla pustego wejścia (K,), y_idx: klasy."""
+        best = (1.0, 1.0, float("inf"))
+        for lam in self.LAM_GRID:
+            T, loss = self._best_T(Z - lam * z_base[None, :], y_idx)
+            log.info("[River][Cal]   lam=%.2f -> T=%.4f NLL=%.4f", lam, T, loss)
+            if loss < best[2]:
+                best = (lam, T, loss)
+        self.lam, self.T = float(best[0]), float(best[1])
+        return self.lam, self.T
 
-    # z już policzonego proba + priory z mgr
-    def margins_from_proba(self, proba: Dict[str, float], base_logits: Dict[str, float]) -> np.ndarray:
-        classes = self.classes_ or []
-        if not classes:
-            raise RuntimeError("Calibrator.classes_ puste — wywołaj fit() albo ustaw klasy.")
-        logits = [_logit(float(proba.get(c, 1e-9))) - float(base_logits.get(c, 0.0)) for c in classes]
-        return np.asarray(logits, dtype=np.float64).reshape(1, -1)
-
-    def transform_proba(self, margins: np.ndarray) -> np.ndarray:
-        return _softmax(margins / self.T)
+    def transform(self, z: np.ndarray, z_base: np.ndarray) -> np.ndarray:
+        return _softmax((z - self.lam * z_base[None, :]) / self.T)
 
     def save(self, path: str = RIVER_CALIB_PATH) -> None:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        joblib.dump({"T": float(self.T), "classes": list(self.classes_)}, path)
-        log.info("[River][Cal] Zapisano kalibrator T=%.5f -> %s", self.T, path)
+        joblib.dump({"T": float(self.T), "lam": float(self.lam), "classes": list(self.classes_),
+                     "version": 2, "metrics": self.metrics_}, path)
+        log.info("[River][Cal] Zapisano kalibrator T=%.4f lam=%.2f -> %s", self.T, self.lam, path)
 
     @classmethod
     def load(cls, path: str = RIVER_CALIB_PATH) -> Optional["RiverTemperatureCalibrator"]:
         if not os.path.exists(path):
             return None
         payload = joblib.load(path)
-        T = float(payload.get("T", 1.0))
-        classes = list(payload.get("classes", []))
-        log.info("[River][Cal] Załadowano T=%.5f (klas=%d).", T, len(classes))
-        return cls(T=T, classes=classes)
+        if int(payload.get("version", 1)) < 2:
+            # stary kalibrator był liczony na innej transformacji niż predykcja
+            log.warning("[River][Cal] Stary format kalibratora - zostanie wyznaczony ponownie.")
+            return None
+        cal = cls(T=float(payload.get("T", 1.0)), classes=list(payload.get("classes", [])),
+                  lam=float(payload.get("lam", 1.0)))
+        cal.metrics_ = dict(payload.get("metrics") or {})
+        log.info("[River][Cal] Załadowano T=%.4f lam=%.2f (klas=%d).", cal.T, cal.lam, len(cal.classes_))
+        return cal
 
 class RiverManager:
     def __init__(self):
@@ -336,7 +320,7 @@ class RiverManager:
         self._vec_template: Optional[np.ndarray] = None
         self._feat_index: Optional[Dict[str, int]] = None
         self._forced_features: List[str] = []  # wymuszone przez set_features()
-        self._base_proba: Optional[Dict[str, float]] = None  # cache P(y|{})
+        self._base_proba: Optional[Dict[str, Any]] = None  # cache wyników dla pustego wejścia
         # Chroni model przed równoczesnym uczeniem (router /river) i predykcją (czat).
         self.lock = threading.RLock()
 
@@ -346,20 +330,23 @@ class RiverManager:
         if fs:
             self.features = list(fs)
             self._prepare_vector_template()
-            log.info("[River][FEATS] set_features() przyjęto (D=%d) — wymuszam zgodność z XGB.", len(self.features))
+            log.info("[River][FEATS] set_features() przyjęto (D=%d) - wymuszam zgodność z XGB.", len(self.features))
 
     def _new_model(self) -> OneVsRestClassifier:
         log.info("[River][Model] Start: inicjalizacja modelu i optymalizatora")
         t0 = time.time()
-        if hasattr(optim, "FTRL"):
-            opt = optim.FTRL(alpha=RIVER_ALPHA, beta=RIVER_BETA, l1=RIVER_L1, l2=RIVER_L2)
-            log.info("[River][Model] Używam optim.FTRL.")
+        # river nazywa ten optymalizator FTRLProximal (wcześniej szukaliśmy nieistniejącego
+        # "FTRL", więc zawsze wpadał AdaGrad)
+        if hasattr(optim, "FTRLProximal"):
+            opt = optim.FTRLProximal(alpha=RIVER_ALPHA, beta=RIVER_BETA, l1=RIVER_L1, l2=RIVER_L2)
+            log.info("[River][Model] Używam optim.FTRLProximal (alpha=%s beta=%s l1=%s l2=%s).",
+                     RIVER_ALPHA, RIVER_BETA, RIVER_L1, RIVER_L2)
         else:
             opt = getattr(optim, "AdaGrad", optim.Adam)()
             log.warning("[River][Model] optim.FTRL niedostępny – fallback na %s.", opt.__class__.__name__)
         base = linear_model.LogisticRegression(optimizer=opt, l2=RIVER_L2, clip_gradient=RIVER_CLIP_GRADIENT)
         ovr = OneVsRestClassifier(base)
-        log.info("[River][Model] Gotowe w %.2fs — OneVsRest(LogisticRegression).", time.time() - t0)
+        log.info("[River][Model] Gotowe w %.2fs - OneVsRest(LogisticRegression).", time.time() - t0)
         return ovr
 
     def _prepare_vector_template(self) -> None:
@@ -401,24 +388,64 @@ class RiverManager:
                 v[0, idx] = 1.0
         return v
 
-    def _baseline_proba(self) -> Dict[str, float]:
-        if self.model is None:
+    # ───────────── surowe wyniki OvR (logity klasyfikatorów binarnych) ─────────────
+    def _raw_scores(self, x: Dict[str, int], classes: List[str]) -> np.ndarray:
+        clfs = self.model.classifiers  # type: ignore[union-attr]
+        out = np.empty(len(classes), dtype=np.float64)
+        for j, c in enumerate(classes):
+            m = clfs[c]
+            try:
+                out[j] = float(m._raw_dot_one(x))
+            except Exception:
+                out[j] = _logit(float(m.predict_proba_one(x).get(True, 1e-9)))
+        return out
+
+    def _base_scores(self, classes: List[str]) -> np.ndarray:
+        """Wyniki dla pustego wejścia (intercepty) - cache, zerowany po każdym uczeniu."""
+        key = tuple(classes)
+        if self._base_proba is None or self._base_proba.get("key") != key:
+            self._base_proba = {"key": key, "z": self._raw_scores({}, classes)}
+        return self._base_proba["z"]
+
+    def _baseline_proba(self) -> Dict[str, float]:  # zgodność wsteczna
+        classes = self._current_classes()
+        if self.model is None or not classes:
             return {}
-        if self._base_proba is None:
-            base = self.model.predict_proba_one({}) or {}
-            classes = self._current_classes()
-            self._base_proba = {c: float(base.get(c, 1e-9)) for c in classes}
-        return self._base_proba
+        z = self._base_scores(classes)
+        return {c: float(1.0 / (1.0 + np.exp(-v))) for c, v in zip(classes, z)}
+
+    def _scores_for_frame(self, df: pd.DataFrame, label: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+        """Surowe wyniki dla wszystkich wierszy CSV (z postępem). Zwraca (Z, y_idx, classes)."""
+        classes = self._current_classes()
+        cidx = {c: i for i, c in enumerate(classes)}
+        feats = [f for f in self.features if f in df.columns]
+        X = df[feats].to_numpy(dtype=np.uint8)
+        labels = df["diseases"].astype(str).to_numpy()
+        Z = np.zeros((len(df), len(classes)), dtype=np.float64)
+        y_idx = np.array([cidx.get(l, -1) for l in labels], dtype=np.int64)
+        prog = Progress(label, len(df), log, unit="wierszy")
+        for i in range(len(df)):
+            x = {feats[j]: 1 for j in np.flatnonzero(X[i])}
+            Z[i] = self._raw_scores(x, classes)
+            prog.update(i + 1)
+        prog.finish()
+        return Z, y_idx, classes
+
+    @staticmethod
+    def _read_eval_csv(path: str, limit: Optional[int] = None) -> pd.DataFrame:
+        df = pd.read_csv(path)
+        df.columns = [str(c).strip().lower().lstrip("\ufeff") for c in df.columns]
+        if "diseases" not in df.columns:
+            raise ValueError(f"{path}: brak kolumny 'diseases'.")
+        df["diseases"] = df["diseases"].astype(str).str.strip().str.lower()
+        if limit:
+            df = df.iloc[: int(limit)].copy()
+        return df
 
     def calibrate(self, csv_path: Optional[str] = None, limit: Optional[int] = None) -> float:
-        log.info("[River][Cal] Start: calibrate(csv_path=%s, limit=%s)", str(csv_path), str(limit))
-        t0 = time.time()
+        """Wyznacza (lam, T) na odłożonym zbiorze kalibracyjnym (nie na treningu ani teście)."""
         if self.model is None or not self.features:
             raise RuntimeError("Najpierw uruchom train().")
-
-        # Kalibrujemy WYŁĄCZNIE na danych odłożonych (calibration.csv). Zbiór testowy
-        # służy do ewaluacji, a próbka z TRAIN była widziana przy uczeniu,
-        # więc oba dałyby zawyżoną (zbyt pewną) kalibrację.
         path = csv_path
         if not path:
             if not _calibration_csv_available():
@@ -428,24 +455,58 @@ class RiverManager:
                 )
             path = RIVER_CALIBRATION_CSV
         log.info("[River][Cal] Źródło kalibracji: %s", path)
+        df = self._read_eval_csv(path, limit)
 
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Brak pliku kalibracyjnego: {path}")
-        df = pd.read_csv(path)
-        df.columns = [str(c).strip().lower() for c in df.columns]
+        with self.lock:
+            Z, y_idx, classes = self._scores_for_frame(df, "River/kalibracja")
+            z_base = self._base_scores(classes)
+        mask = y_idx >= 0
+        if not mask.any():
+            raise ValueError("Zbiór kalibracyjny nie zawiera znanych klas.")
+        Z, y_idx = Z[mask], y_idx[mask]
 
-        if "diseases" not in df.columns:
-            raise ValueError("CSV do kalibracji musi zawierać kolumnę 'diseases'.")
-
-        if limit:
-            df = df.iloc[: int(limit)].copy()
-
-        cal = RiverTemperatureCalibrator()
-        T, n = cal.fit_from_dataframe(self, df)
+        before = calibration_metrics(_softmax(Z - 0.5 * z_base[None, :]), y_idx)
+        cal = RiverTemperatureCalibrator(classes=classes)
+        cal.fit_scores(Z, z_base, y_idx)
+        after = calibration_metrics(cal.transform(Z, z_base), y_idx)
+        cal.metrics_ = {"calibration_set_before": before, "calibration_set_after": after}
+        log.info("[River][Cal] lam=%.2f T=%.4f | zbiór kalibracyjny przed: %s | po: %s",
+                 cal.lam, cal.T, before, after)
         cal.save(RIVER_CALIB_PATH)
         self.calibrator = cal
-        log.info("[River][Cal] Zakończono: T=%.5f (n=%d) w %.2fs.", T, n, time.time() - t0)
-        return T
+        return cal.T
+
+    def evaluate(self, csv_path: str, limit: Optional[int] = None) -> Dict[str, Any]:
+        """Metryki trafności i kalibracji na wskazanym CSV (np. test.csv)."""
+        df = self._read_eval_csv(csv_path, limit)
+        with self.lock:
+            Z, y_idx, classes = self._scores_for_frame(df, "River/ewaluacja")
+            z_base = self._base_scores(classes)
+        mask = y_idx >= 0
+        cal = self.calibrator if (self.calibrator and self.calibrator.classes_ == classes) else None
+        P = cal.transform(Z[mask], z_base) if cal else _softmax(Z[mask] - 0.5 * z_base[None, :])
+        out = calibration_metrics(P, y_idx[mask])
+        out["unknown_label_rows"] = int((~mask).sum())
+        return out
+
+    def _learn_frame(self, df: pd.DataFrame, label: str) -> int:
+        """
+        Jedno przejście uczenia online po wierszach (kolejność losowa, stały seed).
+        Wejście rzadkie: tylko obecne objawy (jak przy predykcji), co jest ~50x
+        szybsze niż słownik z 412 zerami i nie zmienia wyników predykcji.
+        """
+        feats = list(self.features)
+        X = df.reindex(columns=feats, fill_value=0).to_numpy(dtype=np.uint8)
+        y = df["diseases"].astype(str).to_numpy()
+        w = df["weight"].to_numpy(dtype=float) if "weight" in df.columns else np.ones(len(df))
+        order = np.random.default_rng(int(XGB_RANDOM_STATE or 42)).permutation(len(df))
+        prog = Progress(label, len(df), log, unit="wierszy")
+        for step, i in enumerate(order, 1):
+            x = {feats[j]: 1 for j in np.flatnonzero(X[i])}
+            self.model = _learn_in_place(self.model, x, y[i], float(w[i]))  # type: ignore
+            prog.update(step)
+        prog.finish()
+        return len(df)
 
     def train(self) -> None:
         log.info("[River][Train] ▶ Start train()")
@@ -462,7 +523,7 @@ class RiverManager:
                     missing = forced_set - loaded_set
                     extra = loaded_set - forced_set
                     log.warning(
-                        "[River][Train] Zbiór cech artefaktów różni się od XGB — retrain. "
+                        "[River][Train] Zbiór cech artefaktów różni się od XGB - retrain. "
                         "missing=%d extra=%d", len(missing), len(extra),
                     )
                     model = None  # wymuś bootstrap
@@ -473,7 +534,7 @@ class RiverManager:
                     self.warmup()
                     self._base_proba = None
                     log.info(
-                        "[River][Train] Zbiór cech zgodny — używam załadowanego modelu z porządkiem XGB."
+                        "[River][Train] Zbiór cech zgodny - używam załadowanego modelu z porządkiem XGB."
                     )
             else:
                 self.model = model
@@ -497,77 +558,19 @@ class RiverManager:
                 self.features = _features_from(df)
 
             self.model = self._new_model()
-
-            n = len(df)
             t0 = time.time()
-            w = df["weight"].to_numpy(dtype=float)
-            log.info("[River][Train] Start pętli uczącej (N=%d, D=%d)", n, len(self.features))
-
-            for i, row in df.iterrows():
-                y = str(row["diseases"])
-                x = {f: int(row.get(f, 0)) for f in self.features}
-                wi = float(w[i]) if i < len(w) else 1.0
-                self.model = _learn_in_place(self.model, x, y, wi)  # type: ignore
-
-                if (i + 1) % 20000 == 0:
-                    pct = int((i + 1) / n * 100)
-                    elapsed = time.time() - t0
-                    rate = (i + 1) / max(elapsed, 1e-9)
-                    log.info("[River][Train] %d%% (%d/%d) elapsed=%.1fs speed=%.1f rec/s",
-                             pct, i + 1, n, elapsed, rate)
-
+            n = self._learn_frame(df, "River/trening")
             _save_artifacts(self.model, self.features)  # type: ignore
             self._prepare_vector_template()
             self.warmup()
-            self._base_proba = None  # reset priory po uczeniu
-            log.info("[River][Train] Bootstrap ukończony w %.2fs (N=%d, D=%d).", time.time() - t0, n, len(self.features))
-
-            try:
-                te = _maybe_load_test(self.features)
-                if te is not None:
-                    log.info("[River][Eval] Start ewaluacji na TEST")
-                    t_eval = time.time()
-                    Xte, yte = te
-                    ypred = []
-                    proba_rows = []
-                    for _, row in Xte.iterrows():
-                        x = {f: int(row[f]) for f in self.features}
-                        proba = self.model.predict_proba_one(x) or {}  # type: ignore
-                        if not proba:
-                            ypred.append("__none__")
-                            proba_rows.append([])
-                            continue
-                        top = sorted(proba.items(), key=lambda kv: kv[1], reverse=True)
-                        ypred.append(top[0][0])
-                        proba_rows.append([p for _, p in top])
-
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        acc = float(accuracy_score(yte, ypred))
-                        f1m = float(f1_score(yte, ypred, average="macro"))
-
-                    ll = float("nan")
-                    try:
-                        eps = 1e-12
-                        p_top1 = np.array([row[0] if row else 1e-9 for row in proba_rows], dtype=float)
-                        p_top1 = np.clip(p_top1, eps, 1.0)
-                        penal = []
-                        for yt, yp, p in zip(yte, ypred, p_top1):
-                            penal.append(-np.log(p if yt == yp else eps))
-                        ll = float(np.mean(penal))
-                    except Exception:
-                        pass
-
-                    log.info("[River][Eval] Wyniki: acc=%.4f  f1_macro=%.4f  proxy_logloss=%.4f  (N=%d)  in %.2fs",
-                             acc, f1m, ll, len(yte), time.time() - t_eval)
-            except Exception as e:
-                log.warning("[River][Eval] Błąd ewaluacji TEST: %s", e)
+            self._base_proba = None  # reset wyników bazowych po uczeniu
+            log.info("[River][Train] Bootstrap ukończony w %s (N=%d, D=%d).", fmt_duration(time.time() - t0), n, len(self.features))
 
         self.calibrator = self._load_calibrator()
         if RIVER_CALIBRATE_ON_START:
             try:
                 if self.calibrator is None:
-                    log.info("[River][Cal] Brak poprawnego kalibratora — uruchamiam calibrate()")
+                    log.info("[River][Cal] Brak poprawnego kalibratora - uruchamiam calibrate()")
                     self.calibrate()
                 else:
                     log.info("[River][Cal] Używam istniejącego kalibratora (T=%.5f).", self.calibrator.T)
@@ -604,23 +607,8 @@ class RiverManager:
         df = df[[c for c in keep if c in df.columns]]
 
         df["weight"] = _sanitize_weights_series(df["weight"])
-        n = len(df)
-        w = df["weight"].to_numpy(dtype=float)
-
         t0 = time.time()
-        log.info("[River][INC] Start pętli uczącej (N=%d, D=%d)", n, len(self.features))
-        for i, row in df.iterrows():
-            y = str(row["diseases"])
-            x = {f: int(row.get(f, 0)) for f in self.features}
-            wi = float(w[i]) if i < len(w) else 1.0
-            self.model = _learn_in_place(self.model, x, y, wi)  # type: ignore
-
-            if (i + 1) % 20000 == 0:
-                pct = int((i + 1) / n * 100)
-                elapsed = time.time() - t0
-                rate = (i + 1) / max(elapsed, 1e-9)
-                log.info("[River][INC] %d%% (%d/%d) elapsed=%.1fs speed=%.1f rec/s",
-                         pct, i + 1, n, elapsed, rate)
+        n = self._learn_frame(df, "River/douczanie")
 
         _save_artifacts(self.model, self.features)  # type: ignore
         self.warmup()
@@ -691,7 +679,7 @@ class RiverManager:
         # 1) zbuduj x + liczba aktywnych
         x, active = self._x_from_vec(vec)
 
-        # jeżeli brak aktywnych cech — nie zwracaj stale tych samych priors
+        # jeżeli brak aktywnych cech - nie zwracaj stale tych samych priors
         if active == 0:
             log.info("[River][Predict] Brak aktywnych cech → zwracam pustą listę (unikam stałych priors).")
             return []
@@ -703,53 +691,20 @@ class RiverManager:
         except Exception:
             pass
 
-        # 2) predykcja raw
-        proba = self.model.predict_proba_one(x) or {}
+        # 2) surowe wyniki klasyfikatorów OvR + kalibracja identyczna jak przy jej wyznaczaniu
         classes = self._current_classes()
         if not classes:
             log.info("[River][Predict] active=%d | classes=0 | %.3fs", active, time.perf_counter() - t0)
             return []
-
-        # 3) neutralizacja biasu (λ zależne od liczby cech)
-        if active <= 1:
-            lam = 0.35
-        elif active == 2:
-            lam = 0.50
-        elif active == 3:
-            lam = 0.65
-        else:
-            lam = 0.80
-
-        base = self._baseline_proba()
-        base_logits = {c: _logit(float(base.get(c, 1e-9))) for c in classes}
-
-        margins = np.asarray(
-            [_logit(float(proba.get(c, 1e-9))) - lam * base_logits[c] for c in classes],
-            dtype=np.float64
-        ).reshape(1, -1)
-
-        # 4) Kalibracja i strażnik „zbyt płasko”
-        cal = self.calibrator or self._load_calibrator()
+        z = self._raw_scores(x, classes)
+        z_base = self._base_scores(classes)
+        cal = self.calibrator
         if cal is not None and cal.classes_ == classes:
-            probs = cal.transform_proba(margins)[0]
+            probs = cal.transform(z[None, :], z_base)[0]
+            lam, T = cal.lam, cal.T
         else:
-            probs = _softmax(margins / 0.9)[0]
-
-        flat = _norm_entropy(probs) > 0.985
-        p = np.asarray([probs[list(classes).index(c)] for c in classes], dtype=float)
-        b = np.asarray([base.get(c, 1e-9) for c in classes], dtype=float)
-        denom = (np.linalg.norm(p) * np.linalg.norm(b)) or 1.0
-        cos_sim = float(np.dot(p, b) / denom)
-        too_priorish = cos_sim > 0.995
-
-        if flat or too_priorish:
-            margins_full = np.asarray(
-                [_logit(float(proba.get(c, 1e-9))) - base_logits[c] for c in classes],
-                dtype=np.float64
-            ).reshape(1, -1)
-            probs_alt = _softmax(margins_full / 0.85)[0]  # mocniejsze wyostrzenie
-            if _norm_entropy(probs_alt) <= _norm_entropy(probs):
-                probs = probs_alt
+            lam, T = 0.5, 1.0  # bez kalibratora: neutralne ustawienia
+            probs = _softmax(((z - lam * z_base) / T)[None, :])[0]
 
         # 5) deterministyczny tie-break (bez zmiany wartości)
         eps = 1e-12
@@ -765,8 +720,8 @@ class RiverManager:
         res = [{"diagnosis_en": str(classes[i]), "probability": float(probs[i])} for i in idxs]
 
         log.info(
-            "[River][Predict] active=%d | λ=%.2f | H=%.3f | cos(base)=%.4f | top1=%s(%.3f) | %.3fs",
-            active, lam, _norm_entropy(probs), cos_sim,
+            "[River][Predict] active=%d | lam=%.2f T=%.3f | H=%.3f | top1=%s(%.3f) | %.3fs",
+            active, lam, T, _norm_entropy(probs),
             (res[0]['diagnosis_en'] if res else "-"),
             (res[0]['probability'] if res else 0.0),
             time.perf_counter() - t0
@@ -819,23 +774,8 @@ class RiverIncrementalTrainer:
             df["weight"] = 1.0
 
         df["weight"] = _sanitize_weights_series(df["weight"])
-        w = df["weight"].to_numpy(dtype=float)
-
-        n = len(df)
         t0 = time.time()
-        log.info("[River][INC][Trainer] Start pętli uczącej (N=%d, D=%d)", n, len(self.mgr.features))
-        for i, row in df.iterrows():
-            y = str(row["diseases"])
-            x = {f: int(row.get(f, 0)) for f in self.mgr.features}
-            wi = float(w[i]) if i < len(w) else 1.0
-            self.mgr.model = _learn_in_place(self.mgr.model, x, y, wi)  # type: ignore
-
-            if (i + 1) % 20000 == 0:
-                pct = int((i + 1) / n * 100)
-                elapsed = time.time() - t0
-                rate = (i + 1) / max(elapsed, 1e-9)
-                log.info("[River][INC][Trainer] %d%% (%d/%d) elapsed=%.1fs speed=%.1f rec/s",
-                         pct, i + 1, n, elapsed, rate)
+        n = self.mgr._learn_frame(df, "River/douczanie z CSV")
 
         _save_artifacts(self.mgr.model, self.mgr.features)  # type: ignore
         self.mgr._prepare_vector_template()
