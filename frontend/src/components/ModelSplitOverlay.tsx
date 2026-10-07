@@ -23,6 +23,8 @@ type SplitResponse = {
         wx_dyn?: number;
         wr_dyn?: number;
         n_active?: number;
+        gated_to?: string;
+        fusion?: string;
     };
 };
 
@@ -293,11 +295,21 @@ export default function ModelSplitOverlay({
                             – Każdy z modeli osobno układa listę kilku chorób, które
                             najlepiej pasują do podanych objawów.
                         </li>
-                        <li>
-                            – Serwer sprawdza, który model w danej chwili wydaje się
-                            pewniejszy i miesza ich propozycje, dając trochę większy
-                            wpływ temu bardziej pewnemu, ale wciąż uwzględnia oba.
-                        </li>
+                        {data?.meta?.gated_to === "learned" ? (
+                            <li>
+                                – Serwer łączy oba rozkłady stałymi wagami:{" "}
+                                <b>{Math.round((data.meta.wx_dyn ?? 0) * 100)}% XGBoost</b> i{" "}
+                                <b>{Math.round((data.meta.wr_dyn ?? 0) * 100)}% River</b>. Wagi
+                                dobrano na osobnym zbiorze danych tak, żeby podawane
+                                prawdopodobieństwa jak najlepiej zgadzały się z rzeczywistością.
+                            </li>
+                        ) : (
+                            <li>
+                                – Serwer sprawdza, który model w danej chwili wydaje się
+                                pewniejszy i miesza ich propozycje, dając trochę większy
+                                wpływ temu bardziej pewnemu, ale wciąż uwzględnia oba.
+                            </li>
+                        )}
                         <li>
                             – Kolumna „Ensemble” pokazuje wynik po takim połączeniu:
                             choroby, co do których modele się zgadzają, lądują wyżej.

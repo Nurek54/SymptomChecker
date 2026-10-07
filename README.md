@@ -7,6 +7,7 @@
 </a>
 
 <p align="center">
+  <a href="https://github.com/Nurek54/SymptomChecker/actions/workflows/ci.yml"><img src="https://github.com/Nurek54/SymptomChecker/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
@@ -50,7 +51,7 @@ Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GP
     <td width="33%" valign="top">
       <img src="docs/icons/languages.svg" width="44" alt="" /><br />
       <b>Understands Polish</b><br />
-      <sub>Dictionary + multilingual embeddings, aware of inflection (<i>boli mnie głowa</i>) and negation (<i>gorączka już minęła</i>).</sub>
+      <sub>Curated PL dictionary with synonyms, a light Polish stemmer and fuzzy matching; handles inflection (<i>boli mnie głowa</i>) and negation (<i>gorączka już minęła</i>).</sub>
     </td>
     <td width="33%" valign="top">
       <img src="docs/icons/message-circle-question.svg" width="44" alt="" /><br />
@@ -144,6 +145,12 @@ Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GP
 
 ## How it works
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/ensemble-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/ensemble-light.svg" />
+  <img src="docs/ensemble-light.svg" alt="Animation: symptoms go to XGBoost and River, their Top-3 distributions are averaged 0.53 / 0.47 and Bielik 11B explains the result" width="100%" />
+</picture>
+
 ### One chat turn
 
 ```mermaid
@@ -185,7 +192,7 @@ flowchart LR
     subgraph BE["Backend · FastAPI"]
         R["Routers<br/>chat · sessions · history<br/>dicts · river · auth"]
         CS["ChatService"]
-        MA["SymptomMatcher<br/>dictionary + embeddings"]
+        MA["SymptomMatcher<br/>dictionary + stemmer + fuzzy"]
         FS["Follow-up selector<br/>P(symptom | disease)"]
         subgraph ENS["Calibrated ensemble"]
             X["XGBoost<br/>T + prior correction"]
@@ -194,7 +201,7 @@ flowchart LR
         end
         LLM["Bielik 11B GGUF"]
     end
-    DB[("PostgreSQL / SQLite")]
+    DB[("Supabase PostgreSQL")]
     SB["Supabase Auth"]
 
     UI <--> ST
@@ -224,13 +231,17 @@ flowchart LR
 
 Every stage logs elapsed and remaining time, so a long first run is never a black box ([more](#progress-and-remaining-time)):
 
-```text
-[XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
-[XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
-[River/trening (paczki)]  58.3% (7/12) 0.1 epok/s | minęło 49s | zostało ~35s | strata=0.8460
-```
+<p align="center">
+  <img src="docs/terminal.svg" alt="Animated startup log: five stages with progress bars and remaining time" width="100%" />
+</p>
 
 ### Results
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/results-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/results-light.svg" />
+  <img src="docs/results-light.svg" alt="Reliability diagram: the ensemble curve is closest to the diagonal; ensemble top-1 91.0%, top-3 98.6%, ECE 1.3%, NLL 0.217" width="100%" />
+</picture>
 
 Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with the training or calibration data. Numbers come from `backend/ml_validation_runner.py` (report in `backend/reports/ml_validation/`).
 
@@ -273,9 +284,9 @@ Passed = at least 2 of K1 to K3 and no regression. K1/K2 originally required non
 | Classical ML | XGBoost (`hist`, CUDA), scikit-learn, scikit-optimize |
 | Online learning | River 0.23 (OneVsRest LogisticRegression; mini-batch warm start, then online SGD) |
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
-| Embeddings | `sentence-transformers` (multilingual MiniLM) |
+| Symptom matching | PL dictionary + synonyms, light Polish stemmer, fuzzy matching (rapidfuzz or difflib) |
 | Auth | Supabase JWT (HS256 + JWKS), python-jose |
-| Persistence | PostgreSQL (Supabase) or SQLite via SQLAlchemy |
+| Persistence | Supabase PostgreSQL via SQLAlchemy (psycopg 3) |
 | Testing | pytest, pytest-asyncio, vitest, Playwright |
 
 ## Project Structure
@@ -291,6 +302,7 @@ SymptomChecker/
 │   ├── reports/              # ML validation outputs (SVG, JSON)
 │   ├── services/             # ensemble, prompt_builder, symptom_matcher, sessions, …
 │   ├── tests/                # pytest
+│   ├── tools/                # export_predictions.py (raw model outputs for analysis)
 │   ├── weights/bielik-gguf/  # ⬅ drop Bielik GGUF here (gitignored)
 │   ├── config.py             # ALL ML / LLM / auth knobs
 │   ├── app.py                # FastAPI factory
@@ -298,16 +310,19 @@ SymptomChecker/
 │   ├── ml_validation_runner.py
 │   └── requirements.txt
 ├── database/                 # SQLAlchemy: models, CRUD, security, db init
-├── docs/                     # README images: hero, demo.gif, screenshots/
+├── docs/                     # README images: animated SVGs, demo.gif, screenshots/, icons/
 ├── frontend/
+│   ├── .env.example          # frontend environment (copy to .env.local)
+│   ├── public/               # logo
 │   └── src/
 │       ├── app/              # Next.js App Router pages
 │       ├── components/       # ChatUI, AuthSheet, SidePanel, …
 │       ├── lib/              # api, supabaseClient, types
 │       ├── store/            # Zustand store
 │       └── tests/            # unit + e2e
+├── .github/workflows/ci.yml  # CI: pytest, ESLint, vitest, tsc
 ├── logs/
-├── .env.example
+├── .env.example              # backend environment (copy to .env)
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -318,24 +333,24 @@ SymptomChecker/
 ### Prerequisites
 
 - **Python 3.11** or newer
-- **Node.js 18+** and npm
+- **Node.js 18.18+** and npm (required by Next.js 15)
 - **CUDA-capable GPU** strongly recommended (for fast XGBoost training and LLM inference). CPU works but is significantly slower.
-- **~25 GB free disk space** (LLM weights, ML models, datasets)
-- **Supabase project** - optional; the app can run in guest mode without it
+- **~20 GB free disk space** (LLM weights ~9.2 GB, Python environment with PyTorch, XGBoost model ~590 MB, datasets ~500 MB)
+- **Supabase project** - required by the backend: Postgres for history (`DATABASE_URL`, pooled) and Auth (`SUPABASE_JWT_SECRET`). In the UI you can still chat as a guest without logging in
 
 ### Backend
 
 ```bash
-cd backend
-python -m venv ../.venv
-..\.venv\Scripts\Activate.ps1   # Windows
-source ../.venv/bin/activate     # Linux / macOS
+# in the repository root
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1      # Windows (PowerShell)
+source .venv/bin/activate        # Linux / macOS
 
-pip install -r requirements.txt
-cp .env.example .env             # fill in at minimum AUTH_SECRET_KEY
+pip install -r backend/requirements.txt
+cp .env.example .env             # Windows: Copy-Item .env.example .env
 ```
 
-> `bitsandbytes` is commented out by default - known issues on Windows. Uncomment on Linux if you need 8-bit quantization for the Transformers fallback path.
+Fill in `.env` (repository root, loaded by `backend/main.py`): `DATABASE_URL` (Supabase pooled Postgres URL), `SUPABASE_URL`, `SUPABASE_JWT_SECRET` and `FRONTEND_ORIGIN`. The backend refuses to start without the first and the third.
 
 ### Download external artifacts
 
@@ -343,7 +358,7 @@ These files are excluded from the repo due to size - you need to provide them yo
 
 #### LLM weights - Bielik 11B GGUF
 
-Download `Bielik-11B-v2.3-Instruct.Q6_K.gguf` (~8.7 GB) from HuggingFace:
+Download `Bielik-11B-v2.3-Instruct.Q6_K.gguf` (~9.2 GB) from HuggingFace:
 
 🔗 https://huggingface.co/speakleash/Bielik-11B-v2.3-Instruct-GGUF
 
@@ -361,13 +376,14 @@ The training datasets used for this project are **not redistributed in this repo
 
 The application expects the following files at the paths defined in `backend/config.py`:
 
-| Path | Required for | Approx. size |
-|------|--------------|--------------|
-| `backend/data/Final_Dataset_Diseases_and_Symptoms.csv` | XGBoost initial training | ~130 MB |
-| `backend/data/Final_Dataset_Diseases_and_Symptoms.class_weight.csv` | Per-class sample weights (auto-applied) | ~30 KB |
-| `backend/data/calibration.csv` | River temperature calibration | ~30 MB |
-| `backend/data/train_remainder.csv` | River incremental updates (optional) | ~100 MB |
-| `backend/data/Final_Testset_for_Eval.csv` | Held-out evaluation (already in repo) | ~13 MB |
+| Path | Role | Approx. size |
+|------|------|--------------|
+| `backend/data/train_remainder.csv` | Source split, input to `build_datasets.py` | ~100 MB |
+| `backend/data/calibration.csv` | Source split, input to `build_datasets.py` | ~30 MB |
+| `backend/data/Final_Testset_for_Eval.csv` | Source split (in repo), input to `build_datasets.py` | ~14 MB |
+| `backend/data/Final_Dataset_Diseases_and_Symptoms.csv` | Full original dataset; training fallback when no other split exists | ~130 MB |
+| `backend/data/Final_Dataset_Diseases_and_Symptoms.class_weight.csv` | Class weights for the fallback dataset (in repo) | ~30 KB |
+| `backend/data/v2/train.csv` / `calibration.csv` / `test.csv` | **What the models use**, generated by `build_datasets.py` | ~92 / 20 / 20 MB |
 
 **Recommended: rebuild the splits once** with `python data/build_datasets.py` (run in `backend/`). It writes `backend/data/v2/` (`train.csv`, `calibration.csv`, `test.csv`, `class_weight.csv`, `build_report.json`), which `config.py` uses automatically when present. The rebuild fixes problems found in the original files:
 
@@ -385,8 +401,10 @@ If you want to use **your own dataset** instead, see the [Dataset Format](#datas
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local       # fill in NEXT_PUBLIC_SUPABASE_URL etc.
+cp .env.example .env.local       # Windows: Copy-Item .env.example .env.local
 ```
+
+Fill in `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000`).
 
 ### Running
 
@@ -628,17 +646,18 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `APP_ENV` | env | `dev` | `dev` or `prod` |
 | `HOST` / `PORT` | env | `127.0.0.1` / `8000` | uvicorn bind |
 | `FRONTEND_ORIGIN` | env | `http://localhost:3000` | CORS origin |
-| `LOG_LEVEL` | env | `info` | logger level |
+| `LOG_LEVEL` | env | `INFO` | logger level |
 
 ### Auth / sessions
 
 | Setting | Source | Default | Purpose |
 |---------|--------|---------|---------|
-| `AUTH_SECRET_KEY` | env | - | JWT secret (fallback when no Supabase) |
-| `SUPABASE_URL` | env | - | Supabase project URL |
-| `SUPABASE_JWT_SECRET` | env | - | Supabase HS256 JWT secret |
+| `DATABASE_URL` | env | - | **Required.** Supabase pooled Postgres URL (`postgresql+psycopg://…supabase.com…`) |
+| `SUPABASE_URL` / `SUPABASE_JWKS_URL` | env | - | Supabase project URL and JWKS endpoint |
+| `SUPABASE_JWT_SECRET` | env | - | **Required** (unless `AUTH_SECRET_KEY` is set). Supabase HS256 JWT secret |
+| `AUTH_SECRET_KEY` | env | `SUPABASE_JWT_SECRET` | Secret for backend session tokens |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | env | `60` | JWT lifetime |
-| `SESSION_COOKIE_SECURE` | env | `false` | set `true` over HTTPS |
+| `SESSION_COOKIE_SECURE` / `SESSION_COOKIE_SAMESITE` | env | `false` / `lax` | set `true` / `none` for cross-site HTTPS |
 | `ADMIN_API_TOKEN` | env | empty | Token for `/river/*` admin endpoints (empty = disabled) |
 
 ### XGBoost training
@@ -650,7 +669,7 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `XGB_USE_GPU` | `True` | Use CUDA |
 | `XGB_TREE_METHOD` | `"hist"` | Fastest tree algorithm |
 | `XGB_CALIBRATE` | `True` | Apply temperature scaling (fitted on held-out data) |
-| `XGB_CALIBRATION_CSV` | `data/calibration.csv` | Held-out calibration set (must differ from `DATA_CSV`) |
+| `XGB_CALIBRATION_CSV` | `data/v2/calibration.csv` (if v2 exists) | Held-out calibration set (must differ from `DATA_CSV`) |
 
 ### River
 
