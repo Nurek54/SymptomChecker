@@ -1,62 +1,268 @@
-<p align="center">
-  <br />
-  <strong>⚕</strong>
-  <br />
-  <br />
-</p>
-
-<h1 align="center">SYMPTOM CHECKER</h1>
-
-<p align="center">
-  <em>A Polish-language diagnostic chat assistant powered by classical ML and a local LLM</em>
-</p>
+<a href="#see-it-in-action">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/banner-light.svg" />
+    <img src="docs/banner-light.svg" alt="Symptom Checker: describe how you feel in Polish, get the three most likely causes, explained" width="100%" />
+  </picture>
+</a>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-blue?style=flat-square" alt="Python" />
-  <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=flat-square" alt="Next.js" />
-  <img src="https://img.shields.io/badge/XGBoost-2.x-orange?style=flat-square" alt="XGBoost" />
-  <img src="https://img.shields.io/badge/Bielik-11B-purple?style=flat-square" alt="Bielik LLM" />
-  <img src="https://img.shields.io/badge/License-All_Rights_Reserved-red?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/XGBoost-GPU-EB6E25?style=flat-square" alt="XGBoost" />
+  <img src="https://img.shields.io/badge/River-online_learning-1F6FEB?style=flat-square" alt="River" />
+  <img src="https://img.shields.io/badge/LLM-Bielik_11B_(GGUF)-8B5CF6?style=flat-square" alt="Bielik" />
+  <img src="https://img.shields.io/badge/Supabase-auth-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
 </p>
 
+<p align="center">
+  <a href="#see-it-in-action"><b>Demo</b></a> &nbsp;·&nbsp;
+  <a href="#highlights"><b>Highlights</b></a> &nbsp;·&nbsp;
+  <a href="#screenshots"><b>Screenshots</b></a> &nbsp;·&nbsp;
+  <a href="#how-it-works"><b>How it works</b></a> &nbsp;·&nbsp;
+  <a href="#getting-started"><b>Getting started</b></a> &nbsp;·&nbsp;
+  <a href="#api-endpoints"><b>API</b></a>
+</p>
+
+> [!WARNING]
+> **Educational / research project, not a medical device.** The output is not a diagnosis. If symptoms worsen or red flags appear, contact a doctor or emergency services (112).
+
+**Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish; the app recognizes the symptoms (inflection and negation included, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation from a Polish LLM running on your own GPU.
+
+Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GPU) and a River one-vs-rest logistic model (trained in mini-batches, then keeps learning online), averaged with a weight fitted on held-out data. The ensemble is statistically significantly more accurate than either model alone.
+
+## See it in action
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Demo: the user describes symptoms, answers follow-up questions, gets the Top-3 and an urgency assessment, then opens the per-model breakdown" width="100%" />
+</p>
+
+<p align="center"><sub>First message → follow-up questions → Top-3 with explanation → quick action <em>Pilność</em> → XGBoost / River / Ensemble breakdown.</sub></p>
+
+## Highlights
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/languages.svg" width="44" alt="" /><br />
+      <b>Understands Polish</b><br />
+      <sub>Dictionary + multilingual embeddings, aware of inflection (<i>boli mnie głowa</i>) and negation (<i>gorączka już minęła</i>).</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/message-circle-question.svg" width="44" alt="" /><br />
+      <b>Asks the right question</b><br />
+      <sub>Picks the symptom that best separates the likely diseases, skips near-duplicates and stops after a limit instead of asking forever.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/layers.svg" width="44" alt="" /><br />
+      <b>Calibrated ensemble</b><br />
+      <sub>XGBoost and River are each temperature-calibrated on held-out data; their weight in the average is fitted there too. The ensemble beats both models (McNemar p = 0.002).</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/cpu.svg" width="44" alt="" /><br />
+      <b>Local LLM</b><br />
+      <sub>Bielik 11B v2.3 (GGUF) via <code>ctransformers</code> writes the explanation in natural Polish prose. No external AI API.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/eye.svg" width="44" alt="" /><br />
+      <b>Transparent</b><br />
+      <sub>Per-model Top-3 and the fusion weights are one click away in the UI; full metrics land in <code>training_report.json</code>.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/zap.svg" width="44" alt="" /><br />
+      <b>Quick actions</b><br />
+      <sub>One click for diagnosis, recommendations, urgency, OTC medicines, prevention or a summary.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <img src="docs/icons/user-round-check.svg" width="44" alt="" /><br />
+      <b>Accounts or guest mode</b><br />
+      <sub>Supabase auth with saved history, or start chatting right away as a guest.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/timer.svg" width="44" alt="" /><br />
+      <b>Training with ETA</b><br />
+      <sub>Every long step logs elapsed and remaining time; startup is split into 5 timed stages.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <img src="docs/icons/flask-conical.svg" width="44" alt="" /><br />
+      <b>Tested</b><br />
+      <sub>pytest (unit, API, regressions), vitest and Playwright end-to-end; leak-free train / calibration / test split.</sub>
+    </td>
+  </tr>
+</table>
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/hero.png" alt="Light and dark theme side by side" width="100%" />
+</p>
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/02-followup.png" alt="Follow-up questions" />
+      <p align="center"><b>Adaptive follow-up questions</b><br /><sub>Recognized symptoms appear on the right as you type.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/03-model-split.png" alt="XGBoost vs River vs Ensemble" />
+      <p align="center"><b>Look inside the ensemble</b><br /><sub>XGBoost, River and the fused result side by side, with the weights used.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/04-symptom-picker.png" alt="Symptom picker" />
+      <p align="center"><b>Symptom picker</b><br /><sub>Hundreds of Polish symptom names grouped by body system.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/screenshots/06-history.png" alt="Conversation history" />
+      <p align="center"><b>Conversation history</b><br /><sub>Saved chats with extracted symptoms and the diagnoses at that time.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary><b>More screens</b> (visit preparation, help, account, login)</summary>
 <br />
 
-<p align="center">
-  <img src="preview.png" alt="SymptomChecker - Hero" width="720" />
-</p>
+| Prepare a description for the doctor | Built-in guide |
+|:---:|:---:|
+| <img src="docs/screenshots/08-prep.png" alt="Visit preparation" /> | <img src="docs/screenshots/09-howto.png" alt="How to use" /> |
+| **Account menu** | **Login or guest mode** |
+| <img src="docs/screenshots/07-user-menu.png" alt="Account menu" /> | <img src="docs/screenshots/10-login.png" alt="Login" /> |
 
----
+</details>
 
-## About
+<sub>Screenshots and the demo come from the real frontend; the backend responses in them are scripted so the example is reproducible.</sub>
 
-**SymptomChecker** is a research-grade diagnostic chat assistant developed as part of an engineering thesis (*praca inżynierska*). The user describes their symptoms in Polish (English also supported), the system extracts them through a hybrid dictionary + multilingual embedding matcher, asks adaptive follow-up questions, and finally returns the **Top-3 most probable conditions** with a short clinical-style summary generated locally by a Polish LLM (Bielik 11B).
+## How it works
 
-The classifier is a **dynamic-weight ensemble** of XGBoost (offline, deeply tuned) and River OVR/FTRL (online, incrementally updated) - letting the model both leverage strong batch training and adapt to drift over time.
+### One chat turn
 
-> ⚠️ **Disclaimer.** This is an educational / research project. **It is NOT a substitute for professional medical advice.** The output is not a medical diagnosis. If your symptoms worsen or red flags appear, contact a doctor or emergency services.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant FE as Next.js UI
+    participant API as FastAPI /chat
+    participant M as Symptom matcher
+    participant E as Ensemble (XGB + River)
+    participant Q as Follow-up selector
+    participant L as Bielik 11B
 
-## User Flow
-
+    U->>FE: "Od wczoraj mam gorączkę i boli mnie gardło"
+    FE->>API: POST /chat {session_id, user_input}
+    API->>M: extract symptoms (+ negations)
+    M-->>API: fever, sore_throat
+    API->>E: posterior over ~570 diseases
+    alt fewer than MIN_SYMPTOMS or not confident yet
+        API->>Q: most informative next symptom
+        Q-->>API: swollen_lymph_nodes
+        API-->>FE: "Czy masz powiększone węzły chłonne?"
+    else enough evidence
+        API->>L: prompt with symptoms + Top-3
+        L-->>API: explanation in Polish
+        API-->>FE: answer + Top-3 + symptoms
+    end
+    FE-->>U: chat bubble, symptom chips, Top-3 bars
 ```
-Symptom input (PL/EN)  →  Dictionary + embedding match  →  Follow-up loop  →  Ensemble Top-3  →  LLM summary
+
+### Architecture
+
+```mermaid
+flowchart LR
+    subgraph FE["Frontend · Next.js 15"]
+        UI["ChatUI · SidePanel<br/>History · Overlays"]
+        ST[("Zustand store")]
+    end
+    subgraph BE["Backend · FastAPI"]
+        R["Routers<br/>chat · sessions · history<br/>dicts · river · auth"]
+        CS["ChatService"]
+        MA["SymptomMatcher<br/>dictionary + embeddings"]
+        FS["Follow-up selector<br/>P(symptom | disease)"]
+        subgraph ENS["Calibrated ensemble"]
+            X["XGBoost<br/>T + prior correction"]
+            RV["River one-vs-rest<br/>(λ, T)"]
+            F["weighted average<br/>weight from calibration"]
+        end
+        LLM["Bielik 11B GGUF"]
+    end
+    DB[("PostgreSQL / SQLite")]
+    SB["Supabase Auth"]
+
+    UI <--> ST
+    UI -- "REST + JWT" --> R
+    UI -. login .-> SB
+    R --> CS
+    CS --> MA
+    CS --> FS
+    CS --> ENS
+    X --> F
+    RV --> F
+    CS --> LLM
+    R --> DB
 ```
 
-The user never sees raw probabilities or model internals - only the chat, the running symptom list, and the final diagnosis card.
+### Training pipeline (first start)
 
-## Features
+```mermaid
+flowchart LR
+    A["Data split<br/>build_datasets.py"] --> B["1 · XGBoost<br/>Bayes search<br/>+ calibration"]
+    B --> C["2 · Bielik LLM"]
+    C --> D["3 · Symptom<br/>statistics"]
+    D --> E["4 · River<br/>12 epochs<br/>+ (λ, T)"]
+    E --> F["5 · Ensemble<br/>weight + test<br/>metrics"]
+    F --> G[("training_report<br/>.json")]
+```
 
-- **Bilingual symptom extraction** - multilingual `sentence-transformers` matcher backed by a curated PL/EN dictionary, with rule-first fallback for short / ambiguous tokens
-- **Adaptive follow-up** - model-split selector picks the next best question based on which features would most reduce ensemble disagreement
-- **Hybrid ensemble** - XGBoost (Bayesian-tuned, 32 iters × 3-fold CV, GPU-accelerated) fused with River OVR Logistic / FTRL (online learning) using dynamic confidence-gap weights
-- **Local LLM** - Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers`, no external API calls, no data leaves the machine
-- **Calibrated probabilities** - temperature scaling on both XGBoost and River outputs for honest confidence
-- **Stateful sessions** - server-side session store tracks symptoms, follow-ups asked, and prediction history per user
-- **Auth** - Supabase JWT (HS256 + JWKS fallback) with local profile sync, plus optional guest mode
-- **Persistent history** - SQLAlchemy 2.x ORM stores conversations, messages, extracted symptoms and triage results
-- **Validation pipeline** - `ml_validation_runner` produces full reports: confusion matrices, per-class F1, top-50 frequent/rare slices, all rendered as SVG
-- **Production-leaning hygiene** - CORS, secure cookies, request validation, sensitive-data masking in logs
-- **Comprehensive test suite** - pytest for backend (units + API), vitest for component logic, Playwright for end-to-end flows
+Every stage logs elapsed and remaining time, so a long first run is never a black box ([more](#progress-and-remaining-time)):
+
+```text
+[XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
+[XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
+[River/trening (paczki)]  58.3% (7/12) 0.1 epok/s | minęło 49s | zostało ~35s | strata=0.8460
+```
+
+### Results
+
+Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with the training or calibration data. Numbers come from `backend/ml_validation_runner.py` (report in `backend/reports/ml_validation/`).
+
+| Model | Top-1 | Top-3 | NLL | ECE | Brier |
+|---|:---:|:---:|:---:|:---:|:---:|
+| XGBoost | 90.7% | 98.5% | 0.235 | 2.0% | 0.122 |
+| River | 90.6% | 98.4% | 0.242 | 1.8% | 0.124 |
+| **Ensemble** | **91.0%** | **98.6%** | **0.217** | **1.3%** | **0.113** |
+
+- The right disease is among the three shown in **98.6%** of cases.
+- The ensemble is better than both models on every metric. On Top-1 it fixes 369 cases XGBoost gets wrong and breaks 288 (exact McNemar test, **p = 0.002**).
+- Calibration matters: River's raw one-vs-rest scores said about 75% when it was right 91% of the time (ECE 15.7% on the calibration set); after calibration ECE is 1.8% on the test set.
+
+<details>
+<summary><b>Validation criteria</b> (result: <b>passed</b>)</summary>
+<br />
+
+`python ml_validation_runner.py` checks the ensemble against the better of the two models on the same test cases:
+
+| Criterion | Requirement | Result |
+|---|---|:---:|
+| K1 | Top-1 significantly better (exact McNemar, p < 0.05) | ✓ p = 0.0018 |
+| K2 | Top-3 significantly better (exact McNemar, p < 0.05) | ✗ p = 0.14 |
+| K3 | No more errors than either model | ✓ |
+| K4 | ECE not worse than the worse model | ✓ 1.3% |
+| No regression | No class loses >10 p.p. significantly (per-class McNemar, Holm correction) | ✓ 0 classes |
+
+Passed = at least 2 of K1 to K3 and no regression. K1/K2 originally required non-overlapping 95% bootstrap intervals and the per-class check had no significance test; both were replaced by paired tests because the models are evaluated on the same cases (the old values are still printed for reference).
+
+</details>
+
+<sub>NLL = negative log-likelihood, ECE = expected calibration error (10 bins), Brier = multi-class Brier score. Lower is better.</sub>
 
 ## Tech Stack
 
@@ -64,42 +270,13 @@ The user never sees raw probabilities or model internals - only the chat, the ru
 |-------|-----------|
 | Backend | Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.x |
 | Frontend | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Zustand |
-| Classical ML | XGBoost 2.x (`hist` + GPU), scikit-learn, scikit-optimize |
-| Online learning | River (OVR Logistic / FTRL) |
+| Classical ML | XGBoost (`hist`, CUDA), scikit-learn, scikit-optimize |
+| Online learning | River 0.23 (OneVsRest LogisticRegression; mini-batch warm start, then online SGD) |
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
 | Embeddings | `sentence-transformers` (multilingual MiniLM) |
-| Auth | Supabase JWT (HS256 + JWKS), python-jose, passlib/bcrypt |
-| Persistence | SQLite / PostgreSQL via SQLAlchemy |
+| Auth | Supabase JWT (HS256 + JWKS), python-jose |
+| Persistence | PostgreSQL (Supabase) or SQLite via SQLAlchemy |
 | Testing | pytest, pytest-asyncio, vitest, Playwright |
-
-## High-level Architecture
-
-```
-┌─────────────────┐     POST /chat       ┌──────────────────────────────────┐
-│  Next.js (3000) │ ───────────────────► │  FastAPI (8000)                  │
-│  ChatUI / Auth  │ ◄─── JSON {top3,…} ─ │                                  │
-└─────────────────┘                      │  SymptomMatcher (dict + embed)   │
-                                         │           │                       │
-                                         │           ▼                       │
-                                         │  ┌──────────────────────────┐    │
-                                         │  │ Ensemble                 │    │
-                                         │  │  XGBoost  ─┐             │    │
-                                         │  │           ├─► Top-K      │    │
-                                         │  │  River    ─┘   diagnoses │    │
-                                         │  └──────────┬───────────────┘    │
-                                         │             ▼                     │
-                                         │  Followup selector (model split) │
-                                         │             │                     │
-                                         │             ▼                     │
-                                         │  PromptBuilder ► LLM (Bielik)    │
-                                         │             │                     │
-                                         │             ▼                     │
-                                         │  PromptLocalizer (PL/EN)         │
-                                         └──────────────────────────────────┘
-                                                       │
-                                                       ▼
-                                              SQLite / Postgres
-```
 
 ## Project Structure
 
@@ -121,6 +298,7 @@ SymptomChecker/
 │   ├── ml_validation_runner.py
 │   └── requirements.txt
 ├── database/                 # SQLAlchemy: models, CRUD, security, db init
+├── docs/                     # README images: hero, demo.gif, screenshots/
 ├── frontend/
 │   └── src/
 │       ├── app/              # Next.js App Router pages
@@ -191,6 +369,15 @@ The application expects the following files at the paths defined in `backend/con
 | `backend/data/train_remainder.csv` | River incremental updates (optional) | ~100 MB |
 | `backend/data/Final_Testset_for_Eval.csv` | Held-out evaluation (already in repo) | ~13 MB |
 
+**Recommended: rebuild the splits once** with `python data/build_datasets.py` (run in `backend/`). It writes `backend/data/v2/` (`train.csv`, `calibration.csv`, `test.csv`, `class_weight.csv`, `build_report.json`), which `config.py` uses automatically when present. The rebuild fixes problems found in the original files:
+
+- every row of `Final_Testset_for_Eval.csv` also appears in `train_remainder.csv` or `calibration.csv` (test metrics were inflated); the new splits share no symptom vector,
+- duplicate labels for the same disease coming from the second source dataset (e.g. `bronchial_asthma`/`asthma`, `dengue`/`dengue_fever`) are merged,
+- diseases with fewer than 10 examples are removed (`--min-rows`),
+- class weights are `sqrt(N / (K * n_c))` clipped to `[0.5, 5]` instead of reaching ~200.
+
+After rebuilding, delete the old model artifacts (see [What happens on first start](#what-happens-on-first-start)) so the models are retrained on the new data.
+
 If you want to use **your own dataset** instead, see the [Dataset Format](#dataset-format) section below - as long as your CSVs match the expected schema, the pipeline will train, calibrate, and evaluate without any code changes.
 
 ### Frontend
@@ -226,35 +413,38 @@ The very first time you start the backend, **the system trains the ML models fro
 - `backend/ml/xgb_model.joblib` - main XGBoost classifier
 - `backend/ml/label_encoder.joblib` - disease label encoder
 - `backend/ml/xgb_best_params.joblib` - Bayes-optimized hyperparameters
-- `backend/ml/river_ovr_ftrl.joblib` - River OVR/FTRL model (shipped in the repo)
+- `backend/ml/river_ovr_ftrl.joblib` - River one-vs-rest model (shipped in the repo)
 - `backend/ml/river_ovr_ftrl.calibration.joblib` - River temperature calibrator
 
 If any of the XGB artifacts are missing, the full pipeline runs:
 
-1. **Load training data** from `DATA_CSV` (default: `Final_Dataset_Diseases_and_Symptoms.csv`)
+1. **Load training data** from `DATA_CSV` (default: `data/v2/train.csv` when present, see [Training datasets](#training-datasets))
 2. **Bayesian hyperparameter search** - `XGB_N_ITER_BAYES` × `XGB_CV_SPLITS`-fold CV (default: 32 × 3 = 96 fits)
-3. **Final training** on the full dataset with the best params
-4. **Temperature calibration** for probability outputs
-5. **Save artifacts** to `backend/ml/`
+3. **Final training** on the training set with the best params
+4. **Temperature calibration** on held-out data the model has never seen (`calibration.csv`; if it is missing, a stratified hold-out is cut from the training set *before* training)
+5. **Save artifacts** to `backend/ml/` (plus `xgb_model.meta.json` recording which data the model was trained on)
+
+> To retrain from scratch, delete `backend/ml/xgb_model.joblib`, `label_encoder.joblib`, `xgb_best_params.joblib`, `xgb_model.calibration.joblib`, `river_ovr_ftrl.joblib`, `river_ovr_ftrl.calibration.joblib` and `ensemble_calibration.json`. Models trained by older versions are still loaded, but the backend logs a warning.
 
 After that, every subsequent startup just **loads the saved models** (~5–10 s).
 
-### Approximate training times
+### Progress and remaining time
 
-Estimates assume a dataset on the order of ~100k–1M rows × ~400 binary symptom features. Your mileage will vary.
+Every long step logs its progress with elapsed time and an estimate of the remaining time (see the example in [How it works](#training-pipeline-first-start)).
 
-| Hardware | Bayes search | Final training | Total first run |
-|----------|--------------|----------------|-----------------|
-| **CUDA GPU** (RTX 3080+, `XGB_USE_GPU=True`) | ~10–25 min | ~1–3 min | **~15–30 min** |
-| **Modern CPU** (12+ cores) | ~1.5–4 h | ~5–15 min | **~2–4 h** |
-| **Older CPU** (4–8 cores) | ~4–8 h | ~15–30 min | **~5–9 h** |
+Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. River starts with 12 epochs of mini-batch training (Adam, numpy) on the training set and then keeps learning online; a single online pass (`RIVER_BOOTSTRAP_MODE=online`) left it clearly under-trained.
 
-Speed up dev iterations by lowering `XGB_N_ITER_BAYES` to `8–16` in `backend/config.py`.
+Measured on the author's machine (CUDA GPU): Bayesian search ~19.5 h, final XGBoost training 11 min, River about 1 min, ensemble calibration and report 1.5 min. The search runs only once; its result is saved in `xgb_best_params.joblib`.
 
-### River calibration
+### Calibration and quality report
 
-- **First start with `RIVER_CALIBRATE_ON_START=True`**: reads `calibration.csv`, fits a temperature scalar - typically **30–90 seconds**
-- **Subsequent starts**: calibrator loaded from disk (~1 s)
+All three predictors are calibrated on `calibration.csv` (never seen in training) and measured on `test.csv`:
+
+- **XGBoost**: `p = softmax((margins - log w_c) / T)`. `T` is fitted by minimum NLL. The class-weight prior correction `log w_c` (training with class weights inflates rare classes) is used only if it lowers NLL on the calibration set.
+- **River (one-vs-rest logistic regression)**: `p = softmax((z - lam * z_base) / T)`, where `z` are the raw per-class logits and `z_base` the logits for an empty input; `(lam, T)` are fitted together and the same transform is used at prediction time.
+- **Ensemble**: `p = a * p_xgb + (1 - a) * p_river`, with `a` fitted by minimum NLL on the calibration set (`ENSEMBLE_FUSION=linear`; `log` and the old `heuristic` gating are still available). Cached in `backend/ml/ensemble_calibration.json` and recomputed only when a model changes.
+
+The metrics (top-1, top-3, NLL, ECE, Brier, mean confidence) before and after calibration are logged as tables and saved to `backend/ml/training_report.json`.
 
 ### LLM loading
 
@@ -269,6 +459,9 @@ Bielik 11B Q6_K is **not trained** - only loaded into memory:
 Once loaded, generation is fast (a few seconds per Top-3 summary on GPU).
 
 ## Dataset Format
+
+<details>
+<summary><b>Expected CSV and dictionary formats</b></summary>
 
 If you don't have the original training data and want to use your own, the CSV files must follow the schema below. Match the schema and the entire training, calibration and evaluation pipeline will work without code changes.
 
@@ -333,34 +526,39 @@ Same schema as the main training CSV. Used by `ml_validation_runner` for end-to-
 
 ### 5. Symptom dictionary - `symptoms_pl_en.json`
 
-Maps Polish symptom phrases to English keys (which become CSV column names). Already shipped in the repo. Format:
+A list of entries mapping Polish symptom names (and synonyms) to feature columns. Already shipped in the repo. Format:
 
 ```json
-{
-  "gorączka": "fever",
-  "kaszel": "cough",
-  "ból głowy": "headache",
-  "ból gardła": "sore_throat",
-  ...
-}
+[
+  {
+    "en": "Sore throat",
+    "pl": "ból gardła",
+    "xgb_label": ["sore_throat"],
+    "synonyms_pl": ["drapanie w gardle", "ból przy przełykaniu"],
+    "synonyms_en": [],
+    "category": "Otolaryngologiczny"
+  }
+]
 ```
 
-If you add new symptoms to your CSV, you also need to add the PL↔EN mapping here so the symptom matcher can extract them from user input.
+`xgb_label` must match CSV column names. When it lists several columns, the matcher picks the one with the most training data and skips columns that never occur in the training set (`build_datasets.py` reports dictionary entries without data).
 
 ### 6. Disease dictionary - `diseases_pl_en.json`
 
-Same idea, but for diseases - used by the LLM prompt localizer to translate Top-3 results into Polish. Format:
+Same idea for diseases, used to show Polish names in the UI and in LLM prompts:
 
 ```json
-{
-  "Influenza": "Grypa",
-  "Migraine": "Migrena",
-  "Pneumonia": "Zapalenie płuc",
-  ...
-}
+[
+  { "en": "Strep throat", "pl": "Angina paciorkowcowa", "xgb_label": "strep_throat" }
+]
 ```
 
+</details>
+
 ## API Endpoints
+
+<details>
+<summary><b>All endpoints</b></summary>
 
 ### Chat
 | Method | Endpoint | Description |
@@ -394,15 +592,18 @@ Same idea, but for diseases - used by the LLM prompt localizer to translate Top-
 | `GET` | `/dicts/symptoms` | Full PL/EN symptom dictionary |
 
 ### River (online learning)
+
+Read endpoints (`status`, `features`, `predict_topk`) are open. Endpoints that change the model or read CSV files require the `X-Admin-Token` header matching `ADMIN_API_TOKEN` (they are disabled when the variable is empty) and accept only `.csv` files from `backend/data/`. They operate on the same River model the chat ensemble uses.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/river/status` | Model status, sample counts, calibration state |
 | `GET` | `/river/features` | Current River feature list |
 | `POST` | `/river/predict_topk` | Predict from a feature vector |
-| `POST` | `/river/train_one` | Single-sample online update |
-| `POST` | `/river/incremental_batch` | Mini-batch online update |
-| `POST` | `/river/fit_from_csv` | Fit/re-fit from a CSV |
-| `GET` | `/river/evaluate` | Evaluate against the test set |
+| `POST` | `/river/train_one` | Single-sample online update (admin) |
+| `POST` | `/river/incremental_batch` | Mini-batch online update (admin) |
+| `POST` | `/river/fit_from_csv` | Incremental fit from a CSV in `backend/data/` (admin) |
+| `GET` | `/river/evaluate` | Evaluate against the test set (admin) |
 
 ### Health
 | Method | Endpoint | Description |
@@ -411,7 +612,12 @@ Same idea, but for diseases - used by the LLM prompt localizer to translate Top-
 
 Full Swagger docs at `http://127.0.0.1:8000/docs` once the backend is running.
 
+</details>
+
 ## Configuration
+
+<details>
+<summary><b>All settings</b></summary>
 
 All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides come from `.env`. Below are the most relevant settings - full list in the file itself.
 
@@ -433,6 +639,7 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `SUPABASE_JWT_SECRET` | env | - | Supabase HS256 JWT secret |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | env | `60` | JWT lifetime |
 | `SESSION_COOKIE_SECURE` | env | `false` | set `true` over HTTPS |
+| `ADMIN_API_TOKEN` | env | empty | Token for `/river/*` admin endpoints (empty = disabled) |
 
 ### XGBoost training
 
@@ -442,14 +649,18 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | `XGB_CV_SPLITS` | `3` | CV folds |
 | `XGB_USE_GPU` | `True` | Use CUDA |
 | `XGB_TREE_METHOD` | `"hist"` | Fastest tree algorithm |
-| `XGB_CALIBRATE` | `True` | Apply temperature scaling |
+| `XGB_CALIBRATE` | `True` | Apply temperature scaling (fitted on held-out data) |
+| `XGB_CALIBRATION_CSV` | `data/calibration.csv` | Held-out calibration set (must differ from `DATA_CSV`) |
 
 ### River
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `RIVER_CALIBRATE_ON_START` | `True` | Recalibrate on every startup |
-| `RIVER_ALPHA` | `0.1` | FTRL learning rate |
+| `RIVER_BOOTSTRAP_MODE` | `batch` | `batch` = mini-batch warm start (recommended), `online` = old single FTRL pass |
+| `RIVER_BATCH_EPOCHS` / `RIVER_BATCH_LR` / `RIVER_BATCH_L2` | `12` / `0.02` / `1e-5` | Mini-batch training (Adam) |
+| `RIVER_ONLINE_LR` | `0.01` | SGD learning rate for online updates after the warm start |
+| `RIVER_ALPHA` | `0.1` | FTRL learning rate (only `online` mode) |
 | `RIVER_L1` / `RIVER_L2` | `1e-6` / `1e-4` | Regularization |
 | `RIVER_WEIGHT_CAP` | `25.0` | Max class-weight clamp |
 
@@ -457,18 +668,19 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
-| `ENSEMBLE_W_XGB` / `ENSEMBLE_W_RIVER` | `0.8` / `0.2` | Base weights |
-| `ENSEMBLE_K_FUSE` | `9` | Top-K from each model before merge |
-| `ENSEMBLE_MIN_XGB_WEIGHT` | `0.55` | XGB floor (River never fully dominates) |
-| `ENSEMBLE_CONF_GAP` | `0.20` | "One model is clearly more confident" threshold |
+| `ENSEMBLE_FUSION` | `linear` | `linear` / `log` with a weight fitted on the calibration set, or the old `heuristic` |
+| `ENSEMBLE_W_XGB` / `ENSEMBLE_W_RIVER` | `0.8` / `0.2` | Base weights (`heuristic` only) |
+| `ENSEMBLE_K_FUSE` | `0` | `0` = fuse full probability distributions (recommended); `>0` = only Top-K from each model |
+| `ENSEMBLE_MIN_XGB_WEIGHT` / `ENSEMBLE_MIN_RIVER_WEIGHT` | `0.55` / `0.15` | Minimum share of each model |
+| `ENSEMBLE_CONF_GAP` | `0.20` | When one model is more confident by this much, it gets its maximum allowed share |
 
 ### LLM generation
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `LLM_MAX_NEW_TOKENS` | `2000` | Max generated tokens |
-| `LLM_TEMP` | `0.55` | Sampling temperature |
-| `LLM_TOP_P` / `LLM_TOP_K` | `0.9` / `40` | Nucleus / top-k sampling |
+| `LLM_TEMP` | `0.72` | Sampling temperature |
+| `LLM_TOP_P` / `LLM_TOP_K` | `0.92` / `40` | Nucleus / top-k sampling |
 | `LLM_CONTEXT_LEN` | `8192` | Context window |
 | `LLM_GPU_LAYERS` | `999` | Layers offloaded to GPU (`999` = all) |
 
@@ -477,9 +689,11 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `MIN_SYMPTOMS` | `3` | Minimum symptoms before allowing diagnosis |
-| `STOP_FOLLOWUPS_AT` | `4` | Force diagnosis after N follow-up turns |
+| `STOP_FOLLOWUPS_AT` | `4` | After N follow-up questions without reaching `MIN_SYMPTOMS`, give an indicative (low-confidence) assessment instead of asking forever |
 | `TOPN_DIAGNOSES` | `3` | Number of diagnoses returned |
 | `SUMMARY_MODE` | `"llm"` | `"llm"` or `"template"` |
+
+</details>
 
 ## License
 

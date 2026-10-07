@@ -13,6 +13,7 @@
     "en": "Abdominal pain",
     "pl": "ból brzucha",
     "xgb_label": [
+      "sharp_abdominal_pain",
       "abdominal_pain"
     ],
     "synonyms_pl": [
@@ -69,6 +70,7 @@
     "en": "Abnormal menstruation",
     "pl": "nieprawidłowe miesiączkowanie",
     "xgb_label": [
+      "unpredictable_menstruation",
       "abnormal_menstruation"
     ],
     "synonyms_pl": [],
@@ -129,6 +131,7 @@
     "en": "Acidity",
     "pl": "nadkwaśność / zgaga",
     "xgb_label": [
+      "heartburn",
       "acidity"
     ],
     "synonyms_pl": [],
@@ -233,6 +236,7 @@
     "en": "Anxiety",
     "pl": "lęk / niepokój",
     "xgb_label": [
+      "anxiety_and_nervousness",
       "anxiety"
     ],
     "synonyms_pl": [],
@@ -403,6 +407,7 @@
     "en": "Belly pain",
     "pl": "ból brzucha",
     "xgb_label": [
+      "sharp_abdominal_pain",
       "belly_pain"
     ],
     "synonyms_pl": [
@@ -419,6 +424,7 @@
     "en": "Blackheads",
     "pl": "zaskórniki",
     "xgb_label": [
+      "acne_or_pimples",
       "blackheads"
     ],
     "synonyms_pl": [],
@@ -429,6 +435,7 @@
     "en": "Bladder discomfort",
     "pl": "dyskomfort w pęcherzu moczowym",
     "xgb_label": [
+      "symptoms_of_bladder",
       "bladder_discomfort"
     ],
     "synonyms_pl": [],
@@ -491,6 +498,7 @@
     "en": "Bleeding in mouth",
     "pl": "krwawienie w jamie ustnej",
     "xgb_label": [
+      "bleeding_gums",
       "bleeding_in_mouth"
     ],
     "synonyms_pl": [
@@ -539,9 +547,14 @@
     "en": "Blood in sputum",
     "pl": "krew w plwocinie",
     "xgb_label": [
+      "coughing_up_blood",
       "blood_in_sputum"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "kaszel z krwią",
+      "kaszlę krwią",
+      "odkrztuszam krew"
+    ],
     "synonyms_en": [],
     "category": "Układ oddechowy"
   },
@@ -573,6 +586,7 @@
     "en": "Bloody stool",
     "pl": "krwawy stolec",
     "xgb_label": [
+      "blood_in_stool",
       "bloody_stool"
     ],
     "synonyms_pl": [],
@@ -583,6 +597,7 @@
     "en": "Blurred and distorted vision",
     "pl": "zamazane i zniekształcone widzenie",
     "xgb_label": [
+      "diminished_vision",
       "blurred_and_distorted_vision"
     ],
     "synonyms_pl": [],
@@ -623,6 +638,7 @@
     "en": "Brittle nails",
     "pl": "łamliwe paznokcie",
     "xgb_label": [
+      "irregular_appearing_nails",
       "brittle_nails"
     ],
     "synonyms_pl": [],
@@ -673,6 +689,7 @@
     "en": "Burning micturition",
     "pl": "pieczenie przy oddawaniu moczu",
     "xgb_label": [
+      "painful_urination",
       "burning_micturition"
     ],
     "synonyms_pl": [
@@ -707,6 +724,7 @@
     "en": "Chest pain",
     "pl": "ból w klatce piersiowej",
     "xgb_label": [
+      "sharp_chest_pain",
       "chest_pain"
     ],
     "synonyms_pl": [
@@ -777,6 +795,7 @@
     "en": "Congestion",
     "pl": "zatkanie / przekrwienie (najczęściej nosa)",
     "xgb_label": [
+      "nasal_congestion",
       "congestion"
     ],
     "synonyms_pl": [],
@@ -807,6 +826,7 @@
     "en": "Continuous feel of urine",
     "pl": "ciągłe parcie na mocz",
     "xgb_label": [
+      "frequent_urination",
       "continuous_feel_of_urine"
     ],
     "synonyms_pl": [],
@@ -833,7 +853,11 @@
     "xgb_label": [
       "coughing_up_blood"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "kaszel z krwią",
+      "kaszlę krwią",
+      "odkrztuszam krew"
+    ],
     "synonyms_en": [],
     "category": "Układ oddechowy"
   },
@@ -871,6 +895,7 @@
     "en": "Dark urine",
     "pl": "ciemny mocz",
     "xgb_label": [
+      "unusual_color_or_odor_to_urine",
       "dark_urine"
     ],
     "synonyms_pl": [],
@@ -921,6 +946,7 @@
     "en": "Depression",
     "pl": "depresja",
     "xgb_label": [
+      "symptom_depression",
       "depression"
     ],
     "synonyms_pl": [],
@@ -941,6 +967,7 @@
     "en": "Diaper rash",
     "pl": "pieluszkowe zapalenie skóry",
     "xgb_label": [
+      "symptom_diaper_rash",
       "diaper_rash"
     ],
     "synonyms_pl": [],
@@ -1061,7 +1088,9 @@
     "synonyms_pl": [
       "zawroty",
       "wirowanie w głowie",
-      "oszołomienie"
+      "oszołomienie",
+      "kręci mi się w głowie",
+      "zawroty głowy"
     ],
     "synonyms_en": [],
     "category": "Neurologiczny"
@@ -1100,6 +1129,7 @@
     "en": "Drug abuse",
     "pl": "nadużywanie substancji psychoaktywnych",
     "xgb_label": [
+      "symptom_drug_abuse",
       "drug_abuse"
     ],
     "synonyms_pl": [],
@@ -1250,6 +1280,7 @@
     "en": "Erectile dysfunction",
     "pl": "zaburzenia erekcji",
     "xgb_label": [
+      "symptom_erectile_dysfunction",
       "erectile_dysfunction"
     ],
     "synonyms_pl": [],
@@ -1290,6 +1321,7 @@
     "en": "Excessive hunger",
     "pl": "wzmożone łaknienie",
     "xgb_label": [
+      "excessive_appetite",
       "excessive_hunger"
     ],
     "synonyms_pl": [],
@@ -1416,7 +1448,11 @@
     "xgb_label": [
       "fatigue"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "jestem zmęczony",
+      "jestem zmęczona",
+      "ciągłe zmęczenie"
+    ],
     "synonyms_en": [],
     "category": "Ogólny"
   },
@@ -1537,6 +1573,7 @@
     "en": "Fluid overload",
     "pl": "przeciążenie płynami (hiperwolemia)",
     "xgb_label": [
+      "fluid_retention",
       "fluid_overload",
       "fluid_overload_1"
     ],
@@ -1558,6 +1595,7 @@
     "en": "Flushing",
     "pl": "uderzenia gorąca / zaczerwienienie",
     "xgb_label": [
+      "hot_flashes",
       "flushing"
     ],
     "synonyms_pl": [],
@@ -1656,6 +1694,7 @@
     "en": "Foul smell of urine",
     "pl": "nieprzyjemny zapach moczu",
     "xgb_label": [
+      "unusual_color_or_odor_to_urine",
       "foul_smell_of_urine"
     ],
     "synonyms_pl": [],
@@ -1856,6 +1895,7 @@
     "en": "Hip joint pain",
     "pl": "ból stawu biodrowego",
     "xgb_label": [
+      "hip_pain",
       "hip_joint_pain"
     ],
     "synonyms_pl": [
@@ -1924,6 +1964,7 @@
     "en": "History of alcohol consumption",
     "pl": "wywiad: spożywanie alkoholu",
     "xgb_label": [
+      "abusing_alcohol",
       "history_of_alcohol_consumption"
     ],
     "synonyms_pl": [],
@@ -2012,6 +2053,8 @@
     "en": "Indigestion",
     "pl": "niestrawność",
     "xgb_label": [
+      "upper_abdominal_pain",
+      "symptom_indigestion",
       "indigestion"
     ],
     "synonyms_pl": [],
@@ -2052,6 +2095,7 @@
     "en": "Inflammatory nails",
     "pl": "zapalne zmiany paznokci",
     "xgb_label": [
+      "irregular_appearing_nails",
       "inflammatory_nails"
     ],
     "synonyms_pl": [],
@@ -2166,6 +2210,7 @@
     "en": "Irritability",
     "pl": "drażliwość",
     "xgb_label": [
+      "temper_problems",
       "irritability"
     ],
     "synonyms_pl": [],
@@ -2186,6 +2231,7 @@
     "en": "Irritation in anus",
     "pl": "podrażnienie odbytu",
     "xgb_label": [
+      "itching_of_the_anus",
       "irritation_in_anus"
     ],
     "synonyms_pl": [],
@@ -2206,6 +2252,7 @@
     "en": "Itching",
     "pl": "świąd",
     "xgb_label": [
+      "itching_of_skin",
       "itching"
     ],
     "synonyms_pl": [
@@ -2220,6 +2267,7 @@
     "en": "Itching of scrotum",
     "pl": "świąd moszny",
     "xgb_label": [
+      "symptoms_of_the_scrotum_and_testes",
       "itching_of_scrotum"
     ],
     "synonyms_pl": [],
@@ -2280,6 +2328,7 @@
     "en": "Jaundice",
     "pl": "żółtaczka",
     "xgb_label": [
+      "symptom_jaundice",
       "jaundice"
     ],
     "synonyms_pl": [],
@@ -2449,7 +2498,9 @@
     "synonyms_pl": [
       "nadmierne łzawienie",
       "łzy z oka",
-      "wydzielina wodnista z oczu"
+      "wydzielina wodnista z oczu",
+      "łzawią mi oczy",
+      "łzawienie oczu"
     ],
     "synonyms_en": [],
     "category": "Ogólny"
@@ -2522,9 +2573,14 @@
     "en": "Lethargy",
     "pl": "osłabienie / apatia (letarg)",
     "xgb_label": [
+      "fatigue",
       "lethargy"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "jestem zmęczony",
+      "jestem zmęczona",
+      "ciągłe zmęczenie"
+    ],
     "synonyms_en": [],
     "category": "Neurologiczny"
   },
@@ -2562,9 +2618,14 @@
     "en": "Loss of appetite",
     "pl": "utrata apetytu",
     "xgb_label": [
+      "decreased_appetite",
       "loss_of_appetite"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "brak apetytu",
+      "nie mam apetytu",
+      "brak łaknienia"
+    ],
     "synonyms_en": [],
     "category": "Ogólny"
   },
@@ -2724,6 +2785,7 @@
     "en": "Lymphedema",
     "pl": "obrzęk limfatyczny (limfatyczny zastój)",
     "xgb_label": [
+      "symptom_lymphedema",
       "lymphedema"
     ],
     "synonyms_pl": [],
@@ -2734,6 +2796,7 @@
     "en": "Malaise",
     "pl": "złe samopoczucie (malaise)",
     "xgb_label": [
+      "feeling_ill",
       "malaise"
     ],
     "synonyms_pl": [],
@@ -2848,6 +2911,7 @@
     "en": "Movement stiffness",
     "pl": "sztywność ruchów",
     "xgb_label": [
+      "stiffness_all_over",
       "movement_stiffness"
     ],
     "synonyms_pl": [],
@@ -2868,6 +2932,7 @@
     "en": "Muscle cramps",
     "pl": "skurcze mięśni",
     "xgb_label": [
+      "cramps_and_spasms",
       "muscle_cramps"
     ],
     "synonyms_pl": [],
@@ -2890,7 +2955,10 @@
     "xgb_label": [
       "muscle_pain"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "bolą mnie mięśnie",
+      "bóle mięśni"
+    ],
     "synonyms_en": [],
     "category": "Mięśniowo-szkieletowy"
   },
@@ -2898,6 +2966,7 @@
     "en": "Muscle stiffness or tightness",
     "pl": "sztywność mięśni",
     "xgb_label": [
+      "stiffness_all_over",
       "muscle_stiffness_or_tightness"
     ],
     "synonyms_pl": [],
@@ -2928,6 +2997,7 @@
     "en": "Muscle weakness",
     "pl": "osłabienie mięśni",
     "xgb_label": [
+      "weakness",
       "muscle_weakness"
     ],
     "synonyms_pl": [],
@@ -3090,6 +3160,7 @@
     "en": "Obesity",
     "pl": "otyłość",
     "xgb_label": [
+      "symptom_obesity",
       "obesity"
     ],
     "synonyms_pl": [],
@@ -3110,6 +3181,7 @@
     "en": "Pain behind the eyes",
     "pl": "ból za oczami",
     "xgb_label": [
+      "pain_in_eye",
       "pain_behind_the_eyes"
     ],
     "synonyms_pl": [
@@ -3124,6 +3196,7 @@
     "en": "Pain during bowel movements",
     "pl": "ból przy wypróżnianiu",
     "xgb_label": [
+      "pain_of_the_anus",
       "pain_during_bowel_movements"
     ],
     "synonyms_pl": [
@@ -3166,6 +3239,7 @@
     "en": "Pain in anal region",
     "pl": "ból w okolicy odbytu",
     "xgb_label": [
+      "pain_of_the_anus",
       "pain_in_anal_region"
     ],
     "synonyms_pl": [
@@ -3297,7 +3371,10 @@
     "synonyms_pl": [
       "palpitacje",
       "nierówne bicie serca",
-      "przyspieszone bicie serca"
+      "przyspieszone bicie serca",
+      "serce mi kołacze",
+      "kołatanie serca",
+      "serce mi wali"
     ],
     "synonyms_en": [],
     "category": "Sercowo-naczyniowy"
@@ -3306,6 +3383,7 @@
     "en": "Passage of gases",
     "pl": "oddawanie gazów",
     "xgb_label": [
+      "flatulence",
       "passage_of_gases"
     ],
     "synonyms_pl": [],
@@ -3502,6 +3580,7 @@
     "en": "Puffy face and eyes",
     "pl": "obrzęknięta twarz i oczy",
     "xgb_label": [
+      "swollen_eye",
       "puffy_face_and_eyes"
     ],
     "synonyms_pl": [],
@@ -3542,6 +3621,7 @@
     "en": "Pus filled pimples",
     "pl": "krosty wypełnione ropą",
     "xgb_label": [
+      "acne_or_pimples",
       "pus_filled_pimples"
     ],
     "synonyms_pl": [],
@@ -3572,6 +3652,7 @@
     "en": "Rapid heartbeat",
     "pl": "przyspieszone bicie serca (tachykardia)",
     "xgb_label": [
+      "increased_heart_rate",
       "rapid_heartbeat"
     ],
     "synonyms_pl": [],
@@ -3670,6 +3751,7 @@
     "en": "Red spots over body",
     "pl": "czerwone plamki na ciele",
     "xgb_label": [
+      "rash",
       "red_spots_over_body"
     ],
     "synonyms_pl": [],
@@ -3700,6 +3782,7 @@
     "en": "Redness of eyes",
     "pl": "zaczerwienienie oczu",
     "xgb_label": [
+      "red_eyes",
       "redness_of_eyes"
     ],
     "synonyms_pl": [],
@@ -3941,6 +4024,7 @@
     "en": "Silver like dusting",
     "pl": "srebrzyste łuszczenie skóry",
     "xgb_label": [
+      "skin_dryness_peeling_scaliness_or_roughness",
       "silver_like_dusting"
     ],
     "synonyms_pl": [],
@@ -3961,6 +4045,7 @@
     "en": "Sinus pressure",
     "pl": "uczucie ucisku w zatokach",
     "xgb_label": [
+      "painful_sinuses",
       "sinus_pressure"
     ],
     "synonyms_pl": [
@@ -4079,6 +4164,7 @@
     "en": "Skin peeling",
     "pl": "złuszczanie skóry",
     "xgb_label": [
+      "skin_dryness_peeling_scaliness_or_roughness",
       "skin_peeling"
     ],
     "synonyms_pl": [],
@@ -4119,6 +4205,7 @@
     "en": "Small dents in nails",
     "pl": "dołeczki w paznokciach (naparstkowatość)",
     "xgb_label": [
+      "irregular_appearing_nails",
       "small_dents_in_nails"
     ],
     "synonyms_pl": [],
@@ -4166,7 +4253,8 @@
       "ból przy przełykaniu",
       "angina (ból gardła)",
       "ból w gardła",
-      "dolegliwości bólowe gardła"
+      "dolegliwości bólowe gardła",
+      "drapie mnie w gardle"
     ],
     "synonyms_en": [],
     "category": "Otolaryngologiczny"
@@ -4185,9 +4273,13 @@
     "en": "Spinning movements",
     "pl": "wirowe zawroty głowy",
     "xgb_label": [
+      "dizziness",
       "spinning_movements"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "kręci mi się w głowie",
+      "zawroty głowy"
+    ],
     "synonyms_en": [],
     "category": "Neurologiczny"
   },
@@ -4219,6 +4311,7 @@
     "en": "Spotting urination",
     "pl": "oddawanie moczu kroplami",
     "xgb_label": [
+      "hesitancy",
       "spotting_urination"
     ],
     "synonyms_pl": [],
@@ -4229,6 +4322,7 @@
     "en": "Sputum phlegm",
     "pl": "plwocina (flegma)",
     "xgb_label": [
+      "coughing_up_sputum",
       "sputum_phlegm"
     ],
     "synonyms_pl": [],
@@ -4239,6 +4333,7 @@
     "en": "Stiff neck",
     "pl": "sztywność karku",
     "xgb_label": [
+      "neck_stiffness_or_tightness",
       "stiff_neck"
     ],
     "synonyms_pl": [],
@@ -4327,6 +4422,7 @@
     "en": "Swelled lymph nodes",
     "pl": "powiększone węzły chłonne",
     "xgb_label": [
+      "swollen_lymph_nodes",
       "swelled_lymph_nodes"
     ],
     "synonyms_pl": [],
@@ -4337,6 +4433,7 @@
     "en": "Swelling joints",
     "pl": "obrzęki stawów",
     "xgb_label": [
+      "joint_swelling",
       "swelling_joints"
     ],
     "synonyms_pl": [],
@@ -4357,6 +4454,7 @@
     "en": "Swelling of stomach",
     "pl": "obrzęk brzucha",
     "xgb_label": [
+      "swollen_abdomen",
       "swelling_of_stomach"
     ],
     "synonyms_pl": [],
@@ -4387,6 +4485,7 @@
     "en": "Swollen extremeties",
     "pl": "obrzęk kończyn",
     "xgb_label": [
+      "leg_swelling",
       "swollen_extremeties"
     ],
     "synonyms_pl": [],
@@ -4555,9 +4654,13 @@
     "en": "Throat irritation",
     "pl": "podrażnienie gardła",
     "xgb_label": [
+      "sore_throat",
       "throat_irritation"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "drapie mnie w gardle",
+      "drapanie w gardle"
+    ],
     "synonyms_en": [],
     "category": "Otolaryngologiczny"
   },
@@ -4619,6 +4722,7 @@
     "en": "Tongue pain",
     "pl": "ból języka",
     "xgb_label": [
+      "mouth_pain",
       "tongue_pain"
     ],
     "synonyms_pl": [
@@ -4707,6 +4811,7 @@
     "en": "Unsteadiness",
     "pl": "chwiejność / niepewny chód",
     "xgb_label": [
+      "problems_with_movement",
       "unsteadiness"
     ],
     "synonyms_pl": [],
@@ -4839,6 +4944,7 @@
     "en": "Visual disturbances",
     "pl": "zaburzenia widzenia",
     "xgb_label": [
+      "diminished_vision",
       "visual_disturbances"
     ],
     "synonyms_pl": [],
@@ -4903,9 +5009,13 @@
     "en": "Watering from eyes",
     "pl": "łzawienie oczu",
     "xgb_label": [
+      "lacrimation",
       "watering_from_eyes"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "łzawią mi oczy",
+      "łzawienie oczu"
+    ],
     "synonyms_en": [],
     "category": "Ogólny"
   },
@@ -4923,6 +5033,7 @@
     "en": "Weakness in limbs",
     "pl": "osłabienie kończyn",
     "xgb_label": [
+      "weakness",
       "weakness_in_limbs"
     ],
     "synonyms_pl": [],
@@ -4933,6 +5044,7 @@
     "en": "Weakness of one body side",
     "pl": "osłabienie jednej połowy ciała (niedowład połowiczy)",
     "xgb_label": [
+      "focal_weakness",
       "weakness_of_one_body_side"
     ],
     "synonyms_pl": [],
@@ -5061,6 +5173,7 @@
     "en": "Yellow urine",
     "pl": "żółty mocz",
     "xgb_label": [
+      "unusual_color_or_odor_to_urine",
       "yellow_urine"
     ],
     "synonyms_pl": [],
@@ -5071,6 +5184,7 @@
     "en": "Yellowish skin",
     "pl": "zażółcenie skóry",
     "xgb_label": [
+      "symptom_jaundice",
       "yellowish_skin"
     ],
     "synonyms_pl": [

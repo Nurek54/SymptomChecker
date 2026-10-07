@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/store/chatStore";
+import type { Session } from "@supabase/supabase-js";
 import { api, getMe, supabase, exchangeSession, API_BASE } from "@/lib/api";
 
 export type User = {
@@ -52,7 +53,8 @@ type Ctx = {
     continueAsGuest: () => void;
 };
 
-const AuthCtx = createContext<Ctx>(null as any);
+// Provider zawsze otacza aplikację (layout.tsx), więc wartość domyślna nie jest używana.
+const AuthCtx = createContext<Ctx>(null as unknown as Ctx);
 export const useAuth = () => useContext(AuthCtx);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -79,7 +81,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             new Promise<never>((_, rej) =>
                 setTimeout(() => rej(new Error("getSession timeout")), ms)
             ),
-        ]).catch(() => ({ data: { session: null } as any }));
+        ]).catch(() => ({ data: { session: null as Session | null } }));
     };
 
     const refreshMe = async () => {

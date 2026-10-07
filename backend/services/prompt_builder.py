@@ -23,6 +23,7 @@ from services.prompt_helpers import (
     _extract_duration_days,
     _age_risk_score,
     _contains,
+    _user_text,
 )
 
 SYSTEM_PROMPT = (
@@ -66,7 +67,7 @@ DRUG_POLICY = (
 
 # ========================= TRIAGE =========================
 TRIAGE_GUIDELINE = (
-    "Pilność łącz z ramą czasową: niska — samoobserwacja i ewentualnie wizyta w 48–72 h; "
+    "Gdy mówisz o pilności, łącz ją z ramą czasową: niska — samoobserwacja i ewentualnie wizyta w 48–72 h; "
     "średnia — kontakt z lekarzem dzisiaj lub w 24 h; "
     "wysoka — pilna ocena teraz (SOR/112), zwłaszcza przy czerwonych flagach. "
     "Wpleć to w naturalne zdanie, nie ogłaszaj jak komunikat."
@@ -85,8 +86,11 @@ TASK_DIAGNOSIS = (
 TASK_DIAGNOSIS_FOLLOWUP = (
     "Pacjent dopytuje o tę samą diagnozę, którą wcześniej wymieniłeś. Skup się na "
     "wyjaśnieniu, dlaczego pasuje, jakie objawy ją potwierdzają, a co ewentualnie "
-    "do niej nie pasuje. Zakończ zdaniem o pilności. 4–6 zdań w jednym akapicie."
+    "do niej nie pasuje. NIE opisuj pilności ani leków. 4–6 zdań w jednym akapicie."
 )
+
+# Intencje, w których odpowiedź ma mówić o pilności (dla pozostałych TASK_* zabraniają tego)
+TRIAGE_INTENTS = {"triage", "summary", "autosummary"}
 
 TASK_ADVICE = (
     "Powiedz pacjentowi konkretnie, co może zrobić w domu — działania niefarmakologiczne "
@@ -166,7 +170,7 @@ def build_prompt(
     triage_level, triage_window = _suggest_triage(
         sym_for_llm,
         patient_age,
-        history_text=" ".join((m.get("content") or "") for m in history),
+        history_text=_user_text(history),
     )
 
     otc_text = _otc_hints(sym_for_llm, patient_age) if intent in {"advice", "otc"} else ""
@@ -180,7 +184,9 @@ def build_prompt(
         "summary": TASK_SUMMARY,
     }.get(intent, TASK_SUMMARY)
 
-    hints_lines = [f"Sugerowana pilnosc: {triage_level} ({triage_window})."]
+    hints_lines: List[str] = []
+    if intent in TRIAGE_INTENTS:
+        hints_lines.append(f"Sugerowana pilnosc: {triage_level} ({triage_window}).")
     if fit_text:
         hints_lines.append(f"Wewnetrzna ocena dopasowania: {fit_text}")
     if otc_text:
@@ -191,7 +197,7 @@ def build_prompt(
         hints_lines.append(
             f"Pacjent zna juz diagnoze {top1_name} — nie powtarzaj jej jak nowej."
         )
-    hints_text = "\n".join(hints_lines)
+    hints_text = "\n".join(hints_lines) or "Brak dodatkowych wskazowek."
 
     sys_block = (
         SYSTEM_PROMPT + "\n\n"
@@ -248,7 +254,7 @@ def build_prompt_strict(
     triage_level, triage_window = _suggest_triage(
         sym_for_llm,
         patient_age,
-        history_text=" ".join((m.get("content") or "") for m in history),
+        history_text=_user_text(history),
     )
 
     leader_clause = ""
@@ -283,10 +289,14 @@ def build_prompt_strict(
 
     ctx_block = (
         "### Kontekst rozmowy\n" + context + "\n\n"
-        "### Zadanie\n" + task + "\n\n"
-        f"### Wewnetrzna wskazowka\nSugerowana pilnosc: {triage_level} ({triage_window}). "
-        "Wpleć ją jako naturalne zdanie."
+        "### Zadanie\n" + task
     )
+    if intent in TRIAGE_INTENTS:
+        ctx_block += (
+            "\n\n"
+            f"### Wewnetrzna wskazowka\nSugerowana pilnosc: {triage_level} ({triage_window}). "
+            "Wpleć ją jako naturalne zdanie."
+        )
 
     hist_chatml = _render_history_chatml(history)
 
@@ -316,6 +326,6 @@ __all__ = [
     "_extract_top1_name", "_dedup_keep_order",
     "_symptom_clusters", "_dx_domain",
     "_extract_temp_high", "_extract_duration_days",
-    "_age_risk_score", "_contains",
+    "_age_risk_score", "_contains", "_user_text", "TRIAGE_INTENTS",
     "PROMPT_SYMPTOMS_MAX_FOR_LLM",
 ]

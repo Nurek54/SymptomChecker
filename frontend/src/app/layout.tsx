@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AuthProvider from "@/components/AuthProvider";
 import AuthSheet from "@/components/AuthSheet";
 import AutoOpenAuth from "@/components/AutoOpenAuth";
@@ -35,7 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </head>
         <body className="min-h-screen antialiased transition-colors">
         {/* ⬇️ Jednorazowy globalny warm-up i strażnicy (focus/visibility/online) */}
-        <ClientWarmup />
+        {/* useSearchParams() wymaga granicy Suspense, inaczej "next build" się wywraca */}
+        <Suspense fallback={null}>
+            <ClientWarmup />
+        </Suspense>
         <AuthProvider>
             {/* auto pokaże panel, jeśli brak sesji i nie wybrano gościa */}
             <AutoOpenAuth />

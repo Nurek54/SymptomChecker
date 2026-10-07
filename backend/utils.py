@@ -29,10 +29,14 @@ def mask_sensitive(msg: str) -> str:
 
 
 def contains_stop_phrase(text: str) -> bool:
+    """
+    Czy pacjent kończy wymienianie objawów ("to wszystko", "koniec", ...).
+    Dopasowanie całych słów: "stop" nie może łapać "39 stopni", a "end" słowa "trend".
+    """
     t = (text or "").strip().lower()
     for p in (STOP_PHRASES or []):
-        p = (p or "").strip().lower()
-        if p and p in t:
+        p = (p or "").strip().lower().rstrip(".!")
+        if p and re.search(r"(?<!\w)" + re.escape(p) + r"(?!\w)", t):
             return True
     return any(re.search(p, t) for p in STOP_PATTERNS)
 
@@ -117,3 +121,139 @@ def seed_everywhere(seed: int = 42) -> None:
     except Exception:
         pass
     random.seed(seed)
+
+
+# ───────────────────────── postęp długich operacji (trening, kalibracja) ─────────────────────────
+def fmt_duration(seconds: float) -> str:
+    """12.3 -> '12s', 125 -> '2m05s', 3725 -> '1h02m05s'."""
+    if seconds is None or seconds != seconds or seconds == float("inf"):
+        return "?"
+    s = int(round(max(0.0, seconds)))
+    h, rem = divmod(s, 3600)
+    m, s = divmod(rem, 60)
+    if h:
+        return f"{h}h{m:02d}m{s:02d}s"
+    if m:
+        return f"{m}m{s:02d}s"
+    return f"{s}s"
+
+
+class Progress:
+    """
+    Loguje postęp długiej pętli: procent, liczba kroków, tempo, czas od startu
+    i szacowany czas do końca (ETA). Loguje co `every_pct` procent, ale nie
+    częściej niż co `min_interval` sekund (wyjątek: koniec).
+
+        p = Progress("River/trening", total=len(df), log=log, unit="wierszy")
+        for i, row in enumerate(...):
+            ...
+            p.update(i + 1)
+        p.finish()
+    """
+
+    def __init__(self, label: str, total: int, log, every_pct: float = 2.0,
+                 min_interval: float = 5.0, unit: str = "") -> None:
+        import time as _time
+        self._time = _time
+        self.label = label
+        self.total = max(int(total), 1)
+        self.log = log
+        self.every = max(float(every_pct), 0.1)
+        self.min_interval = float(min_interval)
+        self.unit = unit
+        self.start = _time.time()
+        self._last_pct = -1e9
+        self._last_t = 0.0
+        self.log.info("[%s] START (%d %s)", self.label, self.total, self.unit or "kroków")
+
+    def update(self, done: int, extra: str = "") -> None:
+        now = self._time.time()
+        pct = 100.0 * done / self.total
+        if done < self.total and (pct - self._last_pct < self.every or now - self._last_t < self.min_interval):
+            return
+        self._last_pct, self._last_t = pct, now
+        elapsed = now - self.start
+        rate = done / elapsed if elapsed > 0 else 0.0
+        eta = (self.total - done) / rate if rate > 0 else float("inf")
+        self.log.info(
+            "[%s] %5.1f%% (%d/%d) %.1f %s/s | minęło %s | zostało ~%s%s",
+            self.label, pct, done, self.total, rate, self.unit or "kroków",
+            fmt_duration(elapsed), fmt_duration(eta), (" | " + extra) if extra else "",
+        )
+
+    def finish(self, extra: str = "") -> float:
+        elapsed = self._time.time() - self.start
+        self.log.info("[%s] KONIEC w %s%s", self.label, fmt_duration(elapsed), (" | " + extra) if extra else "")
+        return elapsed
+
+
+def calibration_metrics(P, y) -> Dict[str, float]:
+    """
+    Jakość prawdopodobieństw dla rozkładów P (N x K) i prawdziwych klas y (indeksy).
+    top1/top3: trafność; nll: log-loss; ece: Expected Calibration Error (15 przedziałów,
+    pewność klasy top-1); brier: wieloklasowy Brier score; mean_conf: średnia pewność top-1.
+    """
+    import numpy as np
+    P = np.clip(np.asarray(P, dtype=np.float64), 1e-12, 1.0)
+    y = np.asarray(y, dtype=np.int64)
+    n = len(y)
+    if n == 0:
+        return {}
+    py = P[np.arange(n), y]
+    k = min(3, P.shape[1])
+    top = np.argpartition(-P, kth=k - 1, axis=1)[:, :k]
+    top1 = P.argmax(1)
+    conf = P.max(1)
+    hit = top1 == y
+    ece = 0.0
+    edges = np.linspace(0.0, 1.0, 16)
+    for a, b in zip(edges[:-1], edges[1:]):
+        m = (conf > a) & (conf <= b)
+        if m.any():
+            ece += m.mean() * abs(hit[m].mean() - conf[m].mean())
+    return {
+        "n": int(n),
+        "top1": round(float(hit.mean()), 4),
+        "top3": round(float((top == y[:, None]).any(1).mean()), 4),
+        "nll": round(float(-np.log(py).mean()), 4),
+        "ece": round(float(ece), 4),
+        "brier": round(float(((P ** 2).sum(1) - 2 * py + 1).mean()), 4),
+        "mean_conf": round(float(conf.mean()), 4),
+    }
+
+
+def _training_report_path() -> str:
+    import os
+    from config import MODEL_PATH
+    return os.path.join(os.path.dirname(MODEL_PATH), "training_report.json")
+
+
+def update_training_report(section: str, data: Dict[str, Any]) -> None:
+    """Dopisuje sekcję (xgb / river / ensemble) do ml/training_report.json."""
+    import json, os, datetime
+    path = _training_report_path()
+    report: Dict[str, Any] = {}
+    try:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                report = json.load(f) or {}
+    except Exception:
+        report = {}
+    report[section] = {**data, "updated_at": datetime.datetime.now().isoformat(timespec="seconds")}
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def log_metrics_table(log, title: str, results: Dict[str, Any]) -> None:
+    """Czytelna tabelka metryk w logu: wiersz na wariant (np. surowe vs po kalibracji)."""
+    rows = [(k, v) for k, v in results.items() if isinstance(v, dict) and "top1" in v]
+    if not rows:
+        return
+    log.info("[%s] %-22s %7s %7s %7s %7s %7s %9s", title, "wariant", "top1", "top3", "NLL", "ECE", "Brier", "śr.pewn.")
+    for name, m in rows:
+        log.info("[%s] %-22s %7.4f %7.4f %7.4f %7.4f %7.4f %9.4f", title, name,
+                 m["top1"], m["top3"], m["nll"], m["ece"], m["brier"], m["mean_conf"])

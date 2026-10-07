@@ -19,7 +19,7 @@ def _decode_local_cookie(request: Request) -> Optional[int]:
     if not tok:
         return None
     try:
-        data = decode_token(tok, AUTH_SECRET_KEY or "dev-secret-change-me") or {}
+        data = decode_token(tok, AUTH_SECRET_KEY) or {}
         sub = data.get("sub")
         if sub is None:
             return None
@@ -50,7 +50,8 @@ def _resolve_via_supabase(request: Request, db: Session) -> Optional[int]:
         return None
 
     try:
-        user = _ensure_local_profile(db, claims)
+        # odczyt tożsamości: bez "miękkich" aktualizacji profilu (te robi /auth/session i PUT /auth/me)
+        user = _ensure_local_profile(db, claims, allow_writes=False)
         return int(user.id)
     except Exception:
         log.exception("Błąd mapowania profilu Supabase → lokalny.")

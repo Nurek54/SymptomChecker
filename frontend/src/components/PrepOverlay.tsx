@@ -26,7 +26,6 @@ const MAX_NOTES = 300;
 function toXgbSlug(free: string): string {
   const basic = free
     .normalize("NFD")
-    // @ts-ignore – unicode class
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
     .trim()
@@ -96,14 +95,18 @@ export default function PrepOverlay({ open, onClose }: Props) {
     const ac = new AbortController();
     (async () => {
       try {
-        const arr = await (listSymptomsDict as any)?.({ signal: ac.signal }) ?? await listSymptomsDict?.();
+        const arr = await listSymptomsDict();
+        if (ac.signal.aborted) return;
         if (Array.isArray(arr)) {
-          const normalized: SymItem[] = arr.map((it: any) => ({
-            en: it.en,
-            pl: it.pl ?? undefined,
-            category: it.category ?? undefined,
-            xgb_label: it.xgb_label ?? it.en,
-          }));
+          const normalized: SymItem[] = arr.map((raw) => {
+            const it = raw as typeof raw & { xgb_label?: string };
+            return {
+              en: it.en,
+              pl: it.pl ?? undefined,
+              category: it.category ?? undefined,
+              xgb_label: it.xgb_label ?? it.en,
+            };
+          });
           setDict(normalized);
         }
       } catch {
@@ -209,7 +212,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
     const pieces: string[] = [];
 
     if (selected.length) {
-      pieces.push(`Zgłaszam objawy: ${joinPolish(selected)}.`);
+      pieces.push(`Zgłaszam objawy: ${joinPolish(selected.map(humanFor))}.`);
     } else {
       pieces.push("Nie wskazano objawów.");
     }
@@ -225,7 +228,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
     pieces.push(`Nasilenie subiektywne: ${severity}/10.`);
 
     if (notes.trim()) {
-      pieces.push(`Dodatkowe informacje: ${notes.trim()}.`);
+      pieces.push(`Dodatkowe informacje: ${notes.trim().replace(/[.!?…]+$/, "")}.`);
     }
 
     return pieces.join(" ");
@@ -374,7 +377,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
                   />
                   <select
                     value={durationUnit}
-                    onChange={(e) => setDurationUnit(e.target.value as any)}
+                    onChange={(e) => setDurationUnit(e.target.value as "hours" | "days" | "weeks")}
                     className="h-9 rounded-lg border border-base bg-transparent px-2 text-sm outline-none"
                   >
                     <option value="hours">godzin</option>

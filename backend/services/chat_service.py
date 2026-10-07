@@ -19,17 +19,10 @@ from config import (
     LLM_STOP_SEQUENCES,
     GLOBAL_SEED,
     TOPN_DIAGNOSES,
+    STOP_FOLLOWUPS_AT,
+    PREDICT_ONLY_ON_NEW,
+    SUMMARY_MODE,
 )
-
-try:
-    from config import STOP_FOLLOWUPS_AT
-except Exception:
-    STOP_FOLLOWUPS_AT = 4
-
-try:
-    from config import PREDICT_ONLY_ON_NEW
-except Exception:
-    PREDICT_ONLY_ON_NEW = True
 
 try:
     from config import PROMPT_HISTORY_FETCH
@@ -47,20 +40,15 @@ except Exception:
     PROMPT_STRIP_SUMMARY = False
 
 from services.followup_selector import FollowupSelector
-from services.lang import detect_lang, is_yes, is_no
 from services.prompt_localizer import PromptLocalizer
 from services.symptom_matcher import SymptomMatcher
 from services.prompt_builder import (
     build_prompt,
     build_prompt_strict,
     _classify_intent_pl as _intent_pl,
+    _suggest_triage as _triage_hint,
 )
-
-try:
-    from services.prompt_builder import _suggest_triage as _triage_hint  # type: ignore
-except Exception:
-    _triage_hint = None
-
+from services.prompt_helpers import _user_text
 from services.ensemble import EnsembleTopK
 
 from utils import (
@@ -70,6 +58,10 @@ from utils import (
 )
 
 log = logging.getLogger("symptomchecker.chat_service")
+
+# Wszystkie teksty dla pacjenta, słowniki objawów/chorób i model językowy (Bielik)
+# są polskie, więc odpowiadamy zawsze po polsku.
+LANG = "pl"
 
 def _normalize_topk(top: Any) -> List[Dict[str, Any]]:
     items = top or []
@@ -136,39 +128,51 @@ def _filter_history_for_prompt(history: List[Dict[str, str]], keep: int, strip_s
     return filtered
 
 
-def _split_yesno_and_extra(text: str) -> Tuple[Optional[bool], str]:
+
+_YES_RE = re.compile(
+    r"^\s*(?:tak|ta|yes|yep|yeah|jasne|oczywi[sś]cie|owszem|zgadza\s+si[eę]|(?:raczej|chyba)\s+tak)\b",
+    re.IGNORECASE,
+)
+_NO_RE = re.compile(r"^\s*(?:nie|no|nope|(?:raczej|chyba)\s+nie)\b", re.IGNORECASE)
+_UNKNOWN_RE = re.compile(
+    r"^\s*(?:nie\s+wiem|nie\s+jestem\s+pew\w*|nie\s+pami[eę]tam|trudno\s+powiedzie[cć]|nie\s+mam\s+poj[eę]cia)\b",
+    re.IGNORECASE,
+)
+
+
+def _parse_yes_no(text: str) -> Optional[str]:
+    """
+    Odpowiedź na pytanie "Czy masz X?": "yes" / "no" / "unknown" albo None,
+    jeśli wiadomość nie jest odpowiedzią tak/nie (to zwykły opis objawów).
+    """
     t = (text or "").strip()
     if not t:
-        return None, ""
-    m = re.match(r"^\s*(tak|nie|yes|no|yep|yeah|nope)\b[ ,.:;!?-]*", t, flags=re.IGNORECASE)
-    if not m:
-        return None, ""
-    key = m.group(1).lower()
-    val = True if key in ("tak", "yes", "yep", "yeah") else False
-    extra = t[m.end():].strip(" ,.;:!-")
-    return val, extra
+        return None
+    if _UNKNOWN_RE.match(t):
+        return "unknown"
+    if _YES_RE.match(t):
+        return "yes"
+    if _NO_RE.match(t):
+        return "no"
+    return None
 
-_DOSE_PAT = re.compile(
-    r"\b\d+(?:[.,]\d+)?\s?(?:mg|ml|mcg|µg|g|iu|j\.?m\.?|kropli|tabletek|tabl\.?|caps?\.?|razy\s*(?:dziennie|w\s*ciągu|na\s*dobę)?|x\s*\d+)\b",
+
+# Polityka leków: bez dawek. Zdania z dawkowaniem usuwamy w całości
+# (wycinanie samych liczb zostawiało urwane zdania).
+_DOSE_SENTENCE_PAT = re.compile(
+    r"\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|ml|j\.?\s?m\.?|iu|tabletk\w*|tabl\.?|kapsu\w*|kaps\.?|kropl\w*|saszet\w*)\b"
+    r"|\bco\s*\d+\s*(?:h|godz\w*)\b"
+    r"|\b\d+\s*(?:razy|x)\s*(?:dziennie|na\s+dob[eę]|w\s+ci[aą]gu\s+doby)\b",
     flags=re.IGNORECASE,
 )
-_FREQ_PAT = re.compile(r"\bco\s*\d+\s*(?:h|godzin[ya]?|godzinach?)\b", flags=re.IGNORECASE)
 
 
-def _strip_doses_only(text: str) -> str:
-    return text or ""
-
-
-def _strip_doses_legacy(text: str) -> str:
+def _drop_dose_sentences(text: str) -> str:
     if not text:
         return text
-    out = _DOSE_PAT.sub("", text)
-    out = _FREQ_PAT.sub("", out)
-    out = re.sub(r"\s+,", ",", out)
-    out = re.sub(r"\(\s*\)", "", out)
-    out = re.sub(r"\s{2,}", " ", out).strip()
-    return out
-
+    parts = re.split(r"(?<=[.!?])\s+", text.strip())
+    kept = [p for p in parts if not _DOSE_SENTENCE_PAT.search(p)]
+    return " ".join(kept).strip() if kept else text
 
 def _strip_allergy_speculation(text: str, have_allergy_symptom: bool) -> str:
     if have_allergy_symptom:
@@ -268,141 +272,49 @@ def _llm_claims_other_top1(text: str, leader_pl: str, top3_names_pl: List[str]) 
                 tail = text_low.split(sep, 1)[1]
                 for other in others_norm:
                     if other in tail and "najbardziej prawdopodobn" in tail:
-                        return f"odpowiedź odwraca hierarchię — używa 'jednak' i wskazuje '{other}' jako prawdopodobniejszą"
+                        return f"odpowiedź odwraca hierarchię: używa 'jednak' i wskazuje '{other}' jako prawdopodobniejszą"
 
     return None
 
 
+
+_DANGLING_END_WORDS = {
+    "w", "we", "z", "ze", "do", "od", "na", "po", "przed", "przez", "przy", "nad", "pod",
+    "o", "u", "dla", "bez", "i", "oraz", "lub", "albo", "a", "ale", "że", "bo", "czy",
+    "jak", "gdy", "jeśli", "jeżeli", "który", "która", "które", "którego", "której",
+    "których", "jest", "są", "się", "ten", "ta", "tego", "tej", "ciągu", "okresie",
+}
+_DANGLING_ADJ = {
+    "najbliższy", "najbliższa", "najbliższe", "najbliższego", "najbliższej", "najbliższych",
+    "kilku", "kilka", "następnych", "następnego", "następnej", "kolejnych", "ostatnich",
+}
+_PREPOSITIONS = {"w", "we", "z", "ze", "do", "od", "na", "po", "przed", "przez", "przy", "ciągu", "okresie"}
+
+
 def _looks_truncated(text: str) -> bool:
-    if not text:
-        return False
-    s = text.strip()
+    """
+    Odpowiedź urwana w połowie zdania: brak znaku końca zdania albo zdanie
+    kończy się przyimkiem/spójnikiem ("...w ciągu.", "...oraz.") lub
+    zawieszonym określeniem po przyimku ("...w ciągu najbliższych.").
+    Krótkie, poprawne zdania ("Zdrowia życzę!", "Nie.") NIE są urwane.
+    """
+    s = (text or "").strip()
     if not s:
         return False
-
     last = s[-1]
-
-    ends_well = last in '.!?…'
-    if not ends_well and last in '")]' and len(s) >= 2 and s[-2] in '.!?…':
-        ends_well = True
-
+    ends_well = last in ".!?…" or (last in "\")]" and len(s) >= 2 and s[-2] in ".!?…")
     if not ends_well:
         return True
 
     sentences = re.split(r"(?<=[.!?…])\s+", s)
-    if not sentences:
+    last_sentence = sentences[-1].strip() if sentences else s
+    words = re.findall(r"[a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", last_sentence.lower())
+    if not words:
         return False
-
-    last_sentence = sentences[-1].strip()
-    if not last_sentence:
-        return False
-
-    words = re.findall(r"[a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", last_sentence)
-
-    if len(sentences) == 1:
-        if len(words) < 2:
-            return True
-    else:
-        if len(words) < 3:
-            return True
-
-    KNOWN_ABBREVS = {
-        "tj", "tzw", "np", "itd", "itp", "tzn", "etc",
-        "godz", "min", "sek", "tys", "mln", "mld",
-        "ul", "al", "pl", "dr", "prof", "mgr", "inż",
-        "pn", "wt", "śr", "czw", "pt", "sob", "nd",
-        "tabl", "kaps", "amp", "ml", "mg", "kg",
-    }
-
-    body = re.sub(r"[.!?…\s)\]\"]+$", "", last_sentence)
-    last_word_match = re.search(r"(\S+)$", body)
-    if not last_word_match:
-        return False
-    last_word = last_word_match.group(1)
-    bare = re.sub(r"[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", "", last_word).lower()
-
-    if not bare:
-        return False
-    if bare in KNOWN_ABBREVS:
-        return False
-
-    DANGLING_ADJ = {
-        "najbliższy", "najbliższa", "najbliższe", "najbliższego", "najbliższej",
-        "najbliższych", "najbliższym", "najbliższymi",
-        "ostatni", "ostatnia", "ostatnie", "ostatniego", "ostatniej",
-        "ostatnich", "ostatnim", "ostatnimi",
-        "kilku", "kilka", "kilkoma", "kilkudziesięciu",
-        "następny", "następna", "następne", "następnego", "następnej", "następnych",
-        "poprzedni", "poprzednia", "poprzednie", "poprzedniego", "poprzedniej", "poprzednich",
-        "który", "która", "które", "którego", "której", "których", "którym", "którymi",
-        "taki", "taka", "takie", "takiego", "takiej", "takich",
-        "jaki", "jaka", "jakie", "jakiego", "jakiej", "jakich",
-        "ten", "ta", "to", "tego", "tej", "tych", "tym", "tymi",
-        "duży", "duża", "duże", "dużego", "dużej", "dużych",
-        "mały", "mała", "małe", "małego", "małej", "małych",
-        "wysoki", "wysoka", "wysokie", "wysokiego", "wysokiej", "wysokich",
-        "niski", "niska", "niskie", "niskiego", "niskiej", "niskich",
-    }
-    PREPOSITIONS = {
-        "w", "we", "z", "ze", "do", "od", "na", "po", "przed", "przez", "przy",
-        "nad", "pod", "obok", "wobec", "ponad", "poza", "między", "pomiędzy",
-        "ciągu", "okresie",  # "w ciągu X", "w okresie X"
-    }
-
-    if bare in DANGLING_ADJ:
-        # sprawdź ~3 słowa wstecz — czy jest tam przyimek?
-        all_words = re.findall(r"[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", last_sentence)
-        if len(all_words) >= 2:
-            tail_words = [w.lower() for w in all_words[-4:-1]]  # 3 słowa przed ostatnim
-            if any(w in PREPOSITIONS for w in tail_words):
-                return True
-
-    POLISH_VOWELS = set("aeiouyąęóAEIOUYĄĘÓ")
-    POLISH_FREQ_END = set("ćńłjknmtszwiAĆŃŁJKNMTSZWI")  # częste końcówki
-
-    POLISH_COMMON_ENDINGS = {
-        # samogłoski na końcu
-        "ka", "ki", "ko", "ku", "ek", "ik", "ka", "ce", "ci", "go", "gi",
-        "na", "ne", "ni", "no", "nu", "ny", "ńy", "ń",
-        "ta", "te", "ty", "tu", "to", "ć",
-        "wa", "we", "wi", "wo", "wy", "ów", "ów", "ów",
-        "la", "le", "li", "lu", "ło", "łe", "ły", "ł",
-        "sa", "se", "si", "so", "su", "sy", "ść",
-        "ja", "je", "ji", "jo", "ju", "j", "ej",
-        "ra", "re", "ri", "ro", "ru", "ry", "rz",
-        "da", "de", "dy", "do", "du", "dź",
-        "ma", "me", "mi", "mo", "mu", "my",
-        "ba", "be", "bi", "bo", "bu", "by",
-        "pa", "pe", "pi", "po", "pu", "py",
-        "fa", "fy",
-        "ga", "ge", "gi", "go", "gu", "gy",
-        "ha", "he", "hi", "ho", "hu", "hy",
-        "ca", "ce", "cy", "cz", "ć",
-        "za", "ze", "zi", "zo", "zu", "zy", "ź", "ż",
-        "ść", "śń", "śm", "śl", "ś",
-        # częste wieloliterowe końcówki
-        "ość", "ość", "ący", "ącą", "ące",
-        "iej", "owy", "owa", "owe", "ami", "ach",
-        "ego", "emu", "ymi", "ami",
-    }
-    POLISH_VOWEL_ENDINGS = {"a", "e", "i", "o", "u", "y", "ą", "ę", "ó"}
-
-    if 3 <= len(bare) <= 6:
-        last_one = bare[-1]
-        last_two = bare[-2:] if len(bare) >= 2 else ""
-        last_three = bare[-3:] if len(bare) >= 3 else ""
-
-        if last_one in POLISH_VOWEL_ENDINGS:
-            return False
-        if last_two in POLISH_COMMON_ENDINGS or last_three in POLISH_COMMON_ENDINGS:
-            return False
-        if last_one in {"ć", "ń", "ł", "ś", "ź", "ż", "j", "m", "w", "r", "t", "s", "n", "k", "l", "p", "z", "c", "d"}:
-            CONS = set("bcćdfghjklłmnńprstwxzźż")
-            if len(bare) >= 3 and all(c in CONS for c in bare[-3:]):
-                return True
-            return False
+    if words[-1] in _DANGLING_END_WORDS:
         return True
-
+    if words[-1] in _DANGLING_ADJ and any(w in _PREPOSITIONS for w in words[-4:-1]):
+        return True
     return False
 
 _LIST_OPENER_PATTERNS = [
@@ -448,9 +360,9 @@ def _lists_to_prose(text: str) -> str:
         sep = m.group(3)    # ":" / "." / "\n"
         connector = connectors.get(num, "Następnie")
         title_lower = title[0].lower() + title[1:] if len(title) > 1 else title.lower()
-        # ":" → " — " (myślnik, naturalna proza), "." / "\n" → ". "
+        # ":" → ": ", "." / "\n" → ". "
         if sep == ":":
-            return f"{connector}, {title_lower} — "
+            return f"{connector}, {title_lower}: "
         else:
             return f"{connector}, {title_lower}. "
 
@@ -475,29 +387,30 @@ def _lists_to_prose(text: str) -> str:
     return out.strip()
 
 
-def _trim_truncated_tail(text: str) -> str:
+
+def _trim_truncated_tail(text: str, max_drop: int = 2) -> str:
+    """Usuwa TYLKO urwane zdania z końca odpowiedzi (najwyżej `max_drop`)."""
     if not text:
         return text
-    parts = re.split(r"(?<=[.!?…])\s+", text.strip())
+    parts = [p for p in re.split(r"(?<=[.!?…])\s+", text.strip()) if p.strip()]
     if not parts:
         return text
-
-    good = []
-    for p in parts:
-        if not p or not p.strip():
-            continue
-        if _looks_truncated(p):
-            break
-        good.append(p)
-
-    if not good:
+    dropped = 0
+    while parts and dropped < max_drop and _looks_truncated(parts[-1]):
+        parts.pop()
+        dropped += 1
+    if not parts:
         return text
-
-    result = " ".join(good).strip()
-    # Upewnij się, że kończy kropką
+    result = " ".join(parts).strip()
     if result and result[-1] not in ".!?…)]\"":
         result += "."
     return result
+
+
+def _objaw_locative(n: int) -> str:
+    """"na 1 objawie", "na 2 objawach"."""
+    return "objawie" if n == 1 else "objawach"
+
 
 class ChatService:
     def __init__(self, state: AppState):
@@ -506,22 +419,16 @@ class ChatService:
         self.loc = PromptLocalizer(state.matcher)
         self.ens = EnsembleTopK(state)
 
-        self._last_vec: Dict[str, Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]] = {}
-        self._expand_cache: Dict[str, List[str]] = {}
-
-    def _guard_leader_consistency(self, text: str, leader_pl: Optional[str], leader_prob: Optional[float], *, enforce: bool) -> str:
+    # ───────────────────────── helpers ─────────────────────────
+    def _guard_leader_consistency(self, text: str, leader_pl: Optional[str], *, enforce: bool) -> str:
         if not enforce or not text or not leader_pl:
             return text
-        try:
-            lp = leader_pl.strip().lower()
-            if lp in text.lower():
-                return text
-            tail = f" Główna z rozważanych przyczyn to {leader_pl}."
-            return (text.rstrip(" .") + ".").rstrip() + tail
-        except Exception:
+        if leader_pl.strip().lower() in text.lower():
             return text
+        return (text.rstrip(" .") + ".").rstrip() + f" Główna z rozważanych przyczyn to {leader_pl}."
 
-    def _join_pl(self, items: List[str]) -> str:
+    @staticmethod
+    def _join_pl(items: List[str]) -> str:
         items = [i for i in (items or []) if i]
         if not items:
             return ""
@@ -529,50 +436,90 @@ class ChatService:
             return items[0]
         return ", ".join(items[:-1]) + " i " + items[-1]
 
-    def _top3_update_note(self, lang: str, prev: List[str], curr: List[str]) -> str:
-        return ""
+    def _known_features(self, items: Optional[Sequence[str]]) -> List[str]:
+        feats = {str(f).strip().lower() for f in (self.st.xgb.features or [])}
+        return sorted({str(s).strip().lower() for s in (items or []) if str(s).strip().lower() in feats})
 
-    def _fallback_choose_next(self, sess_id: str, current_syms: List[str]) -> Optional[str]:
-        xgb = self.st.xgb
-        have = set(s.lower() for s in current_syms)
+    def _build_feature_vector(self, selected_canons: List[str]) -> List[int]:
+        feats = [str(f).strip().lower() for f in (self.st.xgb.features or [])]
+        expanded: set[str] = set()
+        for s in (selected_canons or []):
+            key = str(s).strip().lower()
+            try:
+                expanded |= set(self.st.matcher.expand_to_xgb(key) or [key])
+            except Exception:
+                expanded.add(key)
+        return [1 if f in expanded else 0 for f in feats]
+
+    def _llm_ready(self, llm) -> bool:
+        if not llm:
+            return False
+        if getattr(llm, "backend", None) == "ctransformers":
+            return llm.model is not None
+        return False
+
+    def _safe_stop_sequences(self) -> Tuple[str, ...]:
+        raw = list(LLM_STOP_SEQUENCES or [])
+        blacklist = {"\nUser:", "\nSystem:", "User:", "System:"}
+        return tuple(s for s in raw if s not in blacklist)
+
+    def _predict_top(self, sess_id: str, symptoms: List[str], k: int) -> List[Dict[str, Any]]:
+        """Top-k z ensemble; wynik cache'owany w sesji i liczony ponownie tylko po zmianie wektora."""
+        vec = self._build_feature_vector(sorted(symptoms))
+        vt = tuple(vec)
+        cached = self.st.sessions.get_last_pred(sess_id)
+        if PREDICT_ONLY_ON_NEW and cached and cached[0] == vt and cached[1] == int(k):
+            log.info("PREDICT decision=SKIP reason=no_change")
+            return [dict(d) for d in cached[2]]
         try:
-            imps = list(getattr(xgb.model, "feature_importances_", []))
-        except Exception:
-            imps = []
-        feats = list(self.st.xgb.features)
-        if imps and len(imps) == len(feats):
-            feats = [f for f, _ in sorted(zip(feats, imps), key=lambda x: x[1], reverse=True)]
+            raw_top = self.ens.predict_topk([vec], k=k) or []
+        except Exception as e:
+            log.exception("Ensemble.predict_topk error: %s", e)
+            raw_top = []
+        top = _normalize_topk(raw_top)
+        self.st.sessions.set_last_pred(sess_id, vt, int(k), top)
+        return top
+
+    def _next_question(self, sess_id: str, symptoms: List[str]) -> Optional[str]:
+        """Objaw, o który warto zapytać (najbardziej rozróżnia prawdopodobne choroby)."""
+        posterior: Optional[Dict[str, float]] = None
+        if symptoms:
+            try:
+                posterior = self.ens.predict_distribution([self._build_feature_vector(sorted(symptoms))])
+            except Exception as e:
+                log.warning("Posterior dla pytań niedostępny: %s", e)
         try:
-            neg = set(self.st.sessions.get_negated(sess_id))
-        except Exception:
-            neg = set()
-        asked_recent = (
-            set(self.st.sessions.get_recent_followups(sess_id, n=3))
-            if hasattr(self.st.sessions, "get_recent_followups")
-            else set()
-        )
-        for f in feats:
-            fl = str(f).strip().lower()
-            if fl not in have and fl not in neg and fl not in asked_recent:
-                return fl
-        return None
+            return self.selector.choose_next(sess_id, sorted(symptoms), lang=LANG, posterior=posterior)
+        except Exception as e:
+            log.exception("FollowupSelector error: %s", e)
+            return None
+
+    def _ask(self, sess_id: str, feat: str, symptoms: List[str], prefix: str = "", suffix: str = "") -> ChatResponse:
+        question = self.loc.followup_question(feat, LANG)
+        self.st.sessions.set_pending_symptom(sess_id, feat)
+        self.st.sessions.mark_followup_asked(sess_id, feat)
+        text = " ".join(p for p in (prefix.strip(), question, suffix.strip()) if p)
+        self.st.sessions.append_assistant(sess_id, text)
+        return ChatResponse(response=text, symptoms=sorted(symptoms))
+
+    def _say(self, sess_id: str, text: str, symptoms: List[str]) -> ChatResponse:
+        self.st.sessions.append_assistant(sess_id, text)
+        return ChatResponse(response=text, symptoms=sorted(symptoms))
 
     def _deterministic_summary(
         self,
         sym_for_display: List[str],
         top: List[Dict[str, Any]],
-        lang: str,
         *,
         patient_age: Optional[int],
         history_text: str,
     ) -> str:
         joined = self._join_pl(sym_for_display)
         s1 = f"Zgłoszone objawy: {joined}." if joined else "Brak potwierdzonych objawów."
-        if top and len(top) >= 1:
+        if top:
             first = top[0]
-            diag_en = first.get("diagnosis_en") or ""
+            diag_pl = self.loc.localize_disease(first.get("diagnosis_en") or "", LANG)
             prob = float(first.get("probability", 0.0) or 0.0)
-            diag_pl = self.loc.localize_disease(diag_en, lang)
             pct = int(round(prob * 100)) if prob <= 1.0 else int(round(prob))
             s2 = f"Najbardziej prawdopodobna przyczyna to {diag_pl} ({pct}%)."
         else:
@@ -582,271 +529,62 @@ class ChatService:
         if top and len(top) > 1:
             others = []
             for d in top[1:]:
-                de = d.get("diagnosis_en") or ""
                 p = float(d.get("probability", 0.0) or 0.0)
-                dp = self.loc.localize_disease(de, lang)
                 pct = int(round(p * 100)) if p <= 1.0 else int(round(p))
-                others.append(f"{dp} ({pct}%)")
+                others.append(f"{self.loc.localize_disease(d.get('diagnosis_en') or '', LANG)} ({pct}%)")
             s3 = "Inne możliwe przyczyny to " + self._join_pl(others) + "."
 
-        if _triage_hint is not None:
-            tri_level, tri_window = _triage_hint(sym_for_display, patient_age, history_text=history_text)
-            s4 = f"Pilność: {tri_level}; zalecane: {tri_window}."
-        else:
-            if top and len(top) >= 1 and float(top[0].get("probability", 0.0) or 0.0) >= 0.8:
-                s4 = "Pilność: wysoka; zalecana pilna ocena teraz."
-            elif top and len(top) >= 1 and float(top[0].get("probability", 0.0) or 0.0) >= 0.4:
-                s4 = "Pilność: średnia; kontakt z lekarzem w ciągu 24 godzin."
-            else:
-                s4 = "Pilność: niska; samoobserwacja i konsultacja planowa w 48–72 h."
+        # pilność wynika z objawów, wieku i czasu trwania, a NIE z pewności modelu
+        tri_level, tri_window = _triage_hint(sym_for_display, patient_age, history_text=history_text)
+        s4 = f"Pilność: {tri_level}; zalecane: {tri_window}."
+        return ensure_summary_only(" ".join(p for p in (s1, s2, s3, s4) if p))
 
-        parts = [p for p in (s1, s2, s3, s4) if p]
-        text = " ".join(parts)
-        text = ensure_summary_only(text)
-        return text
-
-    def _build_feature_vector(self, selected_canons: List[str]) -> List[int]:
-        feats = [str(f).strip().lower() for f in (self.st.xgb.features or [])]
-        expanded: set[str] = set()
-        for s in (selected_canons or []):
-            key = str(s).strip().lower()
-            if key in self._expand_cache:
-                expanded |= set(self._expand_cache[key])
-                continue
-            try:
-                alts = list(self.st.matcher.expand_to_xgb(s) or [])
-            except Exception:
-                alts = [key]
-            self._expand_cache[key] = alts
-            expanded |= set(alts)
-        return [1 if f in expanded else 0 for f in feats]
-
-    def _llm_ready(self, llm) -> bool:
-        if not llm:
-            return False
-        be = getattr(llm, "backend", None)
-        if be == "ctransformers":
-            return llm.model is not None
-        return False
-
-    def _safe_stop_sequences(self) -> Tuple[str, ...]:
-        raw = list(LLM_STOP_SEQUENCES or [])
-        blacklist = {"\nUser:", "\nSystem:", "User:", "System:"}
-        return tuple(s for s in raw if s not in blacklist)
-
-    def _ensemble_topk_cached(self, sess_id: str, vec: List[List[int]], k: int = 3) -> List[Dict[str, Any]]:
-        vt: Tuple[int, ...] = tuple(vec[0] if vec else [])
-        cached = self._last_vec.get(sess_id)
-        if cached and cached[0] == vt and cached[1] == int(k):
-            return cached[2]
+    def _generate(self, llm, prompt: str, **kwargs) -> str:
         try:
-            raw_top = self.ens.predict_topk(vec, k=k) or []
+            return llm.generate(prompt, **kwargs) or ""
         except Exception as e:
-            log.exception("Ensemble.predict_topk error: %s", e)
-            raw_top = []
-        top = _normalize_topk(raw_top)
-        self._last_vec[sess_id] = (vt, int(k), top)
-        return top
+            log.exception("Błąd LLM: %s", e)
+            return ""
 
-    def _get_cached_top(self, sess_id: str) -> Optional[List[Dict[str, Any]]]:
-        c = self._last_vec.get(sess_id)
-        return c[2] if c else None
-
-    # ———————————————————————————————————————————————————————————————
-    #          G Ł Ó W N A   P E T L A
-    # ———————————————————————————————————————————————————————————————
-    def handle_chat(self, req: ChatRequest, patient_age: int | None = None) -> ChatResponse:
-        t_req = time.perf_counter()
-
-        xgb = self.st.xgb
-        llm = self.st.llm
-        matcher: SymptomMatcher = self.st.matcher
+    # ───────────────────────── diagnoza + odpowiedź LLM ─────────────────────────
+    def _diagnose(
+        self,
+        req: ChatRequest,
+        sess_symptoms: List[str],
+        history: List[Dict[str, str]],
+        patient_age: Optional[int],
+        *,
+        low_confidence: bool,
+        use_llm: bool,
+        t_req: float,
+    ) -> ChatResponse:
         sessions = self.st.sessions
+        sid = req.session_id
+        llm = self.st.llm
+        sessions.clear_pending_symptom(sid)
 
-        if not (xgb and xgb.model):
-            raise RuntimeError("Model XGB niezaładowany.")
-        if matcher is None:
-            raise RuntimeError("Matcher niezaładowany.")
-        if not self._llm_ready(llm):
-            raise RuntimeError("LLM niezaładowany.")
+        k = int(TOPN_DIAGNOSES)
+        t_pred = time.perf_counter()
+        top = self._predict_top(sid, list(sess_symptoms), k)
+        log.info("TIMING predict_ensemble=%.3fs", time.perf_counter() - t_pred)
+        sessions.set_last_top3(sid, [d.get("diagnosis_en", "") for d in top])
 
-        if not sessions.exists(req.session_id):
-            sessions.init_session(req.session_id)
+        sym_sorted = sorted(sess_symptoms)
+        sym_for_display = self.loc.localize_symptoms(sym_sorted, LANG)
+        diag_summary_display = self.loc.format_diag_summary(top, LANG)
+        history_for_prompt = _filter_history_for_prompt(
+            history, keep=int(PROMPT_HISTORY_TURNS), strip_summaries=bool(PROMPT_STRIP_SUMMARY)
+        )
+        user_history_text = _user_text(history_for_prompt)
 
-        user_text = (req.user_input or "").strip()
-        sessions.append_user(req.session_id, user_text)
-        raw_history = sessions.get_recent_history(req.session_id, max_messages=int(PROMPT_HISTORY_FETCH))
-        history = _normalize_history(raw_history)
-        sess_symptoms = sessions.get_symptoms(req.session_id)
+        leader_en = top[0]["diagnosis_en"] if top else None
+        leader_pl = self.loc.localize_disease(leader_en, LANG) if leader_en else None
+        leader_prob = float(top[0].get("probability") or 0.0) if top else None
+        last_user_msg = history_for_prompt[-1]["content"] if history_for_prompt else (req.user_input or "")
+        intent = _intent_pl(last_user_msg or "")
 
-        syms_before = set(sess_symptoms)
-
-        # — follow-up Tak/Nie —
-        pending = sessions.get_pending_symptom(req.session_id)
-        allow_extract = True
-        answered_pending = False
-
-        if pending:
-            yn_val, extra_tail = _split_yesno_and_extra(user_text)
-            if yn_val is not None:
-                if yn_val:
-                    sess_symptoms.add(pending)
-                else:
-                    sessions.add_negated_symptom(req.session_id, pending)
-                sessions.clear_pending_symptom(req.session_id)
-                sessions.mark_followup_asked(req.session_id, pending)
-                answered_pending = True
-
-                if extra_tail and len(extra_tail) >= 3 and re.search(r"[a-zA-Ząćęłńóśźż]", extra_tail, re.I):
-                    try:
-                        if hasattr(matcher, "extract_fast"):
-                            fast_syms = matcher.extract_fast(extra_tail)  # type: ignore[attr-defined]
-                        else:
-                            fast_syms = matcher.extract(extra_tail)
-                    except Exception as e:
-                        log.exception("Matcher.extract_fast błąd: %s", e)
-                        fast_syms = []
-                    if fast_syms:
-                        sessions.add_symptoms(req.session_id, fast_syms)
-                else:
-                    allow_extract = False
-            else:
-                has_yes = is_yes(user_text)
-                has_no = is_no(user_text)
-                if has_yes or has_no:
-                    if has_yes:
-                        sess_symptoms.add(pending)
-                    else:
-                        sessions.add_negated_symptom(req.session_id, pending)
-                    sessions.clear_pending_symptom(req.session_id)
-                    sessions.mark_followup_asked(req.session_id, pending)
-                    answered_pending = True
-
-                    parts = re.split(r"(?:^|\b)(tak|nie|yes|no|yep|yeah|nope)\b[ ,.:;!?-]*", user_text, flags=re.I)
-                    tail = ""
-                    if len(parts) >= 4:
-                        tail = "".join(parts[3:]).strip(" ,.;:!-")
-                    if tail and len(tail) >= 3 and re.search(r"[a-zA-Ząćęłńóśźż]", tail, re.I):
-                        try:
-                            if hasattr(matcher, "extract_fast"):
-                                fast_syms2 = matcher.extract_fast(tail)  # type: ignore[attr-defined]
-                            else:
-                                fast_syms2 = matcher.extract(tail)
-                        except Exception as e:
-                            log.exception("Matcher.extract_fast błąd: %s", e)
-                            fast_syms2 = []
-                        if fast_syms2:
-                            sessions.add_symptoms(req.session_id, fast_syms2)
-                    else:
-                        allow_extract = False
-
-        # wczesny powrót po samym tak/nie
-        if answered_pending and not allow_extract:
-            sess_symptoms = sessions.get_symptoms(req.session_id)
-            count = len(sess_symptoms)
-            if count < int(MIN_SYMPTOMS):
-                t_sel = time.perf_counter()
-                try:
-                    next_sym = self.selector.choose_next(req.session_id, sorted(list(sess_symptoms)), lang="pl")
-                except Exception as e:
-                    log.exception("FollowupSelector error: %s", e)
-                    next_sym = self._fallback_choose_next(req.session_id, sorted(list(sess_symptoms)))
-                log.info("TIMING select_followup=%.3fs", time.perf_counter() - t_sel)
-
-                follow = self.loc.followup_question(next_sym, "pl") if next_sym else "Czy to wszystkie objawy?"
-                if next_sym:
-                    sessions.set_pending_symptom(req.session_id, next_sym)
-                    sessions.mark_followup_asked(req.session_id, next_sym)
-                sessions.append_assistant(req.session_id, follow)
-                log.info("TIMING early_yesno total=%.3fs", time.perf_counter() - t_req)
-                return ChatResponse(response=follow, symptoms=sorted(list(sess_symptoms)))
-
-        # ekstrakcja objawów
-        t_ext = time.perf_counter()
-        new_syms: List[str] = []
-        short_or_noise = len(user_text) < 3 or not re.search(r"[a-zA-Ząćęłńóśźż]", user_text, re.I)
-
-        if allow_extract and not short_or_noise:
-            try:
-                if len(user_text) < 12 and hasattr(matcher, "extract_fast"):
-                    new_syms = matcher.extract_fast(user_text)  # type: ignore[attr-defined]
-                else:
-                    new_syms = matcher.extract(user_text)
-            except Exception as e:
-                log.exception("Matcher.extract błąd: %s", e)
-                new_syms = []
-            if new_syms:
-                sessions.add_symptoms(req.session_id, new_syms)
-        log.info("TIMING extract=%.3fs", time.perf_counter() - t_ext)
-
-        # stan po aktualizacji
-        sess_symptoms = sessions.get_symptoms(req.session_id)
-        count = len(sess_symptoms)
-        changed_vec = set(sess_symptoms) != syms_before
-        log.info("DEBUG new_syms=%s | symptoms=%s (n=%d) | changed_vec=%s",
-                 new_syms, sorted(list(sess_symptoms))[:12], count, changed_vec)
-
-        if count >= int(STOP_FOLLOWUPS_AT) and pending:
-            sessions.clear_pending_symptom(req.session_id)
-
-        user_stop = contains_stop_phrase(user_text)
-        enough = count >= int(MIN_SYMPTOMS)
-        lang = detect_lang(user_text, default="pl")
-
-        if user_stop and not enough:
-            t_fu = time.perf_counter()
-            try:
-                next_sym = self.selector.choose_next(req.session_id, sorted(list(sess_symptoms)), lang=lang)
-            except Exception as e:
-                log.exception("FollowupSelector error: %s", e)
-                next_sym = self._fallback_choose_next(req.session_id, sorted(list(sess_symptoms)))
-            if next_sym:
-                follow = self.loc.followup_question(next_sym, lang)
-                sessions.set_pending_symptom(req.session_id, next_sym)
-                sessions.mark_followup_asked(req.session_id, next_sym)
-            else:
-                follow = "Czy to wszystkie objawy?"
-            sessions.append_assistant(req.session_id, follow)
-            log.info("TIMING followup_only=%.3fs total=%.3fs", time.perf_counter() - t_fu, time.perf_counter() - t_req)
-            return ChatResponse(response=follow, symptoms=sorted(list(sess_symptoms)))
-
-        # — predykcja (Ensemble) + LLM —
-        if enough:
-            t_pred = time.perf_counter()
-            k = int(TOPN_DIAGNOSES)
-
-            if PREDICT_ONLY_ON_NEW and not changed_vec:
-                cached_top = self._get_cached_top(req.session_id)
-                if cached_top is not None:
-                    top = cached_top
-                    log.info("PREDICT decision=SKIP reason=no_change cache_hit=True")
-                    log.info("TIMING predict_ensemble=%.3fs (skipped)", 0.0)
-                else:
-                    vec = [self._build_feature_vector(sorted(list(sess_symptoms)))]
-                    top = self._ensemble_topk_cached(req.session_id, vec, k=k)
-                    log.info("PREDICT decision=RUN reason=first_time_with_min")
-                    log.info("TIMING predict_ensemble=%.3fs", time.perf_counter() - t_pred)
-            else:
-                vec = [self._build_feature_vector(sorted(list(sess_symptoms)))]
-                top = self._ensemble_topk_cached(req.session_id, vec, k=k)
-                log.info("PREDICT decision=RUN reason=%s", "changed_vec" if changed_vec else "policy")
-                log.info("TIMING predict_ensemble=%.3fs", time.perf_counter() - t_pred)
-
-            curr_top_names = [d.get("diagnosis_en", str(d)) for d in (top or [])]
-            prev_top_names = sessions.get_last_top3(req.session_id)
-            sessions.set_last_top3(req.session_id, curr_top_names)
-
-            sym_for_display = self.loc.localize_symptoms(sorted(list(sess_symptoms)), lang)
-            diag_summary_display = self.loc.format_diag_summary(top, lang)
-
-            history_for_prompt = _filter_history_for_prompt(
-                history, keep=int(PROMPT_HISTORY_TURNS), strip_summaries=bool(PROMPT_STRIP_SUMMARY)
-            )
-
-            leader_en = (top[0]["diagnosis_en"] if top else None)
-            leader_pl = self.loc.localize_disease(leader_en, lang) if leader_en else None
-            leader_prob = float(top[0].get("probability") or 0.0) if top else None
-
+        llm_resp = ""
+        if use_llm:
             prompt = build_prompt(
                 history_for_prompt,
                 sym_for_display,
@@ -854,100 +592,40 @@ class ChatService:
                 diag_summary=diag_summary_display,
                 patient_age=patient_age,
             )
-
-            t_gen = time.perf_counter()
-            safe_stops = self._safe_stop_sequences()
             max_tokens = _chat_max_new_tokens()
-
             gen_kwargs = dict(
                 max_new_tokens=max_tokens,
                 min_new_tokens=int(LLM_MIN_NEW_TOKENS_CHAT),
-                temperature=max(float(LLM_TEMP), 0.72),
-                top_p=max(float(LLM_TOP_P), 0.92),
+                temperature=float(LLM_TEMP),
+                top_p=float(LLM_TOP_P),
                 top_k=int(LLM_TOP_K) if LLM_TOP_K else 40,
-                repetition_penalty=max(float(LLM_REPETITION_PENALTY), 1.1),
-                stop_sequences=safe_stops,
+                repetition_penalty=float(LLM_REPETITION_PENALTY),
+                stop_sequences=self._safe_stop_sequences(),
                 seed=int(GLOBAL_SEED),
                 continue_until_complete=True,
                 max_continuations=2,
             )
 
-            try:
-                llm_resp = llm.generate(prompt, **gen_kwargs)
-            except TypeError:
-                gen_kwargs.pop("top_k", None)
-                gen_kwargs.pop("repetition_penalty", None)
-                gen_kwargs.pop("min_new_tokens", None)
-                try:
-                    llm_resp = llm.generate(prompt, **gen_kwargs)
-                except Exception as e:
-                    log.exception("Błąd LLM (ctransformers, fallback): %s", e)
-                    llm_resp = ""
-            except Exception as e:
-                log.exception("Błąd LLM (ctransformers): %s", e)
-                llm_resp = ""
+            t_gen = time.perf_counter()
+            llm_resp = self._generate(llm, prompt, **gen_kwargs)
+            if not llm_resp.strip():
+                # pusta odpowiedź: jedna próba bez sekwencji stopu
+                llm_resp = self._generate(llm, prompt, **{**gen_kwargs, "stop_sequences": tuple()})
+                log.info("LLM retry: no-stops fallback used")
+            log.info("TIMING llm_generate=%.3fs (max_tokens=%d)", time.perf_counter() - t_gen, max_tokens)
 
-            # PUSTO? → retry bez stopów
-            if not (llm_resp or "").strip():
-                retry_kwargs = dict(gen_kwargs)
-                retry_kwargs["stop_sequences"] = tuple()
-                try:
-                    llm_resp = llm.generate(prompt, **retry_kwargs)
-                    log.info("LLM retry: no-stops fallback used")
-                except TypeError:
-                    retry_kwargs.pop("top_k", None)
-                    retry_kwargs.pop("repetition_penalty", None)
-                    try:
-                        llm_resp = llm.generate(prompt, **retry_kwargs)
-                    except Exception as e:
-                        log.exception("Błąd LLM (retry no-stops, fallback): %s", e)
-                        llm_resp = ""
-                except Exception as e:
-                    log.exception("Błąd LLM (retry no-stops): %s", e)
-                    llm_resp = ""
-            log.info("TIMING llm_generate=%.3fs (max_tokens=%d, stops=%s)",
-                     time.perf_counter() - t_gen, max_tokens, list(safe_stops))
-            est_tokens = int((time.perf_counter() - t_gen) * 50)
-            response_chars = len((llm_resp or "").strip())
-            log.info("LLM_OUTPUT_STATS chars=%d est_tokens=%d budget_used=%d%% min_required=%d",
-                     response_chars, est_tokens,
-                     int(100 * est_tokens / max(1, max_tokens)),
-                     int(LLM_MIN_NEW_TOKENS_CHAT))
-
-            top3_names_pl_for_check: List[str] = []
-            for d in (top or []):
-                en_name = (d.get("diagnosis_en") or "").strip().lower()
-                pl_name = self.loc.localize_disease(en_name, lang)
-                if pl_name:
-                    top3_names_pl_for_check.append(pl_name)
+            top3_names_pl = [n for n in (self.loc.localize_disease((d.get("diagnosis_en") or "").lower(), LANG) for d in top) if n]
             rejection_reason: Optional[str] = None
-            intent_check = _intent_pl(history_for_prompt[-1]["content"] if history_for_prompt else (req.user_input or ""))
-            should_check_for_regen = intent_check not in {"advice", "otc", "prophylaxis"}
-
-            if should_check_for_regen and leader_pl:
-                if intent_check in {"diagnosis", "summary", "autosummary"}:
-                    rr = _llm_claims_other_top1(llm_resp, leader_pl, top3_names_pl_for_check)
-                    if rr:
-                        rejection_reason = rr
-
+            if leader_pl and intent in {"diagnosis", "summary", "autosummary"}:
+                rejection_reason = _llm_claims_other_top1(llm_resp, leader_pl, top3_names_pl)
             if rejection_reason is None and _looks_truncated(llm_resp):
                 rejection_reason = "odpowiedź została urwana w połowie zdania"
 
             if rejection_reason:
-                log.warning("LLM regen reason: %s. Original (first 200): %r",
-                            rejection_reason, (llm_resp or "")[:200])
-                log.info("LLM regen START — to może potrwać +5-15s, ale tylko jeden retry")
-
+                log.warning("LLM regen reason: %s. Original (first 200): %r", rejection_reason, llm_resp[:200])
                 leader_pct_int: Optional[int] = None
                 if leader_prob is not None:
-                    try:
-                        if 0.0 <= float(leader_prob) <= 1.0:
-                            leader_pct_int = int(round(float(leader_prob) * 100))
-                        else:
-                            leader_pct_int = int(round(float(leader_prob)))
-                    except Exception:
-                        leader_pct_int = None
-
+                    leader_pct_int = int(round(leader_prob * 100)) if 0.0 <= leader_prob <= 1.0 else int(round(leader_prob))
                 strict_prompt = build_prompt_strict(
                     history_for_prompt,
                     sym_for_display,
@@ -957,117 +635,199 @@ class ChatService:
                     leader_pct=leader_pct_int,
                     rejection_reason=rejection_reason,
                 )
-                strict_kwargs = dict(gen_kwargs)
-                strict_kwargs["temperature"] = 0.55
-                strict_kwargs["top_p"] = 0.85
-                strict_kwargs["max_new_tokens"] = min(int(max_tokens), 512)
-
+                strict_kwargs = {
+                    **gen_kwargs,
+                    "temperature": min(float(LLM_TEMP), 0.55),
+                    "top_p": min(float(LLM_TOP_P), 0.85),
+                    "max_new_tokens": min(int(max_tokens), 512),
+                }
                 t_regen = time.perf_counter()
-                regen_resp = ""
-                try:
-                    regen_resp = llm.generate(strict_prompt, **strict_kwargs)
-                except TypeError:
-                    strict_kwargs.pop("top_k", None)
-                    strict_kwargs.pop("repetition_penalty", None)
-                    try:
-                        regen_resp = llm.generate(strict_prompt, **strict_kwargs)
-                    except Exception as e:
-                        log.exception("LLM regen błąd (fallback): %s", e)
-                        regen_resp = ""
-                except Exception as e:
-                    log.exception("LLM regen błąd: %s", e)
-                    regen_resp = ""
-
+                regen_resp = self._generate(llm, strict_prompt, **strict_kwargs)
                 log.info("TIMING llm_regen=%.3fs", time.perf_counter() - t_regen)
 
-                regen_ok = bool(regen_resp and regen_resp.strip())
-                if regen_ok and leader_pl and intent_check in {"diagnosis", "summary", "autosummary"}:
-                    if _llm_claims_other_top1(regen_resp, leader_pl, top3_names_pl_for_check):
+                regen_ok = bool(regen_resp.strip())
+                if regen_ok and leader_pl and intent in {"diagnosis", "summary", "autosummary"}:
+                    if _llm_claims_other_top1(regen_resp, leader_pl, top3_names_pl):
                         regen_ok = False
                 if regen_ok and _looks_truncated(regen_resp):
                     regen_ok = False
-
                 if regen_ok:
                     log.info("LLM regen accepted")
                     llm_resp = regen_resp
                 else:
-                    log.info("LLM regen rejected — keeping original")
+                    log.info("LLM regen rejected - keeping original")
 
             # post-processing
             llm_resp = sanitize_llm_output(llm_resp)
             llm_resp = ensure_summary_only(llm_resp)
-
             llm_resp = _lists_to_prose(llm_resp)
-
-            llm_resp = re.sub(r"\(\s?0[,.]\d{1,3}\s?\)", "", llm_resp)
             llm_resp = re.sub(r"\(\s?(\d{1,3})\s?%\)\s*\(\s?0[,.]\d{1,3}\s?\)", r"(\1%)", llm_resp)
-
-            llm_resp = _strip_doses_only(llm_resp)
+            llm_resp = re.sub(r"\(\s?0[,.]\d{1,3}\s?\)", "", llm_resp)
+            llm_resp = _drop_dose_sentences(llm_resp)
 
             allergy_markers = {"allergic_reaction", "hives", "urticaria", "rash", "itching", "angioedema", "wheezing"}
-            have_allergy = any(s in allergy_markers for s in (self.st.sessions.get_symptoms(req.session_id) or []))
-            llm_resp = _strip_allergy_speculation(llm_resp, have_allergy)
-
-            last_user_msg = history_for_prompt[-1]["content"] if history_for_prompt else (req.user_input or "")
-            intent = _intent_pl(last_user_msg or "")
+            llm_resp = _strip_allergy_speculation(llm_resp, any(s in allergy_markers for s in sess_symptoms))
             llm_resp = _dedup_sentences(llm_resp, max_sentences=_intent_sentence_cap(intent))
-
-            llm_resp = self._guard_leader_consistency(llm_resp, leader_pl, leader_prob, enforce=(intent == "diagnosis"))
-
-            if not llm_resp.strip():
-                llm_resp = self._deterministic_summary(
-                    sym_for_display, top, lang, patient_age=patient_age,
-                    history_text=" ".join((m.get("content") or "") for m in history_for_prompt)
-                )
-
-            note = self._top3_update_note(lang, prev_top_names, curr_top_names)
-            if note:
-                llm_resp = (note + llm_resp).strip()
-                llm_resp = ensure_summary_only(llm_resp)
-
+            llm_resp = self._guard_leader_consistency(llm_resp, leader_pl, enforce=(intent == "diagnosis"))
             llm_resp = _trim_truncated_tail(llm_resp)
 
-            top_with_pl: List[Dict[str, Any]] = []
-            for d in (top or []):
-                en_name = (d.get("diagnosis_en") or "").strip().lower()
-                dd = dict(d)
-                dd["diagnosis_pl"] = self.loc.localize_disease(en_name, lang)
-                top_with_pl.append(dd)
-
-            diagnosis_en = top_with_pl[0]["diagnosis_en"] if top_with_pl else None
-            diagnosis_pl = self.loc.localize_disease(diagnosis_en, lang) if diagnosis_en else None
-
-            sessions.append_assistant(req.session_id, llm_resp)
-            log.info("TIMING total=%.3fs", time.perf_counter() - t_req)
-            # FIX #1: diagnosis_en/_pl są teraz w schemacie ChatResponse
-            return ChatResponse(
-                response=llm_resp,
-                symptoms=sorted(list(sess_symptoms)),
-                diagnosis_en=diagnosis_en,
-                diagnosis_pl=diagnosis_pl,
-                top_diagnoses=top_with_pl,
+        if not llm_resp.strip():
+            llm_resp = self._deterministic_summary(
+                sym_for_display, top, patient_age=patient_age, history_text=user_history_text,
             )
 
-        if count < int(MIN_SYMPTOMS):
-            t_sel2 = time.perf_counter()
-            try:
-                next_sym = self.selector.choose_next(req.session_id, sorted(list(sess_symptoms)), lang=lang)
-            except Exception as e:
-                log.exception("FollowupSelector error: %s", e)
-                next_sym = self._fallback_choose_next(req.session_id, sorted(list(sess_symptoms)))
-            log.info("TIMING select_followup=%.3fs", time.perf_counter() - t_sel2)
-        else:
-            next_sym = None
+        # zastrzeżenie raz (przy pierwszej ocenie orientacyjnej), a nie w każdej kolejnej odpowiedzi
+        caveat_given = any(
+            (m.get("role") == "assistant") and (m.get("content") or "").startswith("Uwaga: ocena opiera się")
+            for m in history
+        )
+        if low_confidence and not caveat_given:
+            n = len(sess_symptoms)
+            llm_resp = (
+                f"Uwaga: ocena opiera się tylko na {n} {_objaw_locative(n)} (zalecane minimum to {int(MIN_SYMPTOMS)}), "
+                f"więc jest orientacyjna i mało pewna. " + llm_resp
+            ).strip()
 
-        if not next_sym:
-            follow = "Czy to wszystkie objawy? Jeśli tak, napisz 'to wszystko'."
-            sessions.append_assistant(req.session_id, follow)
-            log.info("TIMING total=%.3fs", time.perf_counter() - t_req)
-            return ChatResponse(response=follow, symptoms=sorted(list(sess_symptoms)))
+        top_with_pl: List[Dict[str, Any]] = []
+        for d in top:
+            dd = dict(d)
+            dd["diagnosis_pl"] = self.loc.localize_disease((d.get("diagnosis_en") or "").strip().lower(), LANG)
+            top_with_pl.append(dd)
+        diagnosis_en = top_with_pl[0]["diagnosis_en"] if top_with_pl else None
+        diagnosis_pl = top_with_pl[0]["diagnosis_pl"] if top_with_pl else None
 
-        follow = self.loc.followup_question(next_sym, lang)
-        sessions.set_pending_symptom(req.session_id, next_sym)
-        sessions.mark_followup_asked(req.session_id, next_sym)
-        sessions.append_assistant(req.session_id, follow)
+        sessions.append_assistant(sid, llm_resp)
         log.info("TIMING total=%.3fs", time.perf_counter() - t_req)
-        return ChatResponse(response=follow, symptoms=sorted(list(sess_symptoms)))
+        return ChatResponse(
+            response=llm_resp,
+            symptoms=sym_sorted,
+            diagnosis_en=diagnosis_en,
+            diagnosis_pl=diagnosis_pl,
+            top_diagnoses=top_with_pl,
+        )
+
+    # ───────────────────────────────────────────────────────────────
+    #          G Ł Ó W N A   P Ę T L A
+    # ───────────────────────────────────────────────────────────────
+    def handle_chat(self, req: ChatRequest, patient_age: int | None = None) -> ChatResponse:
+        t_req = time.perf_counter()
+
+        xgb = self.st.xgb
+        matcher: SymptomMatcher = self.st.matcher
+        sessions = self.st.sessions
+        sid = req.session_id
+        use_llm = str(SUMMARY_MODE or "llm").strip().lower() != "template"
+
+        if not (xgb and xgb.model):
+            raise RuntimeError("Model XGB niezaładowany.")
+        if matcher is None:
+            raise RuntimeError("Matcher niezaładowany.")
+        if use_llm and not self._llm_ready(self.st.llm):
+            raise RuntimeError("LLM niezaładowany.")
+
+        if not sessions.exists(sid):
+            sessions.init_session(sid)
+            # backend mógł zostać zrestartowany - odtwarzamy objawy, które pamięta frontend
+            restored = self._known_features(getattr(req, "client_symptoms", None))
+            if restored:
+                sessions.set_symptoms(sid, restored)
+                log.info("Sesja %s odtworzona z danych klienta (%d objawów).", sid, len(restored))
+
+        user_text = (req.user_input or "").strip()
+        sessions.append_user(sid, user_text)
+        history = _normalize_history(
+            sessions.get_recent_history(sid, max_messages=int(PROMPT_HISTORY_FETCH))
+        )
+
+        # 1) odpowiedź na pytanie "Czy masz X?"
+        pending = sessions.get_pending_symptom(sid)
+        answer = _parse_yes_no(user_text) if pending else None
+        if pending and answer is not None:
+            if answer == "yes":
+                sessions.add_symptoms(sid, [pending])
+            elif answer == "no":
+                sessions.add_negated_symptom(sid, pending)
+            sessions.clear_pending_symptom(sid)
+
+        # 2) ekstrakcja objawów z całej wiadomości (z kontekstem przeczeń:
+        #    "nie mam gorączki, ale mam kaszel" -> gorączka zaprzeczona, kaszel dodany)
+        t_ext = time.perf_counter()
+        new_syms: List[str] = []
+        neg_syms: List[str] = []
+        noise = len(user_text) < 3 or not re.search(r"[a-zA-Ząćęłńóśźż]", user_text, re.I)
+        if not noise:
+            try:
+                if hasattr(matcher, "extract_detailed"):
+                    new_syms, neg_syms = matcher.extract_detailed(user_text)
+                else:
+                    new_syms = matcher.extract(user_text)
+            except Exception as e:
+                log.exception("Matcher.extract błąd: %s", e)
+            for f in neg_syms:
+                sessions.add_negated_symptom(sid, f)
+            if new_syms:
+                sessions.add_symptoms(sid, new_syms)
+            if pending and pending in (set(new_syms) | set(neg_syms)):
+                sessions.clear_pending_symptom(sid)
+        log.info("TIMING extract=%.3fs", time.perf_counter() - t_ext)
+
+        sess_symptoms = sorted(sessions.get_symptoms(sid))
+        count = len(sess_symptoms)
+        user_stop = contains_stop_phrase(user_text)
+        recognized = bool(new_syms or neg_syms or answer is not None)
+        log.info("DEBUG new=%s neg=%s answer=%s | symptoms=%s (n=%d) stop=%s",
+                 new_syms, neg_syms, answer, sess_symptoms[:12], count, user_stop)
+
+        # 3) wystarczająco objawów albo pacjent zakończył już zbieranie objawów
+        if count >= int(MIN_SYMPTOMS) or (count > 0 and sessions.is_stopped(sid)):
+            return self._diagnose(req, sess_symptoms, history, patient_age,
+                                  low_confidence=count < int(MIN_SYMPTOMS), use_llm=use_llm, t_req=t_req)
+
+        # 4) brak jakichkolwiek objawów
+        if count == 0:
+            if user_stop:
+                msg = ("Nie mam jeszcze żadnych objawów do oceny. Opisz proszę własnymi słowami, "
+                       "co Ci dolega, np. gorączka, kaszel, ból głowy.")
+            elif neg_syms or answer == "no":
+                msg = "Rozumiem. Jakie objawy masz w tej chwili? Opisz je proszę własnymi słowami."
+            else:
+                msg = ("Nie rozpoznałem w tej wiadomości objawów. Opisz proszę, co Ci dolega, "
+                       "np. „od wczoraj mam gorączkę i boli mnie gardło”.")
+            return self._say(sid, msg, sess_symptoms)
+
+        # 5) 0 < objawów < MIN_SYMPTOMS
+        asked_n = sessions.get_followup_count(sid)
+        if user_stop:
+            if sessions.is_stop_warned(sid) or asked_n >= int(STOP_FOLLOWUPS_AT):
+                sessions.set_stopped(sid, True)
+                return self._diagnose(req, sess_symptoms, history, patient_age,
+                                      low_confidence=True, use_llm=use_llm, t_req=t_req)
+            sessions.set_stop_warned(sid, True)
+            next_sym = self._next_question(sid, sess_symptoms)
+            if not next_sym:
+                sessions.set_stopped(sid, True)
+                return self._diagnose(req, sess_symptoms, history, patient_age,
+                                      low_confidence=True, use_llm=use_llm, t_req=t_req)
+            have = self._join_pl(self.loc.localize_symptoms(sess_symptoms, LANG))
+            prefix = (f"Do wiarygodnej wstępnej oceny potrzebuję co najmniej {int(MIN_SYMPTOMS)} objawów, "
+                      f"a na razie mam {count}: {have}. Jeszcze jedno pytanie.")
+            suffix = "Jeśli nie masz innych objawów, napisz ponownie „to wszystko”, a podam ocenę orientacyjną."
+            return self._ask(sid, next_sym, sess_symptoms, prefix=prefix, suffix=suffix)
+
+        if asked_n >= int(STOP_FOLLOWUPS_AT):
+            # dość dopytywania - podajemy ocenę orientacyjną zamiast pytać w nieskończoność
+            sessions.set_stopped(sid, True)
+            return self._diagnose(req, sess_symptoms, history, patient_age,
+                                  low_confidence=True, use_llm=use_llm, t_req=t_req)
+
+        t_sel = time.perf_counter()
+        next_sym = self._next_question(sid, sess_symptoms)
+        log.info("TIMING select_followup=%.3fs", time.perf_counter() - t_sel)
+        if not next_sym:
+            sessions.set_stopped(sid, True)
+            return self._diagnose(req, sess_symptoms, history, patient_age,
+                                  low_confidence=True, use_llm=use_llm, t_req=t_req)
+
+        prefix = "" if recognized else "Nie rozpoznałem w tej wiadomości nowych objawów."
+        log.info("TIMING total=%.3fs", time.perf_counter() - t_req)
+        return self._ask(sid, next_sym, sess_symptoms, prefix=prefix)

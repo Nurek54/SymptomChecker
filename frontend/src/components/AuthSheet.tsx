@@ -7,11 +7,15 @@ import {
   Loader2, ShieldAlert, Eye, EyeOff, ChevronDown,
 } from "lucide-react";
 
-function msgFromError(e: any): string {
+function msgFromError(e: unknown): string {
+  const err = (e ?? {}) as {
+    message?: unknown;
+    response?: { data?: { detail?: unknown; message?: unknown } };
+  };
   const detail =
-    e?.response?.data?.detail ||
-    e?.response?.data?.message ||
-    e?.message ||
+    err.response?.data?.detail ||
+    err.response?.data?.message ||
+    err.message ||
     "Wystąpił błąd.";
   return typeof detail === "string" ? detail : JSON.stringify(detail);
 }
@@ -59,7 +63,7 @@ export default function AuthSheet() {
         await register(email, password, username, firstName || undefined, lastName || undefined, dob || undefined);
       }
       closeAuth();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErr(msgFromError(e));
     } finally {
       setBusy(false);

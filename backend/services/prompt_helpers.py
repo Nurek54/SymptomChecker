@@ -51,8 +51,19 @@ _RED_FLAGS = re.compile(
     re.I,
 )
 
-_TEMP_VAL = re.compile(r"(\d{2}(?:[.,]\d)?)\s*(?:°|st|stopni)?\s*c", re.I)
-_DUR_DAYS = re.compile(r"(?:od|ponad|>?)\s*(\d{1,2})\s*(?:dni|dnie|dzie[nń])", re.I)
+# Temperatura ciała: liczba 35-43 z jednostką ("39 stopni", "39,5°C", "40 st")
+# albo w kontekście słów gorączka/temperatura ("gorączka 40", "temperatura 38,9").
+# Zakres chroni przed "45 cm", "10 czerwca" itp.
+_TEMP_UNIT = re.compile(
+    r"(?<![\d.,])(3[5-9]|4[0-3])(?:[.,](\d))?\s*(?:°\s*c?|stopni\w*|st\.?(?=\s|$)|c\b)",
+    re.I,
+)
+_TEMP_CTX = re.compile(
+    r"(?:gor[aą]czk\w*|temperatur\w*|temp\.?|termometr\w*)\D{0,20}?(?<![\d.,])(3[5-9]|4[0-3])(?:[.,](\d))?(?!\d)",
+    re.I,
+)
+_DUR_DAYS = re.compile(r"(\d{1,2})\s*(?:dni|dnia|dzie[nń])\b", re.I)
+_DUR_WEEKS = re.compile(r"(\d{1,2})\s*tygodni|\b(?:od\s+)?(?:tygodnia|tydzie[nń])\b", re.I)
 
 
 def _symptom_clusters(symptoms: List[str]) -> Dict[str, bool]:
@@ -112,24 +123,39 @@ def _estimate_fit(diag_summary: Optional[str], symptoms: List[str]) -> Dict[str,
     return results
 
 def _extract_temp_high(text: str) -> bool:
-    """Wysoka gorączka ~≥39°C w tekście."""
-    for m in _TEMP_VAL.finditer(text.lower()):
-        try:
-            v = float(m.group(1).replace(",", "."))
+    """Wysoka gorączka ~≥39°C w tekście (np. "39 stopni", "gorączka 40", "39,5°C")."""
+    t = (text or "").lower()
+    for pat in (_TEMP_UNIT, _TEMP_CTX):
+        for m in pat.finditer(t):
+            try:
+                v = float(m.group(1) + ("." + m.group(2) if m.group(2) else ""))
+            except Exception:
+                continue
             if v >= 39.0:
                 return True
-        except Exception:
-            pass
     return False
 
 def _extract_duration_days(text: str) -> Optional[int]:
-    m = _DUR_DAYS.search(text.lower())
-    if not m:
-        return None
-    try:
-        return int(m.group(1))
-    except Exception:
-        return None
+    """Najdłuższy podany czas trwania objawów w dniach ("od 3 dni", "od tygodnia", "2 tygodnie")."""
+    t = (text or "").lower()
+    best: Optional[int] = None
+    for m in _DUR_DAYS.finditer(t):
+        try:
+            best = max(best or 0, int(m.group(1)))
+        except Exception:
+            pass
+    for m in _DUR_WEEKS.finditer(t):
+        n = int(m.group(1)) if m.group(1) else 1
+        best = max(best or 0, 7 * n)
+    return best
+
+
+def _user_text(hist: List[Dict[str, str]]) -> str:
+    """Tylko wypowiedzi pacjenta - ostrzeżenia asystenta ("jeśli gorączka przekroczy 39°C") nie są objawami."""
+    return " ".join(
+        (m.get("content") or "") for m in (hist or [])
+        if (m.get("role") or "").lower() == "user"
+    )
 
 def _age_risk_score(age: Optional[int]) -> float:
     if age is None: return 0.0

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -24,6 +24,7 @@ import {
     type HistorySymptom as Symptom,
     type HistoryDiagnosis as Diagnosis,
     prewarmAuth,
+    errorMessage,
 } from "@/lib/api";
 
 /* ——— Aurora akcent (emerald → sky → violet) ——— */
@@ -43,11 +44,16 @@ function timeAgo(iso: string) {
     const steps = [60, 60, 24, 7, 4.345, 12, Number.POSITIVE_INFINITY];
     let val = Math.floor(diff);
     for (let i = 0; i < steps.length; i++) {
-        if (val < steps[i]) return rtf.format(-val as any, units[i]);
+        if (val < steps[i]) return rtf.format(-val, units[i]);
         val = Math.floor(val / (steps[i] as number));
     }
-    return rtf.format(-val as any, "year");
+    return rtf.format(-val, "year");
 }
+function safeTime(iso?: string | null) {
+    const t = iso ? new Date(iso).getTime() : 0;
+    return Number.isFinite(t) ? t : 0; // null → koniec listy
+}
+
 function pct(n?: number | null) {
     if (typeof n !== "number" || !isFinite(n)) return 0;
     return Math.round(Math.min(1, Math.max(0, n)) * 100);
@@ -97,12 +103,7 @@ export default function HistoryPage() {
         void prewarmAuth();
     }, []);
 
-    const safeTime = (iso?: string | null) => {
-        const t = iso ? new Date(iso).getTime() : 0;
-        return Number.isFinite(t) ? t : 0; // null → koniec listy
-    };
-
-    const loadList = async () => {
+    const loadList = useCallback(async () => {
         setErr(null);
         setItemsLoading(true);
         listAbort.current?.abort();
@@ -112,15 +113,15 @@ export default function HistoryPage() {
             const arr = await listHistory(ac.signal);
             arr.sort((a, b) => safeTime(b.last_message_at) - safeTime(a.last_message_at));
             setItems(arr);
-        } catch (e: any) {
-            if (e?.name !== "AbortError") {
-                setErr(e?.message || "Błąd");
+        } catch (e: unknown) {
+            if ((e as { name?: string } | null)?.name !== "AbortError") {
+                setErr(errorMessage(e) || "Błąd");
                 setItems([]);
             }
         } finally {
             setItemsLoading(false);
         }
-    };
+    }, []);
 
     const openConv = async (id: number) => {
         setBusy(true);
@@ -131,8 +132,8 @@ export default function HistoryPage() {
         try {
             const detail = await getConversation(id, ac.signal);
             setCurrent(detail);
-        } catch (e: any) {
-            if (e?.name !== "AbortError") setErr(e?.message || "Błąd");
+        } catch (e: unknown) {
+            if ((e as { name?: string } | null)?.name !== "AbortError") setErr(errorMessage(e) || "Błąd");
         } finally {
             setBusy(false);
         }
@@ -166,7 +167,7 @@ export default function HistoryPage() {
 
     useEffect(() => {
         if (user) loadList();
-    }, [user]);
+    }, [user, loadList]);
 
     // posprzątaj przy wyjściu z widoku
     useEffect(() => {

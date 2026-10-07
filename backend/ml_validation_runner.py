@@ -19,7 +19,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib
 
@@ -71,6 +71,9 @@ class _DummyState:
 
     xgb: XGBManager
     river: RiverManager
+    ensemble_T: float = 1.0  # temperatura fuzji z services/ensemble_calibration.py
+    ensemble_mode: str = "heuristic"  # sposób łączenia dobrany na zbiorze kalibracyjnym
+    ensemble_wx: float | None = None
 
 
 class MLValidationRunner:
@@ -82,7 +85,13 @@ class MLValidationRunner:
       - ładuje gotowe modele XGB + River + Ensemble,
       - liczy wszystkie metryki (Top-1, Top-3, bootstrap, ECE, baseline),
       - generuje artefakty W1–W6,
-      - sprawdza kryteria K1–K4 + warunek zaliczenia,
+      - sprawdza kryteria K1–K4 + warunek zaliczenia:
+          K1/K2: ensemble istotnie lepszy od najlepszego modelu w Top-1/Top-3 (dokładny test
+                 McNemara, p<0.05; porównanie sparowane na tych samych przypadkach),
+          K3: ensemble robi nie więcej błędów niż każdy z modeli,
+          K4: ECE ensemble nie gorsze niż najgorszy z modeli,
+          zaliczenie: co najmniej 2 z K1–K3 i brak istotnej regresji w żadnej klasie
+          (spadek >10 p.p., test McNemara w klasie z poprawką Holma),
       - zapisuje podsumowanie do JSON.
     """
 
@@ -152,11 +161,19 @@ class MLValidationRunner:
         river.train()  # przy istniejących artefaktach: load + ewentualna kalibracja
 
         st = _DummyState(xgb=xgb, river=river)
+        # ta sama temperatura ensemble co w backendzie (cache ml/ensemble_calibration.json)
+        try:
+            from services.ensemble_calibration import ensure_ensemble_calibration
+            ensure_ensemble_calibration(st)
+            logger.info(f"  • Ensemble: tryb={st.ensemble_mode}, waga XGB={st.ensemble_wx}, T_ens={st.ensemble_T:.4f}.")
+        except Exception as e:  # walidacja ma działać także bez kalibracji ensemble
+            logger.warning(f"  • Brak kalibracji ensemble (T_ens=1): {e}")
         ens = EnsembleTopK(st)
 
         self.xgb = xgb
         self.river = river
         self.ens = ens
+        self._state = st
 
         logger.info(f"  • Załadowano modele. Liczba cech XGB/River: {len(self.xgb.features)}.")
 
@@ -253,64 +270,50 @@ class MLValidationRunner:
     # ────────────────────── główny krok: predykcje ──────────────────────
 
     def _predict_all(self) -> Dict[str, Dict[str, np.ndarray] | List[List[str]]]:
+        """
+        Predykcje XGB, River i Ensemble dla całego zbioru testowego, liczone hurtem.
+
+        Używa dokładnie tych samych transformacji co backend (kalibratory XGB i River,
+        fuzja EnsembleTopK z temperaturą T_ens; zgodność sprawdzają testy regresji),
+        ale zamiast 3 wywołań na wiersz liczy całe macierze naraz: minuty zamiast godzin.
+        """
         assert self.df is not None and self.y_true is not None
         assert self.xgb is not None and self.river is not None and self.ens is not None
+        from services.ensemble_calibration import model_distributions_df, ensemble_distribution
 
-        df = self.df
-        y_true = self.y_true
         feats = self.xgb.features
         if not feats:
             raise RuntimeError("XGBManager.features jest puste – sprawdź trening.")
-        if any(f not in df.columns for f in feats):
-            missing = [f for f in feats if f not in df.columns]
+        missing = [f for f in feats if f not in self.df.columns]
+        if missing:
             raise RuntimeError(f"Zbiór testowy nie zawiera cech XGB: {missing[:5]}...")
 
-        X = df[feats].astype(np.uint8).to_numpy()
-        n = len(y_true)
-        logger.info(f"[3/7] Generowanie predykcji dla wszystkich próbek testowych (n={n}).")
+        logger.info(f"[3/7] Generowanie predykcji dla wszystkich próbek testowych (n={len(self.df)}).")
+        st = self._state
+        Px, Pr, y_idx, classes = model_distributions_df(st, self.df, "Walidacja")
+        Pe = ensemble_distribution(Px, Pr, self.ens, st)
+        cls = np.asarray(classes, dtype=object)
+        # model_distributions_df pomija wiersze z klasami nieznanymi modelowi: wyrównujemy etykiety
+        y_true = cls[y_idx]
+        if len(y_true) != len(self.y_true):
+            logger.warning(f"  • Pominięto {len(self.y_true) - len(y_true)} wierszy z klasami spoza modelu.")
+        self.y_true = y_true
+        self._y_idx = y_idx
+        self._probs = {"xgb": Px, "river": Pr, "ens": Pe}
 
-        preds_top3_xgb: List[List[str]] = []
-        preds_top3_river: List[List[str]] = []
-        preds_top3_ens: List[List[str]] = []
+        def top3(P: np.ndarray) -> Tuple[List[List[str]], np.ndarray]:
+            idx = np.argsort(-P, axis=1)[:, :3]
+            return [list(cls[r]) for r in idx], P[np.arange(len(P)), idx[:, 0]]
 
-        conf_xgb: List[float] = []
-        conf_river: List[float] = []
-        conf_ens: List[float] = []
+        preds_top3_xgb, conf_xgb = top3(Px)
+        preds_top3_river, conf_river = top3(Pr)
+        preds_top3_ens, conf_ens = top3(Pe)
 
-        # do examples.csv
         examples_rows: List[Dict[str, str]] = []
-
-        # logujemy progres co 5% danych, minimum co 100 rekordów
-        step = max(100, n // 20) if n > 0 else 1
-
-        for idx, (yt, row) in enumerate(zip(y_true, X)):
-            if idx % step == 0:
-                logger.info(f"  • Predykcje: {idx}/{n} ({idx / max(n, 1):.0%})")
-
-            vec = [[int(v) for v in row]]
-
-            # Używamy osobno modeli + ensemble, tak jak w backendzie
-            top_x = self.xgb.predict_topk(vec, k=3)
-            top_r = self.river.predict_topk(vec, k=3)
-            top_e = self.ens.predict_topk(vec, k=3)
-
-            lx = [d["diagnosis_en"] for d in top_x]
-            lr = [d["diagnosis_en"] for d in top_r]
-            le = [d["diagnosis_en"] for d in top_e]
-
-            preds_top3_xgb.append(lx)
-            preds_top3_river.append(lr)
-            preds_top3_ens.append(le)
-
-            conf_xgb.append(top_x[0]["probability"] if top_x else 0.0)
-            conf_river.append(top_r[0]["probability"] if top_r else 0.0)
-            conf_ens.append(top_e[0]["probability"] if top_e else 0.0)
-
-            # krótka adnotacja: kto „naprawił” kogo
+        for i in range(min(10, len(y_true))):
+            yt, lx, lr, le = y_true[i], preds_top3_xgb[i], preds_top3_river[i], preds_top3_ens[i]
+            ok_x, ok_r, ok_e = yt in lx[:1], yt in lr[:1], yt in le[:1]
             comment = ""
-            ok_x = yt in lx[:1]
-            ok_r = yt in lr[:1]
-            ok_e = yt in le[:1]
             if ok_e and (not ok_x or not ok_r):
                 comment = "Ensemble poprawił błąd modelu pojedynczego."
             elif ok_x and ok_r and not ok_e:
@@ -319,21 +322,10 @@ class MLValidationRunner:
                 comment = "Tylko XGB trafił Top-1."
             elif ok_r and not ok_x and not ok_e:
                 comment = "Tylko River trafił Top-1."
-
-            examples_rows.append(
-                {
-                    "test_id": str(idx),
-                    "true": yt,
-                    "xgb_top3": ", ".join(lx),
-                    "river_top3": ", ".join(lr),
-                    "ens_top3": ", ".join(le),
-                    "comment": comment,
-                }
-            )
-
+            examples_rows.append({"test_id": str(i), "true": yt, "xgb_top3": ", ".join(lx),
+                                  "river_top3": ", ".join(lr), "ens_top3": ", ".join(le), "comment": comment})
         logger.info("  • Predykcje zakończone, zapisywanie examples.csv (pierwsze 10 rekordów).")
-        ex_df = pd.DataFrame(examples_rows)
-        ex_df.head(10).to_csv(self.out_dir / "examples.csv", index=False)
+        pd.DataFrame(examples_rows).to_csv(self.out_dir / "examples.csv", index=False)
 
         return {
             "preds_top3_xgb": preds_top3_xgb,
@@ -359,7 +351,7 @@ class MLValidationRunner:
         if normalize_rows:
             with np.errstate(divide="ignore", invalid="ignore"):
                 row_sums = cm.sum(axis=1, keepdims=True)
-                m = np.divide(cm, row_sums, where=row_sums != 0)
+                m = np.divide(cm, row_sums, out=np.zeros_like(cm, dtype=float), where=row_sums != 0)
         else:
             m = cm
 
@@ -595,21 +587,21 @@ class MLValidationRunner:
         self.load_testset()
         assert self.df is not None and self.y_true is not None
 
-        # >>> TRYB SZYBKI – PRZYCIĘCIE DO 10k REKORDÓW <<<
-        max_n = 10_000
-        if len(self.df) > max_n:
-            logger.info(f"Tryb szybki: przycinam zbiór testowy z {len(self.df)} do {max_n} rekordów.")
-            self.df = self.df.head(max_n).reset_index(drop=True)
-            self.y_true = self.y_true[:max_n]
+        # Domyślnie cały zbiór testowy. VALIDATION_MAX_N pozwala na szybki przebieg
+        # na LOSOWEJ (stratyfikacja nie jest potrzebna przy dużym N) próbce z ustalonym ziarnem.
+        max_n = int(os.environ.get("VALIDATION_MAX_N", "0") or 0)
+        if max_n and len(self.df) > max_n:
+            logger.info(f"Tryb szybki: losowa próbka {max_n} z {len(self.df)} rekordów (seed=42).")
+            self.df = self.df.sample(n=max_n, random_state=42).reset_index(drop=True)
+            self.y_true = self.df["diseases"].astype(str).to_numpy()
 
         # 2) Modele
         self.load_models()
         assert self.xgb is not None and self.river is not None and self.ens is not None
 
-        y_true = self.y_true
-
         # 3) Predykcje dla każdego przykładu testowego
         preds = self._predict_all()
+        y_true = self.y_true
         preds_top3_xgb: List[List[str]] = preds["preds_top3_xgb"]  # type: ignore
         preds_top3_river: List[List[str]] = preds["preds_top3_river"]  # type: ignore
         preds_top3_ens: List[List[str]] = preds["preds_top3_ens"]  # type: ignore
@@ -903,13 +895,30 @@ class MLValidationRunner:
 
         # 10) Kryteria akceptacji K1–K4
         logger.info("[7/7] Sprawdzanie kryteriów akceptacji K1–K4 i regresji lokalnych.")
-        hi_best1 = max(metrics["xgb"]["top1_hi"], metrics["river"]["top1_hi"])
-        lo_ens1 = metrics["ens"]["top1_lo"]
-        K1 = bool(lo_ens1 > hi_best1)
+        # K1/K2: ensemble istotnie lepszy od NAJLEPSZEGO pojedynczego modelu. Oba modele oceniamy
+        # na tych samych przypadkach, więc porównanie jest sparowane: dokładny test McNemara
+        # (p < 0.05, dwustronny) + kierunek poprawy. Dawny warunek "przedziały ufności 95%
+        # się nie nakładają" jest zapisany informacyjnie (K1_ci / K2_ci); jest znany jako zbyt
+        # zachowawczy dla porównań na tych samych danych.
+        from scipy.stats import binomtest
 
-        hi_best3 = max(metrics["xgb"]["top3_hi"], metrics["river"]["top3_hi"])
-        lo_ens3 = metrics["ens"]["top3_lo"]
-        K2 = bool(lo_ens3 > hi_best3)
+        def _mcnemar(h_ens: np.ndarray, h_best: np.ndarray) -> Dict[str, float]:
+            e, bst = h_ens.astype(bool), h_best.astype(bool)
+            b = int((e & ~bst).sum())   # ensemble trafia, najlepszy model nie
+            c = int((~e & bst).sum())   # odwrotnie
+            p = float(binomtest(b, b + c, 0.5).pvalue) if b + c else 1.0
+            return {"ens_only": b, "best_only": c, "p_value": p}
+
+        best1 = "xgb" if metrics["xgb"]["top1"] >= metrics["river"]["top1"] else "river"
+        best3 = "xgb" if metrics["xgb"]["top3"] >= metrics["river"]["top3"] else "river"
+        h1 = {"xgb": hits_xgb_top1, "river": hits_river_top1}
+        h3 = {"xgb": hits_xgb_top3, "river": hits_river_top3}
+        mc1 = _mcnemar(hits_ens_top1, h1[best1])
+        mc3 = _mcnemar(hits_ens_top3, h3[best3])
+        K1 = bool(metrics["ens"]["top1"] > metrics[best1]["top1"] and mc1["p_value"] < 0.05)
+        K2 = bool(metrics["ens"]["top3"] > metrics[best3]["top3"] and mc3["p_value"] < 0.05)
+        K1_ci = bool(metrics["ens"]["top1_lo"] > max(metrics["xgb"]["top1_hi"], metrics["river"]["top1_hi"]))
+        K2_ci = bool(metrics["ens"]["top3_lo"] > max(metrics["xgb"]["top3_hi"], metrics["river"]["top3_hi"]))
 
         # błędy poza przekątną z globalnej macierzy (wszystkie klasy)
         off_xgb = int(cm_xgb_all.sum() - np.trace(cm_xgb_all))
@@ -919,16 +928,54 @@ class MLValidationRunner:
 
         K4 = bool(ece_ens <= max(ece_xgb, ece_river))
 
-        # Warunek lokalnej regresji >10 p.p.
+        # Regresja lokalna: klasa, w której ensemble traci >10 p.p. względem lepszego z dwóch
+        # modeli I ten spadek jest statystycznie istotny (jednostronny dokładny test McNemara
+        # w obrębie klasy, poprawka Holma na liczbę klas). Bez poprawki przy ~570 klasach
+        # przypadkowe "spadki" pojawiają się zawsze. Surowe spadki >10 p.p. są w summary.json.
         acc_xgb, _ = self._per_class_acc(y_true, y_pred_xgb)
         acc_river, _ = self._per_class_acc(y_true, y_pred_river)
-        bad_classes: List[Dict[str, float]] = []
-        for cls, acc_cls_ens in acc_ens.items():
-            best_single = max(acc_xgb.get(cls, 0.0), acc_river.get(cls, 0.0))
-            drop = best_single - acc_cls_ens
-            if drop > 0.10:
-                bad_classes.append({"class": cls, "drop": float(drop)})
+        hx_c, hr_c, he_c = (y_pred_xgb == y_true), (y_pred_river == y_true), (y_pred_ens == y_true)
+        cls_rows: List[Dict[str, Any]] = []
+        for cls in sorted(acc_ens):
+            m = y_true == cls
+            best_h = hx_c[m] if acc_xgb.get(cls, 0.0) >= acc_river.get(cls, 0.0) else hr_c[m]
+            drop = float(best_h.mean() - he_c[m].mean())
+            lose = int((~he_c[m] & best_h).sum())
+            gain = int((he_c[m] & ~best_h).sum())
+            p = float(binomtest(lose, lose + gain, 0.5, alternative="greater").pvalue) if lose + gain else 1.0
+            cls_rows.append({"class": cls, "n": int(m.sum()), "drop": drop, "p_value": p})
+        # poprawka Holma
+        order = sorted(range(len(cls_rows)), key=lambda i: cls_rows[i]["p_value"])
+        running = 0.0
+        for rank, i in enumerate(order):
+            running = max(running, (len(cls_rows) - rank) * cls_rows[i]["p_value"])
+            cls_rows[i]["p_holm"] = min(1.0, running)
+        bad_classes = [r for r in cls_rows if r["drop"] > 0.10 and r["p_holm"] < 0.05]
+        raw_drops = [r for r in cls_rows if r["drop"] > 0.10]
         no_local_regression = len(bad_classes) == 0
+
+        # Różnica ensemble - XGB (sparowany bootstrap na tych samych przypadkach)
+        def _paired_delta(h_a: np.ndarray, h_b: np.ndarray) -> Dict[str, float]:
+            rng = np.random.default_rng(42)
+            d = h_a - h_b
+            boots = np.array([d[rng.integers(0, len(d), len(d))].mean() for _ in range(self.n_bootstrap)])
+            lo, hi = np.quantile(boots, [0.025, 0.975])
+            return {"delta": float(d.mean()), "lo": float(lo), "hi": float(hi)}
+
+        paired = {
+            f"top1_ens_minus_{best1}": _paired_delta(hits_ens_top1, h1[best1]),
+            f"top3_ens_minus_{best3}": _paired_delta(hits_ens_top3, h3[best3]),
+        }
+
+        # Pełne metryki probabilistyczne na rozkładach (NLL, Brier)
+        prob_metrics: Dict[str, Dict[str, float]] = {}
+        yi = getattr(self, "_y_idx", None)
+        for name, P in (getattr(self, "_probs", None) or {}).items():
+            py = np.clip(P[np.arange(len(yi)), yi], 1e-12, 1.0)
+            prob_metrics[name] = {
+                "nll": float(-np.log(py).mean()),
+                "brier": float(((P ** 2).sum(1) - 2 * py + 1).mean()),
+            }
 
         satisfied_main = sum(1 for flag in (K1, K2, K3) if flag)
         passed = bool(satisfied_main >= 2 and no_local_regression)
@@ -959,6 +1006,8 @@ class MLValidationRunner:
                 "river": ece_river,
                 "ens": ece_ens,
             },
+            "probabilistic": prob_metrics,
+            "paired_bootstrap": paired,
             "off_diagonal_errors": {
                 "xgb": off_xgb,
                 "river": off_river,
@@ -967,11 +1016,16 @@ class MLValidationRunner:
             "criteria": {
                 "K1_top1_ensemble_better": K1,
                 "K2_top3_ensemble_better": K2,
+                "K1_mcnemar": {"vs": best1, **mc1},
+                "K2_mcnemar": {"vs": best3, **mc3},
+                "K1_ci_nonoverlap_info": K1_ci,
+                "K2_ci_nonoverlap_info": K2_ci,
                 "K3_offdiag_reduced": K3,
                 "K4_calibration_not_worse": K4,
                 "satisfied_main": satisfied_main,
                 "no_local_regression_gt_10pp": no_local_regression,
                 "bad_classes": bad_classes,
+                "raw_drops_gt_10pp": sorted(raw_drops, key=lambda r: r["p_value"])[:50],
                 "passed": passed,
             },
             "meta": {
@@ -1000,7 +1054,19 @@ class MLValidationRunner:
             print(
                 f"{name.upper():6s} Top-1={m['top1']:.3f} [{m['top1_lo']:.3f}, {m['top1_hi']:.3f}] "
                 f"Top-3={m['top3']:.3f} [{m['top3_lo']:.3f}, {m['top3_hi']:.3f}]"
+                + (f"  NLL={prob_metrics[name]['nll']:.4f} Brier={prob_metrics[name]['brier']:.4f}"
+                   if name in prob_metrics else "")
+                + f"  ECE={ {'xgb': ece_xgb, 'river': ece_river, 'ens': ece_ens}[name]:.4f}"
             )
+        for key, d in paired.items():
+            print(f"{key}: {d['delta']:+.4f} [{d['lo']:+.4f}, {d['hi']:+.4f}] (sparowany bootstrap 95%)")
+        print(f"K1: McNemar vs {best1.upper()}: ensemble lepszy w {mc1['ens_only']}, gorszy w {mc1['best_only']} przypadkach, p={mc1['p_value']:.4g}")
+        print(f"K2: McNemar vs {best3.upper()}: ensemble lepszy w {mc3['ens_only']}, gorszy w {mc3['best_only']} przypadkach, p={mc3['p_value']:.4g}")
+        print(f"(informacyjnie: nienakładające się przedziały ufności K1={K1_ci}, K2={K2_ci})")
+        print(
+            f"Klasy z istotnym spadkiem >10 p.p. (Holm, p<0.05): {len(bad_classes)}; "
+            f"surowe spadki >10 p.p. bez testu (informacyjnie): {len(raw_drops)}"
+        )
         print(
             f"K1={K1}, K2={K2}, K3={K3}, K4={K4}, "
             f"main_satisfied={satisfied_main}, no_local_regression={no_local_regression}"
@@ -1020,7 +1086,7 @@ if __name__ == "__main__":
             format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
         )
         runner = MLValidationRunner(
-            n_bootstrap=200,  # na czas testów; do finalnej walidacji możesz dać 1000
+            n_bootstrap=1000,  # predykcje liczone hurtem, więc pełny bootstrap jest tani
             out_dir="reports/ml_validation",
         )
         ok = runner.run()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import threading
 import json
 import time
 import joblib
@@ -19,8 +20,10 @@ from skopt.space import Real, Integer
 from config import (
     MODEL_PATH, LE_PATH, BEST_PARAMS_PATH, DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     XGB_N_ITER_BAYES, XGB_CV_SPLITS, XGB_RANDOM_STATE,
-    XGB_USE_GPU, XGB_TREE_METHOD, XGB_CALIBRATE, XGB_CALIBRATION_METHOD,
+    XGB_USE_GPU, XGB_TREE_METHOD, XGB_CALIBRATE, XGB_CALIBRATION_CSV,
+    rel_to_backend,
 )
+from utils import Progress, calibration_metrics, fmt_duration, update_training_report, log_metrics_table
 
 # Dodatkowe flagi inference (bezpieczne defaulty gdy brak w config.py)
 try:
@@ -60,6 +63,7 @@ if not logging.getLogger().handlers:
 FEATURES_PATH = os.path.join(os.path.dirname(MODEL_PATH), "features.json")
 TRAIN_PARAMS_PATH = os.path.splitext(MODEL_PATH)[0] + ".train_params.json"   # parametry bazowego treningu
 CALIB_PATH = os.path.splitext(MODEL_PATH)[0] + ".calibration.joblib"        # kalibrator temperatury
+META_PATH = os.path.splitext(MODEL_PATH)[0] + ".meta.json"                   # na jakich danych trenowano
 
 # kolumny specjalne, które NIGDY nie mogą być cechami
 SPECIAL_COLS = {"diseases", "xgb_label", "weight"}
@@ -239,20 +243,56 @@ class _BoosterProgress(xgb.callback.TrainingCallback):
 
     def before_training(self, model):
         self.start = time.time()
+        self.last_t = 0.0
         log.info("[XGB][%s] BOOSTING START (total_rounds=%d)", self.label, self.total)
         return model
 
     def after_iteration(self, model, epoch: int, evals_log):
         done = epoch + 1  # epoch startuje od 0
         pct = int(done / self.total * 100)
-        if pct // self.step > self.last_logged:
-            elapsed = time.time() - self.start
+        now = time.time()
+        last_round = done >= self.total
+        # co step_pct% rund, ale nie częściej niż co 5 s (poza ostatnią rundą)
+        if pct // self.step > self.last_logged and (last_round or now - self.last_t >= 5.0):
+            self.last_t = now
+            elapsed = now - self.start
             rate = done / elapsed if elapsed > 0 else 0.0
             eta = (self.total - done) / rate if rate > 0 else float("inf")
-            log.info("[XGB][%s] %d%% (%d/%d) elapsed=%.1fs ETA=%.1fs",
-                     self.label, pct, done, self.total, elapsed, eta)
+            log.info("[XGB][%s] %d%% (%d/%d rund) | minęło %s | zostało ~%s",
+                     self.label, pct, done, self.total, fmt_duration(elapsed), fmt_duration(eta))
             self.last_logged = pct // self.step
         return False  # kontynuuj
+
+
+class _CVProgress(xgb.callback.TrainingCallback):
+    """Postęp jednej próby strojenia (xgb.cv): runda, bieżący mlogloss, czas i ETA do limitu rund."""
+    def __init__(self, label: str, max_rounds: int, every_s: float = 20.0):
+        self.label = label
+        self.max_rounds = max(int(max_rounds), 1)
+        self.every_s = every_s
+        self.start = 0.0
+        self.last = 0.0
+
+    def before_training(self, model):
+        self.start = self.last = time.time()
+        return model
+
+    def after_iteration(self, model, epoch: int, evals_log):
+        now = time.time()
+        if now - self.last >= self.every_s:
+            self.last = now
+            done = epoch + 1
+            elapsed = now - self.start
+            eta = (self.max_rounds - done) * elapsed / max(done, 1)
+            try:
+                loss = float(evals_log["test"]["mlogloss"][-1][0] if isinstance(evals_log["test"]["mlogloss"][-1], tuple)
+                             else evals_log["test"]["mlogloss"][-1])
+            except Exception:
+                loss = float("nan")
+            log.info("[XGB][%s] runda %d/%d | test mlogloss=%.4f | minęło %s | do limitu rund ~%s "
+                     "(early stopping zwykle kończy wcześniej)",
+                     self.label, done, self.max_rounds, loss, fmt_duration(elapsed), fmt_duration(eta))
+        return False
 
 
 # ───────────────────────── Param helpers ─────────────────────────
@@ -304,6 +344,8 @@ def _to_train_params(params: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, 
 def _save_train_params(params: Dict[str, Any]) -> None:
     safe = {}
     for k, v in (params or {}).items():
+        if isinstance(v, np.generic):  # skopt zwraca np.int64 / np.float64 (np. max_depth)
+            v = v.item()
         if isinstance(v, (int, float, str, bool)) or v is None:
             safe[k] = v
     os.makedirs(os.path.dirname(TRAIN_PARAMS_PATH), exist_ok=True)
@@ -392,6 +434,7 @@ def _tune_xgb_bayes(df_full: pd.DataFrame) -> Dict[str, Any]:
             verbose_eval=False,
             as_pandas=True,
             early_stopping_rounds=EARLY_STOP_ROUNDS,
+            callbacks=[_CVProgress(f"Bayes {i}/{n_iter}", num_boost_round)],
         )
         loss = float(cvres["test-mlogloss-mean"].iloc[-1])
         used_rounds = int(cvres.shape[0])
@@ -411,8 +454,8 @@ def _tune_xgb_bayes(df_full: pd.DataFrame) -> Dict[str, Any]:
         if best_params:
             for k in ["max_depth", "learning_rate", "n_estimators", "subsample", "colsample_bytree"]:
                 slim[k] = best_params.get(k)
-        log.info("[XGB][Bayes] %d%% (%d/%d) loss=%.5f best=%.5f used_rounds=%d params=%s elapsed=%.1fs ETA=%.1fs",
-                 pct, i, n_iter, loss, best_loss, used_rounds, slim, elapsed, eta)
+        log.info("[XGB][Bayes] %d%% (%d/%d) loss=%.5f best=%.5f used_rounds=%d params=%s | minęło %s | zostało ~%s",
+                 pct, i, n_iter, loss, best_loss, used_rounds, slim, fmt_duration(elapsed), fmt_duration(eta))
 
     log.info("[XGB][Bayes] DONE best_loss=%.5f best_params=%s", best_loss, best_params)
     os.makedirs(os.path.dirname(BEST_PARAMS_PATH), exist_ok=True)
@@ -429,46 +472,74 @@ def _softmax(z: np.ndarray) -> np.ndarray:
 
 
 class TemperatureCalibrator:
-    """Prosty multi-class temperature scaling na marginach XGBoost (pre-softmax)."""
-    def __init__(self, T: float = 1.0):
-        self.T: float = float(T)
+    """
+    Kalibracja marginów XGBoost (pre-softmax):
 
-    def _nll(self, margins: np.ndarray, y: np.ndarray, w: Optional[np.ndarray]) -> float:
-        p = _softmax(margins / self.T)
-        N = p.shape[0]
-        rows = np.arange(N)
-        ps = np.clip(p[rows, y], 1e-12, 1.0)
+        p = softmax((margins - log_w) / T)
+
+    - log_w: korekta priorytetu klas. Trening z wagami klas w_c działa jak trening na
+      danych, w których klasa c jest w_c razy częstsza, więc model zawyża rzadkie klasy.
+      Odjęcie log(w_c) przywraca naturalne proporcje (bez parametrów do uczenia).
+    - T: temperatura dobrana na odłożonym zbiorze kalibracyjnym (minimum NLL).
+    Korektę stosujemy tylko wtedy, gdy na zbiorze kalibracyjnym faktycznie obniża NLL.
+    """
+    def __init__(self, T: float = 1.0, log_w: Optional[np.ndarray] = None):
+        self.T: float = float(T)
+        self.log_w: Optional[np.ndarray] = None if log_w is None else np.asarray(log_w, dtype=np.float64)
+        self.metrics_: Dict[str, Any] = {}
+
+    def _adj(self, margins: np.ndarray, log_w: Optional[np.ndarray]) -> np.ndarray:
+        return margins if log_w is None else margins - log_w[None, :]
+
+    @staticmethod
+    def _nll_T(margins: np.ndarray, y: np.ndarray, w: Optional[np.ndarray], T: float) -> float:
+        p = _softmax(margins / T)
+        ps = np.clip(p[np.arange(p.shape[0]), y], 1e-12, 1.0)
         if w is None:
             return float(-np.mean(np.log(ps)))
         w = w.astype(np.float64)
         return float(-(w * np.log(ps)).sum() / np.sum(w))
 
-    def fit(self, margins: np.ndarray, y: np.ndarray, w: Optional[np.ndarray] = None) -> None:
-        grid = np.linspace(-2.0, 2.0, 41)  # T w ~[0.135, 7.39]
+    @classmethod
+    def _best_T(cls, margins: np.ndarray, y: np.ndarray, w: Optional[np.ndarray]) -> Tuple[float, float]:
         best_T, best_loss = 1.0, float("inf")
-        for g in grid:
-            self.T = float(np.exp(g))
-            loss = self._nll(margins, y, w)
+        for g in np.linspace(-2.5, 2.5, 51):
+            T = float(np.exp(g))
+            loss = cls._nll_T(margins, y, w, T)
             if loss < best_loss:
-                best_loss = loss
-                best_T = self.T
-        for factor in [0.85, 0.9, 0.95, 1.05, 1.10, 1.15]:
-            T_try = best_T * factor
-            self.T = float(T_try)
-            loss = self._nll(margins, y, w)
+                best_loss, best_T = loss, T
+        for factor in (0.9, 0.95, 0.97, 1.03, 1.05, 1.1):
+            T = best_T * factor
+            loss = cls._nll_T(margins, y, w, T)
             if loss < best_loss:
-                best_loss = loss
-                best_T = self.T
-        self.T = float(best_T)
+                best_loss, best_T = loss, T
+        return best_T, best_loss
+
+    def fit(self, margins: np.ndarray, y: np.ndarray, w: Optional[np.ndarray] = None,
+            log_w: Optional[np.ndarray] = None) -> None:
+        T0, loss0 = self._best_T(margins, y, w)
+        self.T, self.log_w = T0, None
+        if log_w is not None:
+            T1, loss1 = self._best_T(self._adj(margins, log_w), y, w)
+            log.info("[XGB][Cal] NLL: sama temperatura=%.4f (T=%.3f) | z korektą wag klas=%.4f (T=%.3f)",
+                     loss0, T0, loss1, T1)
+            if loss1 < loss0:
+                self.T, self.log_w = T1, np.asarray(log_w, dtype=np.float64)
 
     def transform(self, margins: np.ndarray) -> np.ndarray:
-        return _softmax(margins / self.T)
+        return _softmax(self._adj(margins, self.log_w) / self.T)
 
 
 def _save_calibrator(cal: TemperatureCalibrator) -> None:
     try:
-        joblib.dump({"T": float(cal.T)}, CALIB_PATH)
-        log.info("[XGB][Cal] Zapisano kalibrator (T=%.5f) -> %s", cal.T, CALIB_PATH)
+        joblib.dump({
+            "T": float(cal.T),
+            "log_w": None if cal.log_w is None else cal.log_w.astype(np.float64).tolist(),
+            "metrics": cal.metrics_,
+            "version": 2,
+        }, CALIB_PATH)
+        log.info("[XGB][Cal] Zapisano kalibrator (T=%.4f, korekta wag=%s) -> %s",
+                 cal.T, cal.log_w is not None, CALIB_PATH)
     except Exception as e:
         log.warning("[XGB][Cal] Nie udało się zapisać kalibratora: %s", e)
 
@@ -478,9 +549,11 @@ def _load_calibrator() -> Optional[TemperatureCalibrator]:
         return None
     try:
         payload = joblib.load(CALIB_PATH)
-        T = float(payload.get("T", 1.0))
-        cal = TemperatureCalibrator(T=T)
-        log.info("[XGB][Cal] Załadowano kalibrator (T=%.5f).", cal.T)
+        log_w = payload.get("log_w")
+        cal = TemperatureCalibrator(T=float(payload.get("T", 1.0)),
+                                    log_w=None if log_w is None else np.asarray(log_w, dtype=np.float64))
+        cal.metrics_ = dict(payload.get("metrics") or {})
+        log.info("[XGB][Cal] Załadowano kalibrator (T=%.4f, korekta wag=%s).", cal.T, cal.log_w is not None)
         return cal
     except Exception as e:
         log.warning("[XGB][Cal] Nie udało się wczytać kalibratora: %s", e)
@@ -567,6 +640,80 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
     return None
 
 
+def _calibration_csv_available() -> bool:
+    """Zbiór kalibracyjny musi istnieć i być rozłączny z DATA_CSV (inny plik)."""
+    if not XGB_CALIBRATION_CSV or not os.path.exists(XGB_CALIBRATION_CSV):
+        return False
+    try:
+        if os.path.samefile(XGB_CALIBRATION_CSV, DATA_CSV):
+            return False
+    except OSError:
+        pass
+    return True
+
+
+def _load_calibration_frame(
+    le: LabelEncoder, features: List[str]
+) -> Optional[Tuple[pd.DataFrame, np.ndarray, Optional[np.ndarray]]]:
+    """Wczytuje odłożony zbiór kalibracyjny (np. data/calibration.csv) -> (X, y_enc, w)."""
+    if not _calibration_csv_available():
+        return None
+    df = pd.read_csv(XGB_CALIBRATION_CSV)
+    df.columns = [str(c).strip().lower().lstrip("\ufeff") for c in df.columns]
+    if "diseases" not in df.columns:
+        log.warning("[XGB][Cal] %s bez kolumny 'diseases' - pomijam.", XGB_CALIBRATION_CSV)
+        return None
+    for c in features:
+        if c not in df.columns:
+            df[c] = 0
+    df = df[df["diseases"].isin(set(le.classes_.tolist()))]
+    if df.empty:
+        return None
+    X = df[features].astype(np.uint8)
+    y = le.transform(df["diseases"])
+    w = df["weight"].astype(float).to_numpy() if "weight" in df.columns else None
+    return X, y, w
+
+
+def _class_log_weights(df: pd.DataFrame, le: LabelEncoder) -> Optional[np.ndarray]:
+    """log(waga klasy) w kolejności LabelEncodera; None, gdy dane nie mają wag klas."""
+    if "weight" not in df.columns:
+        return None
+    w = df.groupby("diseases")["weight"].first().reindex(le.classes_).astype(float)
+    if w.isna().any() or np.allclose(w.to_numpy(), 1.0):
+        return None
+    return np.log(np.clip(w.to_numpy(dtype=np.float64), 1e-6, None))
+
+
+def _save_meta(calibration_source: str) -> None:
+    try:
+        with open(META_PATH, "w", encoding="utf-8") as f:
+            json.dump(
+                {"data_csv": rel_to_backend(DATA_CSV), "calibration": calibration_source},
+                f, ensure_ascii=False, indent=2,
+            )
+    except Exception as e:
+        log.warning("[XGB] Nie zapisano metadanych modelu: %s", e)
+
+
+def _warn_if_trained_on_other_data(has_calibrator: bool) -> None:
+    try:
+        with open(META_PATH, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+        trained_on = str(meta.get("data_csv") or "")
+    except Exception:
+        trained_on = ""
+    if trained_on != rel_to_backend(DATA_CSV):
+        log.warning(
+            "[XGB] Model nie ma metadanych albo był trenowany na innym zbiorze (%s) niż DATA_CSV=%s. "
+            "Starsze wersje kalibrowały temperaturę na danych treningowych, więc prawdopodobieństwa "
+            "mogą być zawyżone%s. Usuń %s, %s i %s, aby przetrenować model.",
+            trained_on or "brak informacji", DATA_CSV,
+            "" if has_calibrator else " (kalibrator nieobecny)",
+            MODEL_PATH, LE_PATH, CALIB_PATH,
+        )
+
+
 # ───────────────────────── Manager ─────────────────────────
 class XGBManager:
     def __init__(self):
@@ -583,6 +730,8 @@ class XGBManager:
         # cache konfiguracji inferencji + warmup flaga
         self._infer_cfg_cache: Optional[tuple[str, int]] = None  # (device, nthread)
         self._warmed: bool = False
+        # /chat działa w puli wątków: predykcja + cache muszą być atomowe
+        self._lock = threading.Lock()
 
     # ───────────────────────── helpers ─────────────────────────
     def _final_params(self, best: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, Any], int]:
@@ -641,7 +790,7 @@ class XGBManager:
     ) -> np.ndarray:
         """
         Zwraca marginesy (pre-softmax) dla 1 lub wielu próbek.
-        Używa inplace_predict z output_margin=True, a jeśli dana wersja XGBoost
+        Używa inplace_predict(predict_type="margin"), a jeśli dana wersja XGBoost
         tego nie wspiera → fallback do DMatrix.predict(output_margin=True).
         """
         if self.model is None:
@@ -672,17 +821,17 @@ class XGBManager:
             if it_end > 0:
                 kwargs["iteration_range"] = (0, it_end)
 
-            # tu część wersji XGBoost rzuca TypeError → wyłapujemy
-            kwargs["output_margin"] = True
+            # XGBoost >= 1.x: predict_type="margin" (output_margin istnieje tylko w predict())
+            kwargs["predict_type"] = "margin"
 
             margins = self.model.inplace_predict(arr, **kwargs)
             margins = np.asarray(margins, dtype=np.float32).reshape(n_rows, -1)
             return margins
 
         except TypeError:
-            # ta wersja XGBoost nie zna output_margin w inplace_predict → przechodzimy na DMatrix
+            # ta wersja XGBoost nie zna predict_type w inplace_predict → przechodzimy na DMatrix
             log.info(
-                "[XGB][Predict] inplace_predict(output_margin=True) niewspierane – "
+                "[XGB][Predict] inplace_predict(predict_type=margin) niewspierane - "
                 "fallback do DMatrix.predict(output_margin=True)."
             )
         except Exception:
@@ -705,6 +854,35 @@ class XGBManager:
 
         margins = np.asarray(margins, dtype=np.float32).reshape(n_rows, -1)
         return margins
+
+    def _predict_margins_batch(self, X: np.ndarray, label: str, chunk: int = 4096) -> np.ndarray:
+        """
+        Marginy dla wielu wierszy (kalibracja, test): na czas predykcji wsadowej używamy
+        GPU albo wszystkich rdzeni (predykcja czatu działa na 1 wątku), z postępem i ETA.
+        """
+        if self.model is None:
+            raise RuntimeError("Model niegotowy.")
+        try:
+            it_end = int(self.model.num_boosted_rounds())
+        except Exception:
+            it_end = 0
+        dev = "cuda" if bool(XGB_USE_GPU) else "cpu"
+        try:
+            self.model.set_param({"device": dev, "nthread": int(os.cpu_count() or 1)})
+        except Exception:
+            pass
+        self._infer_cfg_cache = None
+        X = np.asarray(X, dtype=np.float32)
+        parts: List[np.ndarray] = []
+        prog = Progress(label, len(X), log, unit="wierszy")
+        try:
+            for start in range(0, len(X), chunk):
+                parts.append(self._predict_margins_cpu(X[start:start + chunk], iteration_end=it_end))
+                prog.update(min(start + chunk, len(X)))
+        finally:
+            prog.finish()
+            self._set_inference_device()  # z powrotem konfiguracja do pojedynczych zapytań
+        return np.vstack(parts) if parts else np.zeros((0, 0), dtype=np.float32)
 
     def warmup(self) -> None:
         """Szybki warm-up, by skrócić czas pierwszej odpowiedzi (wykonaj raz)."""
@@ -752,7 +930,7 @@ class XGBManager:
                 if isinstance(loaded, xgb.Booster):
                     self.model = loaded
                 else:
-                    # opcja alternatywna — ścieżka do JSON
+                    # opcja alternatywna - ścieżka do JSON
                     if isinstance(loaded, str) and os.path.exists(loaded):
                         booster = xgb.Booster()
                         booster.load_model(loaded)
@@ -768,6 +946,7 @@ class XGBManager:
                 self.le = joblib.load(LE_PATH)
                 self.features = _recover_features(self.model)
                 self.calibrator = _load_calibrator()
+                _warn_if_trained_on_other_data(self.calibrator is not None)
                 log.info("[XGB] Załadowano istniejący model (Booster).")
             except Exception as e:
                 log.warning("[XGB] Nie udało się wczytać modelu: %s. Trenuję od nowa.", e)
@@ -800,8 +979,42 @@ class XGBManager:
             log.info("[XGB] Final train_params: %s | num_boost_round=%d", train_params, num_rounds)
             _save_train_params(train_params)
 
+            # Kalibracja temperatury MUSI odbywać się na danych, których booster nie widział.
+            # 1) preferowany: odłożony plik (XGB_CALIBRATION_CSV, domyślnie data/calibration.csv),
+            # 2) awaryjnie: stratyfikowany hold-out wycięty z TRAIN przed treningiem.
+            X_tr, y_tr, w_tr = X_full, y_full_enc, w_full
+            cal_holdout: Optional[Tuple[Any, np.ndarray, Optional[np.ndarray]]] = None
+            cal_source = "none"
+            if bool(XGB_CALIBRATE):
+                try:
+                    cal_holdout = _load_calibration_frame(le_full, list(features))
+                    if cal_holdout is not None:
+                        cal_source = rel_to_backend(XGB_CALIBRATION_CSV)
+                except Exception as e:
+                    log.warning("[XGB][Cal] Nie udało się wczytać zbioru kalibracyjnego: %s", e)
+                    cal_holdout = None
+                if cal_holdout is None:
+                    try:
+                        min_class = int(pd.Series(y_full_enc).value_counts().min())
+                        n_splits = max(2, min(10, min_class))
+                        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=XGB_RANDOM_STATE)
+                        tr_idx, va_idx = next(skf.split(X_full, y_full_enc))
+                        cal_holdout = (
+                            X_full.iloc[va_idx],
+                            y_full_enc[va_idx],
+                            w_full[va_idx] if w_full is not None else None,
+                        )
+                        X_tr = X_full.iloc[tr_idx]
+                        y_tr = y_full_enc[tr_idx]
+                        w_tr = w_full[tr_idx] if w_full is not None else None
+                        cal_source = "holdout_from_train"
+                        log.info("[XGB][Cal] Brak osobnego zbioru - odkładam hold-out (N=%d) przed treningiem.", len(va_idx))
+                    except Exception as e:
+                        log.warning("[XGB][Cal] Nie da się wydzielić hold-outu (%s) - bez kalibracji.", e)
+                        cal_holdout = None
+
             # finalny trening (z wagami, GPU jeśli włączone)
-            dtrain = _make_dmatrix(X_full, y_full_enc, for_gpu=bool(XGB_USE_GPU), weight=w_full)
+            dtrain = _make_dmatrix(X_tr, y_tr, for_gpu=bool(XGB_USE_GPU), weight=w_tr)
             booster_progress = _BoosterProgress(total_rounds=num_rounds, label="Train", step_pct=1)
             dev = train_params.get("device", "cpu")
             tm = train_params.get("tree_method", None)
@@ -828,33 +1041,37 @@ class XGBManager:
             self.features = list(features)
             _save_artifacts(booster, le_full, self.features)
 
-            # opcjonalna kalibracja (na wydzielonej walidacji)
+            # kalibracja na danych NIEWIDZIANYCH przy treningu
             self.calibrator = None
-            if bool(XGB_CALIBRATE):
+            if bool(XGB_CALIBRATE) and cal_holdout is not None:
                 try:
-                    min_class = int(pd.Series(y_full_enc).value_counts().min())
-                    n_splits = max(2, min(10, min_class))
-                    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=XGB_RANDOM_STATE)
-                    _, va_idx = next(skf.split(X_full, y_full_enc))
-                    X_va = X_full.iloc[va_idx]
-                    y_va = y_full_enc[va_idx]
-                    w_va = w_full[va_idx] if w_full is not None else None
-
-                    # marginy → kalibrator temperatury
-                    self._set_inference_device()
-                    try:
-                        best_iter = getattr(self.model, "best_iteration", None)
-                        it_end = int(best_iter) if isinstance(best_iter, (int, np.integer)) and best_iter > 0 \
-                            else int(self.model.num_boosted_rounds())
-                    except Exception:
-                        it_end = 0
-                    margins = self._predict_margins_cpu(X_va.to_numpy(dtype=np.float32, copy=False), it_end)
+                    X_va, y_va, w_va = cal_holdout
+                    margins = self._predict_margins_batch(
+                        X_va.to_numpy(dtype=np.float32, copy=False), "XGB/kalibracja (predykcja)")
+                    log_w = _class_log_weights(df_full, le_full)
                     cal = TemperatureCalibrator()
-                    cal.fit(margins, y_va, w=w_va)
+                    cal.fit(margins, y_va, w=w_va, log_w=log_w)
+                    cal.metrics_ = {
+                        "calibration_set_raw": calibration_metrics(_softmax(margins), y_va),
+                        "calibration_set_calibrated": calibration_metrics(cal.transform(margins), y_va),
+                        "source": cal_source,
+                    }
                     self.calibrator = cal
                     _save_calibrator(cal)
+                    log.info("[XGB][Cal] T=%.4f, korekta wag klas=%s (źródło: %s, N=%d)",
+                             cal.T, cal.log_w is not None, cal_source, len(y_va))
+                    log.info("[XGB][Cal] zbiór kalibracyjny: przed %s | po %s",
+                             cal.metrics_["calibration_set_raw"], cal.metrics_["calibration_set_calibrated"])
                 except Exception as e:
                     log.warning("[XGB][Cal] Kalibracja nieudana: %s", e)
+            if self.calibrator is None:
+                cal_source = "none"
+                try:
+                    if os.path.exists(CALIB_PATH):
+                        os.remove(CALIB_PATH)  # stary kalibrator nie pasuje do nowego modelu
+                except Exception:
+                    pass
+            _save_meta(cal_source)
 
             did_train = True  # NEW: świeżo trenowaliśmy
 
@@ -864,43 +1081,33 @@ class XGBManager:
         self._prepare_vector_template()
         self.warmup()
 
-        # 4) Ewaluacja na TEST — tylko po nowym treningu
-        if did_train:  # NEW
+        # 4) Ewaluacja na TEST - tylko po nowym treningu
+        if did_train:
             try:
-                if self.model is not None and self.le is not None and self.features:
-                    te = _maybe_load_test(self.le, self.features)
-                    if te is not None:
-                        Xte, yte_enc = te
-                        try:
-                            best_iter = getattr(self.model, "best_iteration", None)
-                            it_end = int(best_iter) if isinstance(best_iter, (int, np.integer)) and best_iter > 0 \
-                                else int(self.model.num_boosted_rounds())
-                        except Exception:
-                            it_end = 0
-
-                        Xarr = Xte.to_numpy(dtype=np.float32, copy=False)
-                        margins = self._predict_margins_cpu(Xarr, iteration_end=it_end)
-                        proba = (self.calibrator.transform(margins)
-                                 if self.calibrator is not None else _softmax(margins))
-
-                        pred_enc = np.argmax(proba, axis=1)
-                        with warnings.catch_warnings():
-                            warnings.filterwarnings(
-                                "ignore",
-                                message="The number of unique classes is greater than 50% of the number of samples",
-                            )
-                            acc = accuracy_score(yte_enc, pred_enc)
-                            f1m = f1_score(yte_enc, pred_enc, average="macro")
-                            try:
-                                ll = log_loss(yte_enc, proba, labels=list(range(proba.shape[1])))
-                            except Exception:
-                                ll = float("nan")
-                        log.info("[XGB][TEST] acc=%.4f  f1_macro=%.4f  logloss=%.4f  (N=%d)  calibrated=%s",
-                                 acc, f1m, ll, len(yte_enc), bool(self.calibrator))
+                rep_ = self.evaluate_test()
+                if rep_:
+                    update_training_report("xgb", rep_)
             except Exception as e:
                 log.warning("[XGB] Błąd ewaluacji testu: %s", e)
         else:
-            log.info("[XGB] Pomijam ewaluację TEST — model został tylko wczytany (brak świeżego treningu).")  # NEW
+            log.info("[XGB] Pomijam ewaluację TEST - model został tylko wczytany (brak świeżego treningu).")
+
+    def evaluate_test(self) -> Dict[str, Any]:
+        """Trafność i kalibracja na zbiorze testowym: surowy softmax vs po kalibracji."""
+        if self.model is None or self.le is None or not self.features:
+            return {}
+        te = _maybe_load_test(self.le, self.features)
+        if te is None:
+            return {}
+        Xte, yte_enc = te
+        margins = self._predict_margins_batch(Xte.to_numpy(dtype=np.float32, copy=False), "XGB/test (predykcja)")
+        out: Dict[str, Any] = {"test_raw": calibration_metrics(_softmax(margins), yte_enc)}
+        if self.calibrator is not None:
+            out["test_calibrated"] = calibration_metrics(self.calibrator.transform(margins), yte_enc)
+            out["calibrator"] = {"T": round(float(self.calibrator.T), 4),
+                                 "class_weight_correction": self.calibrator.log_w is not None}
+        log_metrics_table(log, "XGB / TEST", out)
+        return out
 
     # ─────────────────────────── API: incremental ───────────────────────────
     def train_incremental(
@@ -1066,7 +1273,10 @@ class XGBManager:
         """
         if self.model is None or self.le is None or not self.features:
             raise RuntimeError("Model/encoder/features niegotowe.")
+        with self._lock:
+            return self._predict_topk_locked(x, k)
 
+    def _predict_topk_locked(self, x: Any, k: int = 3) -> List[Dict[str, Any]]:
         self._set_inference_device()
         t0 = time.perf_counter()
 
@@ -1081,7 +1291,7 @@ class XGBManager:
         # mini-cache: najczęstszy przypadek: ten sam wektor i to samo K
         vt = tuple(float(v) for v in arr[0].tolist())
         if self._last_pred_key == (vt, int(k)) and self._last_pred_val is not None:
-            return self._last_pred_val
+            return [dict(d) for d in self._last_pred_val]
 
         # --- ustalenie liczby rund, jak wcześniej ---
         try:
@@ -1116,7 +1326,7 @@ class XGBManager:
 
         # cache
         self._last_pred_key = (vt, int(k))
-        self._last_pred_val = res
+        self._last_pred_val = [dict(d) for d in res]
 
         rounds_used = self._limit_iteration_end(it_end)
         log.info(

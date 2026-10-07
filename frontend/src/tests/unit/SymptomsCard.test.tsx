@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 
 import { SymptomsCard, TopDiagCard } from "@/components/SidePanel";
 import * as api from "@/lib/api";
+import type { SymptomsPatchResponse, TopDiagnosis } from "@/lib/types";
 
 describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
     const user = userEvent.setup();
@@ -20,7 +21,7 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
      */
     function SymptomsHarness() {
         const [symptoms, setSymptoms] = useState<string[]>([]);
-        const [top, setTop] = useState<any[] | null>(null);
+        const [top, setTop] = useState<TopDiagnosis[] | null>(null);
 
         return (
             <div>
@@ -28,7 +29,7 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
                     sessionId="test-session"
                     symptoms={symptoms}
                     lang="pl"
-                    onPatched={(res: any) => {
+                    onPatched={(res: SymptomsPatchResponse) => {
                         setSymptoms(res.symptoms ?? []);
                         setTop(res.top_diagnoses ?? null);
                     }}
@@ -42,20 +43,20 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
 
     it("po wpisaniu 'kaszel' pokazuje wynik PL/EN, wywołuje PATCH i aktualizuje listę oraz Top-3", async () => {
         // 1) Słownik objawów (kaszel -> cough)
-        vi.spyOn(api, "listSymptomsDict" as any).mockResolvedValue([
+        vi.spyOn(api, "listSymptomsDict").mockResolvedValue([
             { en: "cough", pl: "kaszel", category: "oddechowe" },
             { en: "sore_throat", pl: "ból gardła", category: "oddechowe" },
         ]);
 
         // 2) PATCH /sessions/{id}/symptoms
         const patchSpy = vi
-            .spyOn(api, "patchSessionSymptoms" as any)
+            .spyOn(api, "patchSessionSymptoms")
             .mockResolvedValue({
                 symptoms: ["cough", "sore_throat"],
                 top_diagnoses: [
-                    { diagnosis_pl: "Przeziębienie", probability: 0.7 },
-                    { diagnosis_pl: "Grypa", probability: 0.2 },
-                    { diagnosis_pl: "COVID-19", probability: 0.1 },
+                    { diagnosis_en: "common_cold", diagnosis_pl: "Przeziębienie", probability: 0.7 },
+                    { diagnosis_en: "flu", diagnosis_pl: "Grypa", probability: 0.2 },
+                    { diagnosis_en: "covid_19", diagnosis_pl: "COVID-19", probability: 0.1 },
                 ],
             });
 
@@ -78,10 +79,10 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
             expect(patchSpy).toHaveBeenCalledTimes(1);
         });
 
-        expect(patchSpy).toHaveBeenCalledWith("test-session", {
-            add: ["cough"],
-            lang: "pl",
-        });
+        expect(patchSpy).toHaveBeenCalledWith(
+            "test-session",
+            expect.objectContaining({ add: ["cough"], lang: "pl" })
+        );
 
         // UI (harness) dostał nowe objawy + Top-3
         await waitFor(() => {
