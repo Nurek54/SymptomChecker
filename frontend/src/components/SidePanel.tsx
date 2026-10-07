@@ -421,21 +421,21 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
             />
             <div className="relative z-[1] rounded-t-2xl border-b border-base bg-card/95 backdrop-blur">
               <div className="flex items-center gap-2 px-3 py-2">
-                <Search className="h-4 w-4 opacity-70" />
+                <Search className="h-4 w-4 shrink-0 opacity-70" />
                 <input
                   ref={inputRef}
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setActiveIdx(-1); }}
                   onKeyDown={onSearchKeyDown}
                   placeholder="Szukaj objawu…"
-                  className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+                  className="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
                   aria-controls="symptom-options"
                   aria-autocomplete="list"
                 />
                 {query ? (
                   <button
                     onClick={() => { setQuery(""); setActiveIdx(-1); }}
-                    className="rounded-lg border border-base bg-input px-2 py-1 text-[11px] hover:bg-card focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[rgb(var(--border))]"
+                    className="shrink-0 rounded-lg border border-base bg-input px-2 py-1 text-[11px] hover:bg-card focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[rgb(var(--border))]"
                     aria-label="Wyczyść wyszukiwanie"
                     title="Wyczyść"
                   >
@@ -443,13 +443,13 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
                   </button>
                 ) : null}
                 <span
-                  className="rounded-full border border-base bg-input px-2 py-0.5 text-[10px] text-muted"
+                  className="shrink-0 rounded-full border border-base bg-input px-2 py-0.5 text-[10px] text-muted"
                   aria-live="polite"
                 >
                   {options.length}/{optionsAll.length}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-2 border-t border-base px-3 py-1.5 text-[10px] text-muted">
+              <div className="hidden items-center justify-between gap-2 border-t border-base px-3 py-1.5 text-[10px] text-muted sm:flex">
                 <div className="flex items-center gap-1.5">
                   <span className="rounded border border-base bg-input px-1">↑</span>
                   <span className="rounded border border-base bg-input px-1">↓</span>
@@ -584,7 +584,7 @@ export function TopDiagCard({
           <span aria-hidden className="absolute inset-0 rounded-lg opacity-70" style={{ background: AURORA_SOFT }} />
           <ActivitySquare className="relative h-3.5 w-3.5 opacity-80" />
         </div>
-        <span className="mr-auto">Najbardziej prawdopodobne (Top-3)</span>
+        <span className="mr-auto">Najbardziej prawdopodobne <span className="whitespace-nowrap">(Top-3)</span></span>
 
         {/* ⓘ ikonka informacji */}
         <button
@@ -625,7 +625,7 @@ export function TopDiagCard({
                       i === 0
                         ? "text-white shadow-sm border border-emerald-400/50"
                         : i === 1
-                          ? "text-cyan-100 border border-cyan-400/60"
+                          ? "text-cyan-700 dark:text-cyan-100 border border-cyan-400/60"
                           : "text-muted border border-base bg-card",
                     ].join(" ")}
                     style={
@@ -657,4 +657,4 @@ export function TopDiagCard({
       )}
     </div>
   );
-}
+}

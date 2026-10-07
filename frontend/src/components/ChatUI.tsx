@@ -23,6 +23,9 @@ import {
     Pill,
     ShieldCheck,
     Sparkles,
+    ActivitySquare,
+    ChevronUp,
+    X,
 } from "lucide-react";
 import { useChatStore } from "@/store/chatStore";
 
@@ -53,6 +56,33 @@ export default function ChatUI() {
 
     // Overlay: split modeli
     const [showSplit, setShowSplit] = useState(false);
+
+    // Telefon: panel objawów i Top-3 w wysuwanym arkuszu (na desktopie jest prawa kolumna)
+    const [showPanel, setShowPanel] = useState(false);
+
+    // Wąski ekran: krótszy placeholder (podpowiedź o Enter/Shift+Enter dotyczy klawiatury)
+    const [narrow, setNarrow] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 639px)");
+        const sync = () => setNarrow(mq.matches);
+        sync();
+        mq.addEventListener("change", sync);
+        return () => mq.removeEventListener("change", sync);
+    }, []);
+    useEffect(() => {
+        if (!showPanel) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setShowPanel(false);
+        };
+        const mq = window.matchMedia("(min-width: 768px)");
+        const onMq = () => mq.matches && setShowPanel(false);
+        window.addEventListener("keydown", onKey);
+        mq.addEventListener("change", onMq);
+        return () => {
+            window.removeEventListener("keydown", onKey);
+            mq.removeEventListener("change", onMq);
+        };
+    }, [showPanel]);
 
     // Reakcja na logout: nadaj nową sesję i przewiń na dół (pustej listy)
     useEffect(() => {
@@ -393,6 +423,40 @@ export default function ChatUI() {
         "Ból brzucha po posiłku",
     ];
 
+    // Zawartość panelu (prawa kolumna na desktopie, arkusz na telefonie)
+    const renderPanel = () => (
+        <div className="flex flex-col gap-3">
+                <SymptomsCard
+                    sessionId={sessionId}
+                    symptoms={summary?.symptoms ?? []}
+                    onPatched={(res) => {
+                        const mapped: TopDiagUI[] = (res.top_diagnoses ?? [])
+                            .slice(0, 3)
+                            .map((d) => ({
+                                diagnosis_en: d.diagnosis_en ?? "",
+                                probability: d.probability ?? 0,
+                                diagnosis_pl: d.diagnosis_pl ?? null,
+                            }));
+                        setSummary(sessionId, {
+                            symptoms: res.symptoms,
+                            topDiag: mapped,
+                        });
+                    }}
+                    lang="pl"
+                />
+                <TopDiagCard
+                    items={summary?.topDiag ?? null}
+                    onInfo={() => {
+                        setShowPanel(false);
+                        setShowSplit(true);
+                    }}
+                />
+        </div>
+    );
+
+    const symptomCount = summary?.symptoms?.length ?? 0;
+    const top1 = summary?.topDiag?.[0] ?? null;
+
     // ====== RENDER ======
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-surface text-basecolor">
@@ -408,6 +472,29 @@ export default function ChatUI() {
                         style={{ background: AURORA_SOFT }}
                     />
                     <div className="flex h-full min-h-0 flex-col">
+                        {/* Telefon: skrót objawów i Top-1, otwiera arkusz z pełnym panelem */}
+                        <button
+                            type="button"
+                            onClick={() => setShowPanel(true)}
+                            className="flex w-full shrink-0 items-center gap-2 border-b border-base bg-card px-4 py-2 text-left text-xs md:hidden"
+                            aria-haspopup="dialog"
+                            aria-expanded={showPanel}
+                            aria-controls="mobile-panel"
+                        >
+                            <ActivitySquare className="h-4 w-4 shrink-0 opacity-70" />
+                            <span className="shrink-0 font-semibold">Objawy: {symptomCount}</span>
+                            <span className="text-muted">•</span>
+                            <span className="min-w-0 flex-1 truncate text-muted">
+                                {top1
+                                    ? `${top1.diagnosis_pl || top1.diagnosis_en} ${Math.round((top1.probability ?? 0) * 100)}%`
+                                    : "Top-3 pojawi się po ocenie"}
+                            </span>
+                            <span className="inline-flex shrink-0 items-center gap-0.5 font-medium">
+                                Szczegóły
+                                <ChevronUp className="h-3.5 w-3.5" />
+                            </span>
+                        </button>
+
                         {/* lista wiadomości */}
                         <div
                             ref={scrollRef}
@@ -506,7 +593,7 @@ export default function ChatUI() {
                             {/* QUICK INTENTS */}
                             <div className="mb-2 w-full overflow-hidden pb-[6px]">
                                 <div className="-mb-[6px] w-full overflow-x-auto overflow-y-hidden">
-                                    <div className="min-w-full flex justify-center">
+                                    <div className="mx-auto flex w-max min-w-full justify-start sm:justify-center">
                                         <div className="inline-flex items-center gap-1.5 whitespace-nowrap px-1">
                                             {quickIntents.map(({ label, text, icon: Icon, tint }) => (
                                                 <button
@@ -546,7 +633,11 @@ export default function ChatUI() {
                   />
                                     <textarea
                                         ref={inputRef}
-                                        placeholder="Napisz swoje objawy… (Enter = wyślij, Shift+Enter = nowa linia)"
+                                        placeholder={
+                                            narrow
+                                                ? "Napisz swoje objawy…"
+                                                : "Napisz swoje objawy… (Enter = wyślij, Shift+Enter = nowa linia)"
+                                        }
                                         value={input}
                                         onChange={(e) => {
                                             setInput(e.target.value);
@@ -579,6 +670,10 @@ export default function ChatUI() {
                             <p className="mt-2 text-center text-xs text-muted md:text-left">
                                 To narzędzie ma charakter edukacyjny i nie zastępuje porady
                                 medycznej.
+                                {/* na telefonie podpis autora w tej linii (stały podpis z globals.css nachodziłby na tekst) */}
+                                <span className="aurora-text ml-1 whitespace-nowrap font-semibold md:hidden">
+                                    Autor: Grzegorz Sienkiewicz
+                                </span>
                             </p>
                         </div>
                     </div>
@@ -610,34 +705,34 @@ export default function ChatUI() {
 
                 {/* PRAWA kolumna (bez scrolla) */}
                 <aside className="hidden h-full w-[440px] shrink-0 overflow-hidden md:block">
-                    <div className="h-full p-3">
-                        <div className="flex flex-col gap-3">
-                            <SymptomsCard
-                                sessionId={sessionId}
-                                symptoms={summary?.symptoms ?? []}
-                                onPatched={(res) => {
-                                    const mapped: TopDiagUI[] = (res.top_diagnoses ?? [])
-                                        .slice(0, 3)
-                                        .map((d) => ({
-                                            diagnosis_en: d.diagnosis_en ?? "",
-                                            probability: d.probability ?? 0,
-                                            diagnosis_pl: d.diagnosis_pl ?? null,
-                                        }));
-                                    setSummary(sessionId, {
-                                        symptoms: res.symptoms,
-                                        topDiag: mapped,
-                                    });
-                                }}
-                                lang="pl"
-                            />
-                            <TopDiagCard
-                                items={summary?.topDiag ?? null}
-                                onInfo={() => setShowSplit(true)}
-                            />
-                        </div>
-                    </div>
+                    <div className="h-full p-3">{renderPanel()}</div>
                 </aside>
             </div>
+
+            {/* Telefon: arkusz z panelem objawów i Top-3 */}
+            {showPanel && (
+                <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Objawy i Top-3" id="mobile-panel">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowPanel(false)} aria-hidden />
+                    <div
+                        className="absolute inset-x-0 bottom-0 flex max-h-[88svh] flex-col rounded-t-2xl border-t border-base bg-surface shadow-2xl"
+                        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+                    >
+                        <div className="flex items-center justify-between px-4 pb-1 pt-3">
+                            <span className="text-sm font-semibold">Objawy i Top-3</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowPanel(false)}
+                                className="rounded-lg border border-base bg-card p-1.5 transition hover:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
+                                aria-label="Zamknij"
+                                title="Zamknij"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-1">{renderPanel()}</div>
+                    </div>
+                </div>
+            )}
 
             {/* Overlay: podgląd Top-3 XGB vs River */}
             <ModelSplitOverlay
@@ -647,4 +742,4 @@ export default function ChatUI() {
             />
         </div>
     );
-}
+}

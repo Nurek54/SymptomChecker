@@ -245,18 +245,18 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
 
     return (
         <header className="border-b border-base bg-card">
-            <div className="flex items-center justify-between px-4 py-3 text-basecolor">
+            <div className="flex items-center justify-between gap-2 px-3 py-3 text-basecolor sm:px-4">
                 {/* LEWA: logo + brand */}
-                <div className="flex min-w-0 select-none items-center gap-3">
+                <div className="flex min-w-0 flex-1 select-none items-center gap-2 sm:gap-3">
                     <div className="shrink-0 rounded-xl bg-gradient-to-br from-emerald-400/60 via-sky-400/60 to-violet-400/60 p-[1px] shadow-sm">
-                        <div className="grid h-11 w-11 place-items-center rounded-[11px] border border-base bg-input overflow-hidden">
-                            <Logo className="h-9 w-9 object-contain" />
+                        <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-[11px] border border-base bg-input sm:h-11 sm:w-11">
+                            <Logo className="h-7 w-7 object-contain sm:h-9 sm:w-9" />
                         </div>
                     </div>
 
                     <Link href="/" className="group block min-w-0" title="Strona główna">
                         <div className="flex items-center gap-2">
-                            <h1 className="truncate text-[16px] font-extrabold tracking-tight">
+                            <h1 className="truncate text-[15px] font-extrabold tracking-tight sm:text-[16px]">
                                 Symptom
                                 Checker
                             </h1>
@@ -264,7 +264,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                                 <StatusDot state={overall} />
                             </span>
                         </div>
-                        <p className="truncate text-[11px] text-muted">
+                        <p className="hidden truncate text-[11px] text-muted sm:block">
                             Asystent do wstępnej oceny objawów
                         </p>
                         <div className="mt-1 h-[2px] w-24 rounded-full bg-gradient-to-r from-emerald-400/70 via-sky-400/70 to-violet-400/70 transition-opacity group-hover:opacity-90" />
@@ -273,7 +273,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
 
                 {/* ŚRODEK: Pasek statusów (połączony: sieć + komponenty) */}
                 <div
-                    className="hidden min-w-0 items-center gap-2 rounded-full border border-base bg-input/70 px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm sm:flex"
+                    className="hidden min-w-0 items-center gap-2 rounded-full border border-base bg-input/70 px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm xl:flex"
                     title="Stan połączenia i komponentów"
                 >
                     <StatusDot state={overall} />
@@ -328,10 +328,23 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                 </div>
 
                 {/* PRAWA: zegar, motyw, nowa rozmowa, informacja o gościu, user */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <LiveClock />
+                <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+                    {/* zegar dopiero od lg: na węższych ekranach zabierał miejsce logo */}
+                    <span className="hidden lg:contents">
+                        <LiveClock />
+                    </span>
 
-                    <div className="inline-flex overflow-hidden rounded-full border border-base bg-input shadow-sm">
+                    {/* telefon: jeden przycisk przełączający motyw */}
+                    <button
+                        onClick={theme === "dark" ? setLight : setDark}
+                        className="inline-flex rounded-full border border-base bg-input p-2 shadow-sm transition active:translate-y-[1px] sm:hidden"
+                        title={theme === "dark" ? "Motyw jasny" : "Motyw ciemny"}
+                        aria-label={theme === "dark" ? "Włącz motyw jasny" : "Włącz motyw ciemny"}
+                    >
+                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </button>
+
+                    <div className="hidden overflow-hidden rounded-full border border-base bg-input shadow-sm sm:inline-flex">
                         <button
                             onClick={setLight}
                             aria-pressed={theme === "light"}
@@ -389,7 +402,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                             style={{ background: "linear-gradient(120deg, #fff, transparent)" }}
                         />
                         <Plus className="h-4 w-4 opacity-90 transition-transform group-hover:rotate-90" />
-                        <span className="hidden sm:inline font-medium">Nowa rozmowa</span>
+                        <span className="hidden font-medium md:inline">Nowa rozmowa</span>
                     </button>
 
                     {/* 🔔 Informacja o trybie gościa (bez linku/akcji) */}

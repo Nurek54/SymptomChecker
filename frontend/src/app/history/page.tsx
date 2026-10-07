@@ -228,10 +228,23 @@ export default function HistoryPage() {
         // 🔒 Globalny scroll OFF → tylko lokalne scrollbary
         <main className="flex h-[100svh] min-h-0 overflow-hidden bg-surface text-basecolor">
             {/* Sidebar */}
-            <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col border-r border-base">
+            {/* telefon: lista albo szczegóły rozmowy (dwie kolumny dopiero od md) */}
+            <aside
+                className={`${current ? "hidden md:flex" : "flex"} h-full min-h-0 w-full shrink-0 flex-col border-base md:w-[320px] md:border-r`}
+            >
                 <div className="sticky top-0 z-10 border-b border-base bg-card px-3 py-3">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold">Twoje rozmowy</h2>
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <Link
+                                href="/"
+                                className="inline-flex items-center rounded-lg border border-base bg-card p-1.5 shadow-sm transition hover:brightness-110 md:hidden"
+                                title="Wróć do czatu"
+                                aria-label="Wróć do czatu"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                            </Link>
+                            <h2 className="truncate text-sm font-semibold">Twoje rozmowy</h2>
+                        </div>
                         <div className="flex items-center gap-2">
                             <span className="rounded-full border border-base bg-input px-2 py-0.5 text-[11px] text-muted">{items.length}</span>
                             <button
@@ -259,7 +272,7 @@ export default function HistoryPage() {
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
                                 placeholder="Szukaj w tytułach, dacie…"
-                                className="h-8 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+                                className="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
                             />
                             <button onClick={loadList} className="rounded-lg p-1 text-muted transition hover:text-basecolor" title="Odśwież">
                                 <RefreshCw className="h-4 w-4" />
@@ -336,7 +349,7 @@ export default function HistoryPage() {
             </aside>
 
             {/* Detal */}
-            <section className="min-w-0 flex-1 min-h-0 p-4 flex flex-col">
+            <section className={`${current ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col p-3 md:p-4`}>
                 <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
                         <button
@@ -346,7 +359,7 @@ export default function HistoryPage() {
                             title="Powrót do listy"
                         >
                             <ArrowLeft className="h-4 w-4" />
-                            Powrót
+                            <span className="hidden sm:inline">Powrót</span>
                         </button>
 
                         <div className="min-w-0">
@@ -375,12 +388,12 @@ export default function HistoryPage() {
                                 title="Usuń tę rozmowę"
                             >
                                 <Trash2 className="h-4 w-4" />
-                                Usuń
+                                <span className="hidden sm:inline">Usuń</span>
                             </button>
                         )}
                         <Link
                             href="/"
-                            className="inline-flex items-center gap-2 rounded-xl border border-base bg-card px-3 py-1.5 text-sm shadow-sm transition hover:brightness-110"
+                            className="hidden items-center gap-2 rounded-xl border border-base bg-card px-3 py-1.5 text-sm shadow-sm transition hover:brightness-110 md:inline-flex"
                             title="Wróć do czatu"
                         >
                             ← Wróć do czatu

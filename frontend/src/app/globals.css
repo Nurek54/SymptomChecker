@@ -133,6 +133,10 @@ body::after{
 :root.dark body::after{
   filter: drop-shadow(0 0 10px rgba(167,139,250,.28));
 }
+/* telefon: podpis jest w linii z disclaimerem (ChatUI), stały by na niego nachodził */
+@media (max-width: 767px){
+  body::after{ display: none; }
+}
 
 /* ── Scrollbar / Markdown / overscroll ── */
 * { scrollbar-width: thin; scrollbar-color: #9ca3af transparent; }

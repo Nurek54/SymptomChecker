@@ -119,7 +119,7 @@ export default function UserMenu() {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls="user-drawer"
-        className="group relative inline-flex items-center gap-2 rounded-full border border-base bg-card pl-1 pr-3 py-1 text-sm shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
+        className="group relative inline-flex items-center gap-2 rounded-full border border-base bg-card p-1 sm:pr-3 text-sm shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
       >
         {/* delikatny aurora-shine w tle przy hover */}
         <span
@@ -140,7 +140,7 @@ export default function UserMenu() {
             aria-hidden="true"
           />
         </span>
-        <span className="max-w-[140px] truncate">{user.username}</span>
+        <span className="hidden max-w-[140px] truncate sm:inline">{user.username}</span>
       </button>
 
       {/* — Drawer — */}
