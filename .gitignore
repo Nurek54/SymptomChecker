@@ -71,6 +71,7 @@ backend/ml/Backup/
 backend/ml/symptom_given_disease.npz
 backend/ml/ensemble_calibration.json
 backend/ml/training_report.json
+backend/ml/preds_*.npz
 
 # ───── Logi runtime ─────
 logs/*

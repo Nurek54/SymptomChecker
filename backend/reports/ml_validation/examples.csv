@@ -1,11 +1,11 @@
 test_id,true,xgb_top3,river_top3,ens_top3,comment
-0,pyelonephritis,"pyelonephritis, kidney_stone, injury_to_internal_organ","cystitis, dengue, cervical_spondylosis","pyelonephritis, kidney_stone, cystitis",Ensemble poprawił błąd modelu pojedynczego.
-1,bell_palsy,"bell_palsy, dental_caries, sarcoidosis","vertigo_paroymsal_positional_vertigo, arthritis, osteoarthristis","bell_palsy, dental_caries, sialoadenitis",Ensemble poprawił błąd modelu pojedynczego.
-2,degenerative_disc_disease,"degenerative_disc_disease, spondylosis, arthritis_of_the_hip","spondylolisthesis, spinal_stenosis, herniated_disk","degenerative_disc_disease, spondylosis, ankylosing_spondylitis",Ensemble poprawił błąd modelu pojedynczego.
-3,broken_tooth,"broken_tooth, gum_disease, tooth_disorder","broken_tooth, fracture_of_the_facial_bones, hemangioma","broken_tooth, fracture_of_the_facial_bones, gum_disease",
-4,tietze_syndrome,"tietze_syndrome, hypokalemia, thoracic_outlet_syndrome","vertigo_paroymsal_positional_vertigo, hepatitis_e, hepatitis_d","tietze_syndrome, hypokalemia, thoracic_outlet_syndrome",Ensemble poprawił błąd modelu pojedynczego.
-5,gout,"gout, crushing_injury, injury_to_the_leg","paronychia, gout, vertigo_paroymsal_positional_vertigo","gout, crushing_injury, paronychia",Ensemble poprawił błąd modelu pojedynczego.
-6,cataract,"cataract, macular_degeneration, retinal_detachment","cataract, blepharitis, conjunctivitis_due_to_virus","cataract, macular_degeneration, retinal_detachment",
-7,acute_otitis_media,"acute_otitis_media, otitis_externa_swimmer_s_ear, chronic_otitis_media","otitis_externa_swimmer_s_ear, laryngitis, eustachian_tube_dysfunction_ear_disorder","otitis_externa_swimmer_s_ear, acute_otitis_media, chronic_otitis_media",Tylko XGB trafił Top-1.
-8,dental_caries,"dental_caries, tooth_abscess, tooth_disorder","oral_mucosal_lesion, tooth_disorder, deviated_nasal_septum","dental_caries, tooth_abscess, tooth_disorder",Ensemble poprawił błąd modelu pojedynczego.
-9,sciatica,"sciatica, spondylolisthesis, liver_disease","spondylolisthesis, sciatica, vertigo_paroymsal_positional_vertigo","sciatica, spondylolisthesis, liver_disease",Ensemble poprawił błąd modelu pojedynczego.
+0,erectile_dysfunction,"erectile_dysfunction, benign_prostatic_hyperplasia_bph, prostate_cancer","erectile_dysfunction, benign_prostatic_hyperplasia_bph, urinary_tract_obstruction","erectile_dysfunction, benign_prostatic_hyperplasia_bph, prostate_cancer",
+1,pneumonia,"pneumonia, pulmonary_congestion, sepsis","pneumonia, sepsis, common_cold","pneumonia, sepsis, pulmonary_congestion",
+2,pain_after_an_operation,"pain_after_an_operation, problem_during_pregnancy, ileus","pain_after_an_operation, problem_during_pregnancy, chronic_pain_disorder","pain_after_an_operation, problem_during_pregnancy, ileus",
+3,arthritis_of_the_hip,"arthritis_of_the_hip, degenerative_disc_disease, chronic_back_pain","arthritis_of_the_hip, degenerative_disc_disease, chronic_back_pain","arthritis_of_the_hip, degenerative_disc_disease, chronic_back_pain",
+4,conductive_hearing_loss,"conductive_hearing_loss, ear_drum_damage, sensorineural_hearing_loss","conductive_hearing_loss, ear_drum_damage, otitis_externa_swimmer_s_ear","conductive_hearing_loss, ear_drum_damage, sensorineural_hearing_loss",
+5,nose_disorder,"nose_disorder, deviated_nasal_septum, sialoadenitis","nose_disorder, sialoadenitis, deviated_nasal_septum","nose_disorder, deviated_nasal_septum, sialoadenitis",
+6,brachial_neuritis,"brachial_neuritis, spinal_stenosis, sprain_or_strain","brachial_neuritis, spinal_stenosis, chronic_pain_disorder","brachial_neuritis, spinal_stenosis, sprain_or_strain",
+7,seasonal_allergies_hay_fever,"seasonal_allergies_hay_fever, conjunctivitis, acute_sinusitis","seasonal_allergies_hay_fever, conjunctivitis, acute_sinusitis","seasonal_allergies_hay_fever, conjunctivitis, acute_sinusitis",
+8,pleural_effusion,"pleural_effusion, fracture_of_the_rib, hyponatremia","pleural_effusion, cystitis, vulvodynia","pleural_effusion, fracture_of_the_rib, hyponatremia",
+9,drug_reaction,"drug_reaction, allergy, lymphedema","drug_reaction, allergy, food_allergy","drug_reaction, allergy, food_allergy",

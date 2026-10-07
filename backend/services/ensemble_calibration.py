@@ -90,11 +90,15 @@ def _best_T(L: np.ndarray, y: np.ndarray) -> Tuple[float, float]:
 
 
 # ───────────────────────── rozkłady obu modeli dla CSV ─────────────────────────
-def _model_distributions(state, path: str, label: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Zwraca (Px, Pr, y) w kolejności klas XGB; wiersze z nieznanymi klasami pomijane."""
+def model_distributions_df(state, df: pd.DataFrame, label: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str]]:
+    """
+    Skalibrowane rozkłady XGB i River dla wszystkich wierszy ramki (liczone hurtem).
+    Zwraca (Px, Pr, y, classes) w kolejności klas XGB; wiersze z nieznanymi klasami pomijane.
+    Te same transformacje co przy predykcji pojedynczej (predict_topk), tylko szybciej.
+    """
     xgb_mgr, river = state.xgb, state.river
-    df = pd.read_csv(path)
-    df.columns = [str(c).strip().lower().lstrip("﻿") for c in df.columns]
+    df = df.copy()
+    df.columns = [str(c).strip().lower().lstrip("\ufeff") for c in df.columns]
     df["diseases"] = df["diseases"].astype(str).str.strip().str.lower()
     classes = [str(c).lower() for c in xgb_mgr.le.classes_]
     cidx = {c: i for i, c in enumerate(classes)}
@@ -105,25 +109,35 @@ def _model_distributions(state, path: str, label: str) -> Tuple[np.ndarray, np.n
             df[f] = 0
 
     margins = xgb_mgr._predict_margins_batch(
-        df[xgb_mgr.features].to_numpy(dtype=np.float32), f"Ensemble/{label}: XGB")
+        df[xgb_mgr.features].to_numpy(dtype=np.float32), f"{label}: XGB")
     Px = xgb_mgr.calibrator.transform(margins) if xgb_mgr.calibrator is not None else _softmax(margins)
 
     with river.lock:
-        Z, _, r_classes = river._scores_for_frame(df, f"Ensemble/{label}: River")
+        Z, _, r_classes = river._scores_for_frame(df, f"{label}: River")
         z_base = river._base_scores(r_classes)
     cal = river.calibrator if (river.calibrator and river.calibrator.classes_ == r_classes) else None
     Pr_r = cal.transform(Z, z_base) if cal else _softmax(Z - 0.5 * z_base[None, :])
     # wyrównanie klas River -> kolejność XGB (brakujące: minimum wiersza, jak w EnsembleTopK)
     Pr = np.empty_like(Px, dtype=np.float64)
-    floor = Pr_r.min(1, keepdims=True)
-    Pr[:] = floor
+    Pr[:] = Pr_r.min(1, keepdims=True)
     r_idx = {str(c).lower(): j for j, c in enumerate(r_classes)}
     for c, i in cidx.items():
         j = r_idx.get(c)
         if j is not None:
             Pr[:, i] = Pr_r[:, j]
     Pr = Pr / Pr.sum(1, keepdims=True)
-    return np.asarray(Px, dtype=np.float64), Pr, y
+    return np.asarray(Px, dtype=np.float64), Pr, y, classes
+
+
+def _model_distributions(state, path: str, label: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Zwraca (Px, Pr, y) dla pliku CSV (kolejność klas XGB)."""
+    Px, Pr, y, _ = model_distributions_df(state, pd.read_csv(path), label)
+    return Px, Pr, y
+
+
+def ensemble_distribution(Px: np.ndarray, Pr: np.ndarray, ens, T: float = 1.0) -> np.ndarray:
+    """Rozkład ensemble identyczny z EnsembleTopK._fuse (fuzja + temperatura T_ens)."""
+    return _softmax(fused_log_scores(Px, Pr, ens) / float(T or 1.0))
 
 
 def ensure_ensemble_calibration(state) -> float:

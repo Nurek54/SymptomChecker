@@ -1,264 +1,322 @@
 {
-  "n_test": 10000,
+  "n_test": 24278,
   "baseline": {
-    "most_frequent_class": "acute_pancreatitis",
-    "top1": 0.0085,
-    "top3": 0.0085
+    "most_frequent_class": "hypoglycemia",
+    "top1": 0.007496498887882033,
+    "top3": 0.007496498887882033
   },
   "metrics": {
     "xgb": {
-      "top1": 0.9769,
-      "top1_lo": 0.9741974999999999,
-      "top1_hi": 0.9802,
-      "top3": 0.9988,
-      "top3_lo": 0.9981975,
-      "top3_hi": 0.9994
+      "top1": 0.9069527967707389,
+      "top1_lo": 0.9031623280336107,
+      "top1_hi": 0.9106196968448801,
+      "top3": 0.9853365186588681,
+      "top3_lo": 0.9837713155943653,
+      "top3_hi": 0.9869027514622292
     },
     "river": {
-      "top1": 0.5363,
-      "top1_lo": 0.5263,
-      "top1_hi": 0.54531,
-      "top3": 0.7133,
-      "top3_lo": 0.705195,
-      "top3_hi": 0.72061
+      "top1": 0.87194167559107,
+      "top1_lo": 0.8678628799736388,
+      "top1_hi": 0.8758958728066563,
+      "top3": 0.9618584726913255,
+      "top3_lo": 0.959468448801384,
+      "top3_hi": 0.9642907158744543
     },
     "ens": {
-      "top1": 0.9565,
-      "top1_lo": 0.9525975,
-      "top1_hi": 0.961,
-      "top3": 0.9984,
-      "top3_lo": 0.9976,
-      "top3_hi": 0.9991
+      "top1": 0.9065820907817778,
+      "top1_lo": 0.9029162204464948,
+      "top1_hi": 0.9102901804102479,
+      "top3": 0.9861191201911196,
+      "top3_lo": 0.9845951066809457,
+      "top3_hi": 0.9876853529944806
     }
   },
   "ece": {
-    "xgb": 0.0069107221579498,
-    "river": 0.45963339437216943,
-    "ens": 0.020897671181545004
+    "xgb": 0.019603109832376498,
+    "river": 0.01770418048473007,
+    "ens": 0.022742605456333727
+  },
+  "probabilistic": {
+    "xgb": {
+      "nll": 0.23536878455456234,
+      "brier": 0.12191752533290261
+    },
+    "river": {
+      "nll": 0.3808515077776937,
+      "brier": 0.16598798591729755
+    },
+    "ens": {
+      "nll": 0.22458444103581662,
+      "brier": 0.11879938500678834
+    }
+  },
+  "paired_bootstrap": {
+    "top1_ens_minus_xgb": {
+      "delta": -0.00037070598896119943,
+      "lo": -0.0019770986077930638,
+      "hi": 0.001235686629870665
+    },
+    "top3_ens_minus_xgb": {
+      "delta": 0.0007826015322514211,
+      "lo": 4.118955432902216e-05,
+      "hi": 0.0015652030645028421
+    }
   },
   "off_diagonal_errors": {
-    "xgb": 231,
-    "river": 4637,
-    "ens": 435
+    "xgb": 2259,
+    "river": 3109,
+    "ens": 2268
   },
   "criteria": {
     "K1_top1_ensemble_better": false,
     "K2_top3_ensemble_better": false,
     "K3_offdiag_reduced": false,
-    "K4_calibration_not_worse": true,
+    "K4_calibration_not_worse": false,
     "satisfied_main": 0,
     "no_local_regression_gt_10pp": false,
+    "min_class_n_for_regression": 20,
     "bad_classes": [
       {
-        "class": "pyelonephritis",
-        "drop": 0.15384615384615385
+        "class": "macular_degeneration",
+        "drop": 0.10784313725490191,
+        "n": 102
       },
       {
-        "class": "transient_ischemic_attack",
-        "drop": 0.11428571428571432
+        "class": "urethral_disorder",
+        "drop": 0.15000000000000002,
+        "n": 20
       },
       {
-        "class": "depression",
-        "drop": 0.12195121951219512
-      },
-      {
-        "class": "asthma",
-        "drop": 0.12
-      },
-      {
-        "class": "tracheitis",
-        "drop": 0.19999999999999996
-      },
-      {
-        "class": "panic_disorder",
-        "drop": 0.1777777777777777
-      },
-      {
-        "class": "chronic_obstructive_pulmonary_disease_copd",
-        "drop": 0.20000000000000007
-      },
-      {
-        "class": "infectious_gastroenteritis",
-        "drop": 0.16176470588235292
-      },
-      {
-        "class": "fungal_infection_of_the_hair",
-        "drop": 0.11111111111111105
-      },
-      {
-        "class": "actinic_keratosis",
-        "drop": 0.11904761904761907
-      },
-      {
-        "class": "retinal_detachment",
-        "drop": 0.25
-      },
-      {
-        "class": "gum_disease",
-        "drop": 0.10869565217391308
-      },
-      {
-        "class": "anal_fissure",
-        "drop": 0.125
-      },
-      {
-        "class": "spondylosis",
-        "drop": 0.20000000000000007
-      },
-      {
-        "class": "marijuana_abuse",
-        "drop": 0.12903225806451613
-      },
-      {
-        "class": "fracture_of_the_neck",
-        "drop": 0.5
-      },
-      {
-        "class": "conductive_hearing_loss",
-        "drop": 0.11538461538461542
-      },
-      {
-        "class": "acute_sinusitis",
-        "drop": 0.12765957446808507
-      },
+        "class": "rosacea",
+        "drop": 0.13846153846153852,
+        "n": 65
+      }
+    ],
+    "bad_classes_below_min_n": [
       {
         "class": "chronic_knee_pain",
-        "drop": 0.125
+        "drop": 0.11764705882352944,
+        "n": 17
       },
       {
-        "class": "ovarian_cyst",
-        "drop": 0.16666666666666674
+        "class": "endocarditis",
+        "drop": 0.33333333333333337,
+        "n": 3
       },
       {
-        "class": "cranial_nerve_palsy",
-        "drop": 0.2222222222222222
-      },
-      {
-        "class": "abscess_of_the_pharynx",
-        "drop": 0.11111111111111116
-      },
-      {
-        "class": "intracranial_hemorrhage",
-        "drop": 0.1428571428571428
-      },
-      {
-        "class": "schizophrenia",
-        "drop": 0.13636363636363635
-      },
-      {
-        "class": "astigmatism",
-        "drop": 0.20000000000000007
-      },
-      {
-        "class": "foreign_body_in_the_eye",
-        "drop": 0.1428571428571429
-      },
-      {
-        "class": "head_injury",
-        "drop": 0.1428571428571429
-      },
-      {
-        "class": "essential_tremor",
-        "drop": 0.19999999999999996
-      },
-      {
-        "class": "corneal_disorder",
-        "drop": 0.5
-      },
-      {
-        "class": "hydrocele_of_the_testicle",
-        "drop": 0.16666666666666663
-      },
-      {
-        "class": "adhesive_capsulitis_of_the_shoulder",
-        "drop": 0.5
-      },
-      {
-        "class": "skin_disorder",
-        "drop": 0.5
-      },
-      {
-        "class": "impulse_control_disorder",
-        "drop": 0.25
-      },
-      {
-        "class": "athlete_s_foot",
-        "drop": 0.19999999999999996
-      },
-      {
-        "class": "alcoholic_liver_disease",
-        "drop": 0.19999999999999996
-      },
-      {
-        "class": "gastroparesis",
-        "drop": 0.33333333333333337
-      },
-      {
-        "class": "hydrocephalus",
-        "drop": 0.25
+        "class": "abscess_of_nose",
+        "drop": 0.11111111111111105,
+        "n": 18
       },
       {
         "class": "tinnitus_of_unknown_cause",
-        "drop": 0.125
-      },
-      {
-        "class": "bladder_disorder",
-        "drop": 0.3333333333333333
-      },
-      {
-        "class": "hyperopia",
-        "drop": 0.5
+        "drop": 0.16666666666666663,
+        "n": 18
       },
       {
         "class": "sick_sinus_syndrome",
-        "drop": 0.6
+        "drop": 0.5,
+        "n": 10
       },
       {
-        "class": "perirectal_infection",
-        "drop": 0.5
+        "class": "chronic_rheumatic_fever",
+        "drop": 0.11111111111111105,
+        "n": 9
       },
       {
-        "class": "lung_cancer",
-        "drop": 0.33333333333333337
+        "class": "uterine_fibroids",
+        "drop": 0.10526315789473684,
+        "n": 19
       },
       {
-        "class": "idiopathic_nonmenstrual_bleeding",
-        "drop": 0.5
+        "class": "persistent_vomiting_of_unknown_cause",
+        "drop": 0.10000000000000009,
+        "n": 10
       },
       {
-        "class": "pharyngitis",
-        "drop": 1.0
+        "class": "soft_tissue_sarcoma",
+        "drop": 0.11111111111111116,
+        "n": 9
       },
       {
-        "class": "von_willebrand_disease",
-        "drop": 1.0
+        "class": "bladder_disorder",
+        "drop": 0.15789473684210525,
+        "n": 19
       },
       {
-        "class": "lung_contusion",
-        "drop": 1.0
+        "class": "brain_cancer",
+        "drop": 0.11111111111111105,
+        "n": 18
       },
       {
-        "class": "hemolytic_anemia",
-        "drop": 1.0
+        "class": "dislocation_of_the_elbow",
+        "drop": 0.125,
+        "n": 8
       },
       {
-        "class": "blepharospasm",
-        "drop": 1.0
+        "class": "conjunctivitis_due_to_bacteria",
+        "drop": 0.19999999999999996,
+        "n": 5
+      },
+      {
+        "class": "fracture_of_the_pelvis",
+        "drop": 0.20000000000000007,
+        "n": 10
+      },
+      {
+        "class": "retinal_detachment",
+        "drop": 0.16666666666666663,
+        "n": 12
+      },
+      {
+        "class": "myositis",
+        "drop": 0.19999999999999996,
+        "n": 5
+      },
+      {
+        "class": "substance_related_mental_disorder",
+        "drop": 0.11111111111111116,
+        "n": 9
+      },
+      {
+        "class": "poisoning_due_to_gas",
+        "drop": 0.125,
+        "n": 8
+      },
+      {
+        "class": "stricture_of_the_esophagus",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "down_syndrome",
+        "drop": 0.16666666666666663,
+        "n": 6
+      },
+      {
+        "class": "thoracic_outlet_syndrome",
+        "drop": 0.16666666666666663,
+        "n": 6
+      },
+      {
+        "class": "hydrocephalus",
+        "drop": 0.11111111111111116,
+        "n": 9
+      },
+      {
+        "class": "injury_to_the_knee",
+        "drop": 0.3333333333333333,
+        "n": 3
+      },
+      {
+        "class": "fracture_of_the_patella",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "adhesive_capsulitis_of_the_shoulder",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "cervical_cancer",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "tic_movement_disorder",
+        "drop": 0.20000000000000007,
+        "n": 5
+      },
+      {
+        "class": "lewy_body_dementia",
+        "drop": 0.33333333333333337,
+        "n": 3
+      },
+      {
+        "class": "mastoiditis",
+        "drop": 0.19999999999999996,
+        "n": 5
+      },
+      {
+        "class": "poisoning_due_to_antimicrobial_drugs",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "ischemia_of_the_bowel",
+        "drop": 0.39999999999999997,
+        "n": 10
+      },
+      {
+        "class": "drug_abuse_barbiturates",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "dislocation_of_the_shoulder",
+        "drop": 0.19999999999999996,
+        "n": 5
+      },
+      {
+        "class": "amblyopia",
+        "drop": 0.5,
+        "n": 2
+      },
+      {
+        "class": "hematoma",
+        "drop": 0.5,
+        "n": 2
+      },
+      {
+        "class": "injury_to_internal_organ",
+        "drop": 0.25,
+        "n": 4
+      },
+      {
+        "class": "vocal_cord_polyp",
+        "drop": 0.6666666666666667,
+        "n": 3
+      },
+      {
+        "class": "atelectasis",
+        "drop": 0.33333333333333337,
+        "n": 3
+      },
+      {
+        "class": "primary_immunodeficiency",
+        "drop": 0.5,
+        "n": 2
+      },
+      {
+        "class": "hyperhidrosis",
+        "drop": 0.5,
+        "n": 2
+      },
+      {
+        "class": "metastatic_cancer",
+        "drop": 0.3333333333333333,
+        "n": 3
+      },
+      {
+        "class": "juvenile_rheumatoid_arthritis",
+        "drop": 0.5,
+        "n": 2
       }
     ],
     "passed": false
   },
   "meta": {
-    "test_csv": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\data\\Final_Testset_for_Eval.csv",
-    "model_path_xgb": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\ml\\xgb_model.joblib",
-    "model_path_river": "C:\\Users\\g_sie\\OneDrive\\Pulpit\\SymptomChecker\\backend\\ml\\river_ovr_ftrl.joblib",
-    "model_id_xgb": "xgb_model.joblib@1759753576",
-    "model_id_river": "river_ovr_ftrl.joblib@1759774616",
+    "test_csv": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\data\\v2\\test.csv",
+    "model_path_xgb": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\ml\\xgb_model.joblib",
+    "model_path_river": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\ml\\river_ovr_ftrl.joblib",
+    "model_id_xgb": "xgb_model.joblib@1791385979",
+    "model_id_river": "river_ovr_ftrl.joblib@1791387744",
     "features_hash": "239cf9a70efe",
     "ensemble_version": {
       "w_xgb": 0.8,
       "w_river": 0.2,
-      "k_fuse": 9,
+      "k_fuse": 0,
       "min_w_xgb": 0.55,
       "min_w_river": 0.15,
       "conf_gap": 0.2

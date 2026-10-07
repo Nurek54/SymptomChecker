@@ -344,6 +344,8 @@ def _to_train_params(params: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, 
 def _save_train_params(params: Dict[str, Any]) -> None:
     safe = {}
     for k, v in (params or {}).items():
+        if isinstance(v, np.generic):  # skopt zwraca np.int64 / np.float64 (np. max_depth)
+            v = v.item()
         if isinstance(v, (int, float, str, bool)) or v is None:
             safe[k] = v
     os.makedirs(os.path.dirname(TRAIN_PARAMS_PATH), exist_ok=True)

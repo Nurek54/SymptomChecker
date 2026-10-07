@@ -230,17 +230,21 @@ Every stage logs elapsed and remaining time, so a long first run is never a blac
 [River/trening]  31.3% (35571/113416) 52.1 wierszy/s | minęło 11m22s | zostało ~25m
 ```
 
-### Calibrated probabilities
+### Results
 
-Example from a 100-disease subset of the v2 data (held-out test set). Full numbers for your run are written to `backend/ml/training_report.json`.
+Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with the training or calibration data. Numbers come from `backend/ml/training_report.json`.
 
-| Model | Top-1 | NLL before → after | ECE before → after |
-|---|:---:|:---:|:---:|
-| XGBoost | 98.3% | 0.064 → **0.044** | 2.1% → **0.4%** |
-| River | 96.6% | 0.441 → **0.091** | 22.6% → **1.3%** |
-| **Ensemble** | **98.6%** | **0.040** | **0.5%** |
+| Model | Top-1 | Top-3 | NLL | ECE | Brier |
+|---|:---:|:---:|:---:|:---:|:---:|
+| XGBoost | 90.7% | 98.5% | 0.235 | 2.2% | 0.122 |
+| River | 87.2% | 96.2% | 0.381 | 2.0% | 0.166 |
+| **Ensemble** | **90.7%** | **98.6%** | **0.225** | 2.5% | **0.119** |
 
-<sub>NLL = negative log-likelihood, ECE = expected calibration error (15 bins). Lower is better.</sub>
+- The right disease is among the three shown in **98.6%** of cases.
+- Calibration matters most for River: its raw one-vs-rest scores said about 55% when it was right 87% of the time (ECE 31.8%); after calibration ECE drops to 2.0% and NLL from 0.98 to 0.38.
+- XGBoost is close to calibrated out of the box; the temperature lowers NLL from 0.241 to 0.235. The fused ensemble needs no extra temperature (`T_ens = 1.0`).
+
+<sub>NLL = negative log-likelihood, ECE = expected calibration error (15 bins), Brier = multi-class Brier score. Lower is better.</sub>
 
 ## Tech Stack
 
@@ -411,6 +415,8 @@ After that, every subsequent startup just **loads the saved models** (~5–10 s)
 Every long step logs its progress with elapsed time and an estimate of the remaining time (see the example in [How it works](#training-pipeline-first-start)).
 
 Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. The River bootstrap is a single online pass over the training set (one update per class per row), so with ~570 classes it takes roughly 15–40 min, once.
+
+Measured on the author's machine (CUDA GPU): Bayesian search ~19.5 h, final XGBoost training 11 min, River 27 min, ensemble calibration and report 1.5 min. The search runs only once; its result is saved in `xgb_best_params.joblib`.
 
 ### Calibration and quality report
 
