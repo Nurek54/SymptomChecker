@@ -9,6 +9,7 @@
 <p align="center">
   <a href="https://github.com/Nurek54/SymptomChecker/actions/workflows/ci.yml"><img src="https://github.com/Nurek54/SymptomChecker/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
@@ -35,6 +36,83 @@
 **Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish; the app recognizes the symptoms (inflection and negation included, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation from a Polish LLM running on your own GPU.
 
 Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GPU) and a River one-vs-rest logistic model (trained in mini-batches, then keeps learning online), averaged with a weight fitted on held-out data. The ensemble is statistically significantly more accurate than either model alone.
+
+<p align="center"><b>Keywords</b></p>
+
+<table align="center">
+  <tr>
+    <td align="right" valign="middle"><sub><b>AI&nbsp;/&nbsp;ML</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/Machine%20Learning-0F766E?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTIgNWEzIDMgMCAxIDAtNS45OTcuMTI1IDQgNCAwIDAgMC0yLjUyNiA1Ljc3IDQgNCAwIDAgMCAuNTU2IDYuNTg4QTQgNCAwIDEgMCAxMiAxOFoiIC8%2BIDxwYXRoIGQ9Ik05IDEzYTQuNSA0LjUgMCAwIDAgMy00IiAvPiA8cGF0aCBkPSJNNi4wMDMgNS4xMjVBMyAzIDAgMCAwIDYuNDAxIDYuNSIgLz4gPHBhdGggZD0iTTMuNDc3IDEwLjg5NmE0IDQgMCAwIDEgLjU4NS0uMzk2IiAvPiA8cGF0aCBkPSJNNiAxOGE0IDQgMCAwIDEtMS45NjctLjUxNiIgLz4gPHBhdGggZD0iTTEyIDEzaDQiIC8%2BIDxwYXRoIGQ9Ik0xMiAxOGg2YTIgMiAwIDAgMSAyIDJ2MSIgLz4gPHBhdGggZD0iTTEyIDhoOCIgLz4gPHBhdGggZD0iTTE2IDhWNWEyIDIgMCAwIDEgMi0yIiAvPiA8Y2lyY2xlIGN4PSIxNiIgY3k9IjEzIiByPSIuNSIgLz4gPGNpcmNsZSBjeD0iMTgiIGN5PSIzIiByPSIuNSIgLz4gPGNpcmNsZSBjeD0iMjAiIGN5PSIyMSIgcj0iLjUiIC8%2BIDxjaXJjbGUgY3g9IjIwIiBjeT0iOCIgcj0iLjUiIC8%2BIDwvc3ZnPg%3D%3D" alt="Machine Learning" />
+      <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
+      <img src="https://img.shields.io/badge/XGBoost-EB6E25?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTAgMTB2LjJBMyAzIDAgMCAxIDguOSAxNkg1YTMgMyAwIDAgMS0xLTUuOFYxMGEzIDMgMCAwIDEgNiAwWiIgLz4gPHBhdGggZD0iTTcgMTZ2NiIgLz4gPHBhdGggZD0iTTEzIDE5djMiIC8%2BIDxwYXRoIGQ9Ik0xMiAxOWg4LjNhMSAxIDAgMCAwIC43LTEuN0wxOCAxNGguM2ExIDEgMCAwIDAgLjctMS43TDE2IDloLjJhMSAxIDAgMCAwIC44LTEuN0wxMyAzbC0xLjQgMS41IiAvPiA8L3N2Zz4%3D" alt="XGBoost" />
+      <img src="https://img.shields.io/badge/River-1F6FEB?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMiA2Yy42LjUgMS4yIDEgMi41IDFDNyA3IDcgNSA5LjUgNWMyLjYgMCAyLjQgMiA1IDIgMi41IDAgMi41LTIgNS0yIDEuMyAwIDEuOS41IDIuNSAxIiAvPiA8cGF0aCBkPSJNMiAxMmMuNi41IDEuMiAxIDIuNSAxIDIuNSAwIDIuNS0yIDUtMiAyLjYgMCAyLjQgMiA1IDIgMi41IDAgMi41LTIgNS0yIDEuMyAwIDEuOS41IDIuNSAxIiAvPiA8cGF0aCBkPSJNMiAxOGMuNi41IDEuMiAxIDIuNSAxIDIuNSAwIDIuNS0yIDUtMiAyLjYgMCAyLjQgMiA1IDIgMi41IDAgMi41LTIgNS0yIDEuMyAwIDEuOS41IDIuNSAxIiAvPiA8L3N2Zz4%3D" alt="River" />
+      <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white" alt="scikit-learn" />
+      <img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white" alt="pandas" />
+      <img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" alt="NumPy" />
+      <img src="https://img.shields.io/badge/CUDA%20%2F%20GPU-76B900?style=flat-square&logo=nvidia&logoColor=white" alt="CUDA / GPU" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>LLM&nbsp;/&nbsp;NLP</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/LLM-8B5CF6?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTIgOFY0SDgiIC8%2BIDxyZWN0IHdpZHRoPSIxNiIgaGVpZ2h0PSIxMiIgeD0iNCIgeT0iOCIgcng9IjIiIC8%2BIDxwYXRoIGQ9Ik0yIDE0aDIiIC8%2BIDxwYXRoIGQ9Ik0yMCAxNGgyIiAvPiA8cGF0aCBkPSJNMTUgMTN2MiIgLz4gPHBhdGggZD0iTTkgMTN2MiIgLz4gPC9zdmc%2B" alt="LLM" />
+      <img src="https://img.shields.io/badge/Bielik%2011B-7C3AED?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTYgN2guMDEiIC8%2BIDxwYXRoIGQ9Ik0zLjQgMThIMTJhOCA4IDAgMCAwIDgtOFY3YTQgNCAwIDAgMC03LjI4LTIuM0wyIDIwIiAvPiA8cGF0aCBkPSJtMjAgNyAyIC41LTIgLjUiIC8%2BIDxwYXRoIGQ9Ik0xMCAxOHYzIiAvPiA8cGF0aCBkPSJNMTQgMTcuNzVWMjEiIC8%2BIDxwYXRoIGQ9Ik03IDE4YTYgNiAwIDAgMCAzLjg0LTEwLjYxIiAvPiA8L3N2Zz4%3D" alt="Bielik 11B" />
+      <img src="https://img.shields.io/badge/GGUF-FFD21E?style=flat-square&logo=huggingface&logoColor=black" alt="GGUF" />
+      <img src="https://img.shields.io/badge/ctransformers-4B5563?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHg9IjQiIHk9IjQiIHJ4PSIyIiAvPiA8cmVjdCB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB4PSI5IiB5PSI5IiByeD0iMSIgLz4gPHBhdGggZD0iTTE1IDJ2MiIgLz4gPHBhdGggZD0iTTE1IDIwdjIiIC8%2BIDxwYXRoIGQ9Ik0yIDE1aDIiIC8%2BIDxwYXRoIGQ9Ik0yIDloMiIgLz4gPHBhdGggZD0iTTIwIDE1aDIiIC8%2BIDxwYXRoIGQ9Ik0yMCA5aDIiIC8%2BIDxwYXRoIGQ9Ik05IDJ2MiIgLz4gPHBhdGggZD0iTTkgMjB2MiIgLz4gPC9zdmc%2B" alt="ctransformers" />
+      <img src="https://img.shields.io/badge/NLP-6D28D9?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cG9seWxpbmUgcG9pbnRzPSI0IDcgNCA0IDIwIDQgMjAgNyIgLz4gPGxpbmUgeDE9IjkiIHgyPSIxNSIgeTE9IjIwIiB5Mj0iMjAiIC8%2BIDxsaW5lIHgxPSIxMiIgeDI9IjEyIiB5MT0iNCIgeTI9IjIwIiAvPiA8L3N2Zz4%3D" alt="NLP" />
+      <img src="https://img.shields.io/badge/Polish%20NLP-DC143C?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJtNSA4IDYgNiIgLz4gPHBhdGggZD0ibTQgMTQgNi02IDItMyIgLz4gPHBhdGggZD0iTTIgNWgxMiIgLz4gPHBhdGggZD0iTTcgMmgxIiAvPiA8cGF0aCBkPSJtMjIgMjItNS0xMC01IDEwIiAvPiA8cGF0aCBkPSJNMTQgMThoNiIgLz4gPC9zdmc%2B" alt="Polish NLP" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>Methods</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/Ensemble%20Learning-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJtMTIuODMgMi4xOGEyIDIgMCAwIDAtMS42NiAwTDIuNiA2LjA4YTEgMSAwIDAgMCAwIDEuODNsOC41OCAzLjkxYTIgMiAwIDAgMCAxLjY2IDBsOC41OC0zLjlhMSAxIDAgMCAwIDAtMS44M1oiIC8%2BIDxwYXRoIGQ9Im0yMiAxNy42NS05LjE3IDQuMTZhMiAyIDAgMCAxLTEuNjYgMEwyIDE3LjY1IiAvPiA8cGF0aCBkPSJtMjIgMTIuNjUtOS4xNyA0LjE2YTIgMiAwIDAgMS0xLjY2IDBMMiAxMi42NSIgLz4gPC9zdmc%2B" alt="Ensemble Learning" />
+      <img src="https://img.shields.io/badge/Online%20Learning-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMyAxMmE5IDkgMCAwIDEgOS05IDkuNzUgOS43NSAwIDAgMSA2Ljc0IDIuNzRMMjEgOCIgLz4gPHBhdGggZD0iTTIxIDN2NWgtNSIgLz4gPHBhdGggZD0iTTIxIDEyYTkgOSAwIDAgMS05IDkgOS43NSA5Ljc1IDAgMCAxLTYuNzQtMi43NEwzIDE2IiAvPiA8cGF0aCBkPSJNOCAxNkgzdjUiIC8%2BIDwvc3ZnPg%3D%3D" alt="Online Learning" />
+      <img src="https://img.shields.io/badge/Gradient%20Boosting-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cG9seWxpbmUgcG9pbnRzPSIyMiA3IDEzLjUgMTUuNSA4LjUgMTAuNSAyIDE3IiAvPiA8cG9seWxpbmUgcG9pbnRzPSIxNiA3IDIyIDcgMjIgMTMiIC8%2BIDwvc3ZnPg%3D%3D" alt="Gradient Boosting" />
+      <img src="https://img.shields.io/badge/Logistic%20Regression-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMyAzdjE2YTIgMiAwIDAgMCAyIDJoMTYiIC8%2BIDxwYXRoIGQ9Ik03IDE2Yy41LTIgMS41LTcgNC03IDIgMCAyIDMgNCAzIDIuNSAwIDQuNS01IDUtNyIgLz4gPC9zdmc%2B" alt="Logistic Regression" />
+      <img src="https://img.shields.io/badge/Multi--class%20Classification-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJtMTUgNSA2LjMgNi4zYTIuNCAyLjQgMCAwIDEgMCAzLjRMMTcgMTkiIC8%2BIDxwYXRoIGQ9Ik05LjU4NiA1LjU4NkEyIDIgMCAwIDAgOC4xNzIgNUgzYTEgMSAwIDAgMC0xIDF2NS4xNzJhMiAyIDAgMCAwIC41ODYgMS40MTRMOC4yOSAxOC4yOWEyLjQyNiAyLjQyNiAwIDAgMCAzLjQyIDBsMy41OC0zLjU4YTIuNDI2IDIuNDI2IDAgMCAwIDAtMy40MnoiIC8%2BIDxjaXJjbGUgY3g9IjYuNSIgY3k9IjkuNSIgcj0iLjUiIGZpbGw9ImN1cnJlbnRDb2xvciIgLz4gPC9zdmc%2B" alt="Multi-class Classification" />
+      <img src="https://img.shields.io/badge/Probability%20Calibration-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJtMTIgMTQgNC00IiAvPiA8cGF0aCBkPSJNMy4zNCAxOWExMCAxMCAwIDEgMSAxNy4zMiAwIiAvPiA8L3N2Zz4%3D" alt="Probability Calibration" />
+      <img src="https://img.shields.io/badge/Bayesian%20Optimization-334155?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgLz4gPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNiIgLz4gPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMiIgLz4gPC9zdmc%2B" alt="Bayesian Optimization" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>Domain</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/Medical%20AI-BE123C?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTEgMnYyIiAvPiA8cGF0aCBkPSJNNSAydjIiIC8%2BIDxwYXRoIGQ9Ik01IDNINGEyIDIgMCAwIDAtMiAydjRhNiA2IDAgMCAwIDEyIDBWNWEyIDIgMCAwIDAtMi0yaC0xIiAvPiA8cGF0aCBkPSJNOCAxNWE2IDYgMCAwIDAgMTIgMHYtMyIgLz4gPGNpcmNsZSBjeD0iMjAiIGN5PSIxMCIgcj0iMiIgLz4gPC9zdmc%2B" alt="Medical AI" />
+      <img src="https://img.shields.io/badge/Healthcare-BE123C?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTkgMTRjMS40OS0xLjQ2IDMtMy4yMSAzLTUuNUE1LjUgNS41IDAgMCAwIDE2LjUgM2MtMS43NiAwLTMgLjUtNC41IDItMS41LTEuNS0yLjc0LTItNC41LTJBNS41IDUuNSAwIDAgMCAyIDguNWMwIDIuMyAxLjUgNC4wNSAzIDUuNWw3IDdaIiAvPiA8cGF0aCBkPSJNMy4yMiAxMkg5LjVsLjUtMSAyIDQuNSAyLTcgMS41IDMuNWg1LjI3IiAvPiA8L3N2Zz4%3D" alt="Healthcare" />
+      <img src="https://img.shields.io/badge/Symptom%20Checker-BE123C?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTQgNHYxMC41NGE0IDQgMCAxIDEtNCAwVjRhMiAyIDAgMCAxIDQgMFoiIC8%2BIDwvc3ZnPg%3D%3D" alt="Symptom Checker" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>Backend</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+      <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+      <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
+      <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+      <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>Frontend</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
+      <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+      <img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+    </td>
+  </tr>
+  <tr>
+    <td align="right" valign="middle"><sub><b>Testing&nbsp;/&nbsp;CI</b></sub></td>
+    <td>
+      <img src="https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white" alt="pytest" />
+      <img src="https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white" alt="Vitest" />
+      <img src="https://img.shields.io/badge/Playwright-2EAD33?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgPiA8cGF0aCBkPSJNMTAgMTFoLjAxIiAvPiA8cGF0aCBkPSJNMTQgNmguMDEiIC8%2BIDxwYXRoIGQ9Ik0xOCA2aC4wMSIgLz4gPHBhdGggZD0iTTYuNSAxMy4xaC4wMSIgLz4gPHBhdGggZD0iTTIyIDVjMCA5LTQgMTItNiAxMnMtNi0zLTYtMTJjMC0yIDItMyA2LTNzNiAxIDYgMyIgLz4gPHBhdGggZD0iTTE3LjQgOS45Yy0uOC44LTIgLjgtMi44IDAiIC8%2BIDxwYXRoIGQ9Ik0xMC4xIDcuMUM5IDcuMiA3LjcgNy43IDYgOC42Yy0zLjUgMi00LjcgMy45LTMuNyA1LjYgNC41IDcuOCA5LjUgOC40IDExLjIgNy40LjktLjUgMS45LTIuMSAxLjktNC43IiAvPiA8cGF0aCBkPSJNOS4xIDE2LjVjLjMtMS4xIDEuNC0xLjcgMi40LTEuNCIgLz4gPC9zdmc%2B" alt="Playwright" />
+      <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+    </td>
+  </tr>
+</table>
 
 ## See it in action
 
@@ -284,6 +362,7 @@ Passed = at least 2 of K1 to K3 and no regression. K1/K2 originally required non
 | Classical ML | XGBoost (`hist`, CUDA), scikit-learn, scikit-optimize |
 | Online learning | River 0.23 (OneVsRest LogisticRegression; mini-batch warm start, then online SGD) |
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
+| GPU | PyTorch (CUDA device detection), CUDA for XGBoost training and LLM layer offload |
 | Symptom matching | PL dictionary + synonyms, light Polish stemmer, fuzzy matching (rapidfuzz or difflib) |
 | Auth | Supabase JWT (HS256 + JWKS), python-jose |
 | Persistence | Supabase PostgreSQL via SQLAlchemy (psycopg 3) |
