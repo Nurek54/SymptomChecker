@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
-from river import linear_model, optim
+from river import linear_model, optim, utils as river_utils
 from river.multiclass import OneVsRestClassifier
 
 from utils import Progress, calibration_metrics, fmt_duration
@@ -23,6 +23,13 @@ from config import (
     RIVER_ALPHA, RIVER_BETA, RIVER_L1, RIVER_L2, RIVER_CLIP_GRADIENT,
     XGB_RANDOM_STATE,
 )
+
+try:
+    from config import (RIVER_BOOTSTRAP_MODE, RIVER_BATCH_EPOCHS, RIVER_BATCH_LR,
+                        RIVER_BATCH_L2, RIVER_BATCH_SIZE, RIVER_ONLINE_LR)
+except Exception:
+    RIVER_BOOTSTRAP_MODE, RIVER_BATCH_EPOCHS, RIVER_BATCH_LR = "batch", 12, 0.02
+    RIVER_BATCH_L2, RIVER_BATCH_SIZE, RIVER_ONLINE_LR = 1e-5, 1024, 0.01
 
 try:
     from config import RIVER_WEIGHT_MEDIAN_NORM, RIVER_WEIGHT_CAP, RIVER_WEIGHT_MIN
@@ -508,6 +515,78 @@ class RiverManager:
         prog.finish()
         return len(df)
 
+    def _batch_warm_start(self, df: pd.DataFrame, label: str) -> int:
+        """
+        Start River od zera: ten sam model (OneVsRest + regresja logistyczna dla każdej klasy),
+        ale wagi dopasowane kilkoma epokami uczenia paczkami (Adam) zamiast jednego przejścia
+        online. Jedno przejście FTRL zostawiało model niedouczony (Top-1 87% zamiast ~90%).
+
+        Funkcja kosztu: średnia ważona sum binarnych entropii krzyżowych (OvR) + L2.
+        Potem wagi trafiają do zwykłych obiektów River z optymalizatorem SGD, więc dalsze
+        uczenie online (train_one, douczanie z CSV) działa jak wcześniej.
+        """
+        feats = list(self.features)
+        X = df.reindex(columns=feats, fill_value=0).to_numpy(dtype=np.float32)
+        labels = df["diseases"].astype(str).to_numpy()
+        classes = sorted(set(labels.tolist()))
+        cidx = {c: i for i, c in enumerate(classes)}
+        y = np.array([cidx[l] for l in labels], dtype=np.int64)
+        sw = (df["weight"].to_numpy(dtype=np.float32) if "weight" in df.columns
+              else np.ones(len(df), dtype=np.float32))
+        N, D = X.shape
+        K = len(classes)
+        rng = np.random.default_rng(int(XGB_RANDOM_STATE or 42))
+        W = np.zeros((D, K), dtype=np.float32)
+        b = np.zeros(K, dtype=np.float32)
+        mW, vW = np.zeros_like(W), np.zeros_like(W)
+        mb, vb = np.zeros_like(b), np.zeros_like(b)
+        lr, b1, b2, eps = float(RIVER_BATCH_LR), 0.9, 0.999, 1e-8
+        l2 = float(RIVER_BATCH_L2)
+        bs = max(64, int(RIVER_BATCH_SIZE))
+        epochs = max(1, int(RIVER_BATCH_EPOCHS))
+        log.info("[River][Batch] Start: N=%d D=%d klasy=%d epoki=%d lr=%.3g l2=%.1e batch=%d",
+                 N, D, K, epochs, lr, l2, bs)
+        prog = Progress(label, epochs, log, every_pct=0.0, min_interval=0.0, unit="epok")
+        t = 0
+        for ep in range(epochs):
+            order = rng.permutation(N)
+            loss_sum = 0.0
+            for s0 in range(0, N, bs):
+                idx = order[s0:s0 + bs]
+                xb, wb = X[idx], sw[idx]
+                z = xb @ W + b
+                p = 1.0 / (1.0 + np.exp(-np.clip(z, -30, 30)))
+                p_true = p[np.arange(len(idx)), y[idx]].copy()
+                g = p                                           # liczone w miejscu (oszczędza pamięć)
+                g[np.arange(len(idx)), y[idx]] -= 1.0          # dL/dz dla BCE (OvR)
+                g *= (wb / len(idx))[:, None]
+                gW = xb.T @ g + 2.0 * l2 * W
+                gb = g.sum(0)
+                t += 1
+                mW = b1 * mW + (1 - b1) * gW
+                vW = b2 * vW + (1 - b2) * gW * gW
+                mb = b1 * mb + (1 - b1) * gb
+                vb = b2 * vb + (1 - b2) * gb * gb
+                corr = np.sqrt(1 - b2 ** t) / (1 - b1 ** t)
+                W -= lr * corr * mW / (np.sqrt(vW) + eps)
+                b -= lr * corr * mb / (np.sqrt(vb) + eps)
+                loss_sum += float(-(np.log(np.clip(p_true, 1e-7, 1.0)) * wb).sum())
+            prog.update(ep + 1, extra=f"strata={loss_sum / N:.4f}")
+        prog.finish()
+
+        template = linear_model.LogisticRegression(
+            optimizer=optim.SGD(RIVER_ONLINE_LR), l2=RIVER_L2, clip_gradient=RIVER_CLIP_GRADIENT)
+        ovr = OneVsRestClassifier(template)
+        for c, j in cidx.items():
+            clf = template.clone()
+            col = W[:, j]
+            clf._weights = river_utils.VectorDict({feats[i]: float(col[i]) for i in np.flatnonzero(col)})
+            clf.intercept = float(b[j])
+            ovr.classifiers[c] = clf
+        self.model = ovr
+        log.info("[River][Batch] Gotowe: %d klasyfikatorów, dalsze uczenie online: SGD(lr=%s).", K, RIVER_ONLINE_LR)
+        return N
+
     def train(self) -> None:
         log.info("[River][Train] ▶ Start train()")
         t_all = time.time()
@@ -557,9 +636,12 @@ class RiverManager:
             else:
                 self.features = _features_from(df)
 
-            self.model = self._new_model()
             t0 = time.time()
-            n = self._learn_frame(df, "River/trening")
+            if str(RIVER_BOOTSTRAP_MODE).lower() == "online":
+                self.model = self._new_model()
+                n = self._learn_frame(df, "River/trening")
+            else:
+                n = self._batch_warm_start(df, "River/trening (paczki)")
             _save_artifacts(self.model, self.features)  # type: ignore
             self._prepare_vector_template()
             self.warmup()

@@ -33,7 +33,7 @@
 
 **Symptom Checker** is a diagnostic chat assistant built as part of an engineering thesis (*praca inżynierska*). You describe how you feel in plain Polish; the app recognizes the symptoms (inflection and negation included, e.g. *"gorączki nie mam"*), asks the follow-up questions that best separate the likely diseases, and returns the **Top-3 most probable conditions** with a short, doctor-style explanation from a Polish LLM running on your own GPU.
 
-Predictions come from a **calibrated ensemble** of XGBoost (offline, Bayesian-tuned on GPU) and River OVR / FTRL-Proximal (online, can keep learning), fused in log space with confidence-based weights.
+Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GPU) and a River one-vs-rest logistic model (trained in mini-batches, then keeps learning online), averaged with a weight fitted on held-out data. The ensemble is statistically significantly more accurate than either model alone.
 
 ## See it in action
 
@@ -60,7 +60,7 @@ Predictions come from a **calibrated ensemble** of XGBoost (offline, Bayesian-tu
     <td width="33%" valign="top">
       <img src="docs/icons/layers.svg" width="44" alt="" /><br />
       <b>Calibrated ensemble</b><br />
-      <sub>XGBoost and River are each temperature-calibrated on held-out data, then the fusion gets its own temperature.</sub>
+      <sub>XGBoost and River are each temperature-calibrated on held-out data; their weight in the average is fitted there too. The ensemble beats both models (McNemar p = 0.002).</sub>
     </td>
   </tr>
   <tr>
@@ -189,8 +189,8 @@ flowchart LR
         FS["Follow-up selector<br/>P(symptom | disease)"]
         subgraph ENS["Calibrated ensemble"]
             X["XGBoost<br/>T + prior correction"]
-            RV["River OVR / FTRL<br/>(λ, T)"]
-            F["log-linear fusion<br/>+ T_ens"]
+            RV["River one-vs-rest<br/>(λ, T)"]
+            F["weighted average<br/>weight from calibration"]
         end
         LLM["Bielik 11B GGUF"]
     end
@@ -217,8 +217,8 @@ flowchart LR
     A["Data split<br/>build_datasets.py"] --> B["1 · XGBoost<br/>Bayes search<br/>+ calibration"]
     B --> C["2 · Bielik LLM"]
     C --> D["3 · Symptom<br/>statistics"]
-    D --> E["4 · River<br/>online pass<br/>+ (λ, T)"]
-    E --> F["5 · Ensemble<br/>T_ens + test<br/>metrics"]
+    D --> E["4 · River<br/>12 epochs<br/>+ (λ, T)"]
+    E --> F["5 · Ensemble<br/>weight + test<br/>metrics"]
     F --> G[("training_report<br/>.json")]
 ```
 
@@ -227,24 +227,42 @@ Every stage logs elapsed and remaining time, so a long first run is never a blac
 ```text
 [XGB][Bayes 3/32] runda 410/1446 | test mlogloss=0.2121 | minęło 2m10s | do limitu rund ~5m30s
 [XGB][Train] 40% (560/1400 rund) | minęło 1m12s | zostało ~1m48s
-[River/trening]  31.3% (35571/113416) 52.1 wierszy/s | minęło 11m22s | zostało ~25m
+[River/trening (paczki)]  58.3% (7/12) 0.1 epok/s | minęło 49s | zostało ~35s | strata=0.8460
 ```
 
 ### Results
 
-Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with the training or calibration data. Numbers come from `backend/ml/training_report.json`.
+Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with the training or calibration data. Numbers come from `backend/ml_validation_runner.py` (report in `backend/reports/ml_validation/`).
 
 | Model | Top-1 | Top-3 | NLL | ECE | Brier |
 |---|:---:|:---:|:---:|:---:|:---:|
-| XGBoost | 90.7% | 98.5% | 0.235 | 2.2% | 0.122 |
-| River | 87.2% | 96.2% | 0.381 | 2.0% | 0.166 |
-| **Ensemble** | **90.7%** | **98.6%** | **0.225** | 2.5% | **0.119** |
+| XGBoost | 90.7% | 98.5% | 0.235 | 2.0% | 0.122 |
+| River | 90.6% | 98.4% | 0.242 | 1.8% | 0.124 |
+| **Ensemble** | **91.0%** | **98.6%** | **0.217** | **1.3%** | **0.113** |
 
 - The right disease is among the three shown in **98.6%** of cases.
-- Calibration matters most for River: its raw one-vs-rest scores said about 55% when it was right 87% of the time (ECE 31.8%); after calibration ECE drops to 2.0% and NLL from 0.98 to 0.38.
-- XGBoost is close to calibrated out of the box; the temperature lowers NLL from 0.241 to 0.235. The fused ensemble needs no extra temperature (`T_ens = 1.0`).
+- The ensemble is better than both models on every metric. On Top-1 it fixes 369 cases XGBoost gets wrong and breaks 288 (exact McNemar test, **p = 0.002**).
+- Calibration matters: River's raw one-vs-rest scores said about 75% when it was right 91% of the time (ECE 15.7% on the calibration set); after calibration ECE is 1.8% on the test set.
 
-<sub>NLL = negative log-likelihood, ECE = expected calibration error (15 bins), Brier = multi-class Brier score. Lower is better.</sub>
+<details>
+<summary><b>Validation criteria</b> (result: <b>passed</b>)</summary>
+<br />
+
+`python ml_validation_runner.py` checks the ensemble against the better of the two models on the same test cases:
+
+| Criterion | Requirement | Result |
+|---|---|:---:|
+| K1 | Top-1 significantly better (exact McNemar, p < 0.05) | ✓ p = 0.0018 |
+| K2 | Top-3 significantly better (exact McNemar, p < 0.05) | ✗ p = 0.14 |
+| K3 | No more errors than either model | ✓ |
+| K4 | ECE not worse than the worse model | ✓ 1.3% |
+| No regression | No class loses >10 p.p. significantly (per-class McNemar, Holm correction) | ✓ 0 classes |
+
+Passed = at least 2 of K1 to K3 and no regression. K1/K2 originally required non-overlapping 95% bootstrap intervals and the per-class check had no significance test; both were replaced by paired tests because the models are evaluated on the same cases (the old values are still printed for reference).
+
+</details>
+
+<sub>NLL = negative log-likelihood, ECE = expected calibration error (10 bins), Brier = multi-class Brier score. Lower is better.</sub>
 
 ## Tech Stack
 
@@ -253,7 +271,7 @@ Held-out test set: **24,278 cases, 569 diseases**, no symptom vector shared with
 | Backend | Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.x |
 | Frontend | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Zustand |
 | Classical ML | XGBoost (`hist`, CUDA), scikit-learn, scikit-optimize |
-| Online learning | River 0.23 (OneVsRest LogisticRegression, FTRL-Proximal) |
+| Online learning | River 0.23 (OneVsRest LogisticRegression; mini-batch warm start, then online SGD) |
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
 | Embeddings | `sentence-transformers` (multilingual MiniLM) |
 | Auth | Supabase JWT (HS256 + JWKS), python-jose |
@@ -395,7 +413,7 @@ The very first time you start the backend, **the system trains the ML models fro
 - `backend/ml/xgb_model.joblib` - main XGBoost classifier
 - `backend/ml/label_encoder.joblib` - disease label encoder
 - `backend/ml/xgb_best_params.joblib` - Bayes-optimized hyperparameters
-- `backend/ml/river_ovr_ftrl.joblib` - River OVR/FTRL model (shipped in the repo)
+- `backend/ml/river_ovr_ftrl.joblib` - River one-vs-rest model (shipped in the repo)
 - `backend/ml/river_ovr_ftrl.calibration.joblib` - River temperature calibrator
 
 If any of the XGB artifacts are missing, the full pipeline runs:
@@ -414,17 +432,17 @@ After that, every subsequent startup just **loads the saved models** (~5–10 s)
 
 Every long step logs its progress with elapsed time and an estimate of the remaining time (see the example in [How it works](#training-pipeline-first-start)).
 
-Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. The River bootstrap is a single online pass over the training set (one update per class per row), so with ~570 classes it takes roughly 15–40 min, once.
+Startup is split into stages `[ETAP 1/5]` (XGB) ... `[ETAP 5/5]` (ensemble calibration), each with its duration, and the total time is logged at the end. River starts with 12 epochs of mini-batch training (Adam, numpy) on the training set and then keeps learning online; a single online pass (`RIVER_BOOTSTRAP_MODE=online`) left it clearly under-trained.
 
-Measured on the author's machine (CUDA GPU): Bayesian search ~19.5 h, final XGBoost training 11 min, River 27 min, ensemble calibration and report 1.5 min. The search runs only once; its result is saved in `xgb_best_params.joblib`.
+Measured on the author's machine (CUDA GPU): Bayesian search ~19.5 h, final XGBoost training 11 min, River about 1 min, ensemble calibration and report 1.5 min. The search runs only once; its result is saved in `xgb_best_params.joblib`.
 
 ### Calibration and quality report
 
 All three predictors are calibrated on `calibration.csv` (never seen in training) and measured on `test.csv`:
 
 - **XGBoost**: `p = softmax((margins - log w_c) / T)`. `T` is fitted by minimum NLL. The class-weight prior correction `log w_c` (training with class weights inflates rare classes) is used only if it lowers NLL on the calibration set.
-- **River (OVR, FTRL-Proximal)**: `p = softmax((z - lam * z_base) / T)`, where `z` are the raw per-class logits and `z_base` the logits for an empty input; `(lam, T)` are fitted together and the same transform is used at prediction time.
-- **Ensemble**: the log-linear fusion of both models (dynamic weights and gating) gets its own temperature `T_ens`, cached in `backend/ml/ensemble_calibration.json` and recomputed only when a model changes.
+- **River (one-vs-rest logistic regression)**: `p = softmax((z - lam * z_base) / T)`, where `z` are the raw per-class logits and `z_base` the logits for an empty input; `(lam, T)` are fitted together and the same transform is used at prediction time.
+- **Ensemble**: `p = a * p_xgb + (1 - a) * p_river`, with `a` fitted by minimum NLL on the calibration set (`ENSEMBLE_FUSION=linear`; `log` and the old `heuristic` gating are still available). Cached in `backend/ml/ensemble_calibration.json` and recomputed only when a model changes.
 
 The metrics (top-1, top-3, NLL, ECE, Brier, mean confidence) before and after calibration are logged as tables and saved to `backend/ml/training_report.json`.
 
@@ -639,7 +657,10 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `RIVER_CALIBRATE_ON_START` | `True` | Recalibrate on every startup |
-| `RIVER_ALPHA` | `0.1` | FTRL learning rate |
+| `RIVER_BOOTSTRAP_MODE` | `batch` | `batch` = mini-batch warm start (recommended), `online` = old single FTRL pass |
+| `RIVER_BATCH_EPOCHS` / `RIVER_BATCH_LR` / `RIVER_BATCH_L2` | `12` / `0.02` / `1e-5` | Mini-batch training (Adam) |
+| `RIVER_ONLINE_LR` | `0.01` | SGD learning rate for online updates after the warm start |
+| `RIVER_ALPHA` | `0.1` | FTRL learning rate (only `online` mode) |
 | `RIVER_L1` / `RIVER_L2` | `1e-6` / `1e-4` | Regularization |
 | `RIVER_WEIGHT_CAP` | `25.0` | Max class-weight clamp |
 
@@ -647,7 +668,8 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
-| `ENSEMBLE_W_XGB` / `ENSEMBLE_W_RIVER` | `0.8` / `0.2` | Base weights |
+| `ENSEMBLE_FUSION` | `linear` | `linear` / `log` with a weight fitted on the calibration set, or the old `heuristic` |
+| `ENSEMBLE_W_XGB` / `ENSEMBLE_W_RIVER` | `0.8` / `0.2` | Base weights (`heuristic` only) |
 | `ENSEMBLE_K_FUSE` | `0` | `0` = fuse full probability distributions (recommended); `>0` = only Top-K from each model |
 | `ENSEMBLE_MIN_XGB_WEIGHT` / `ENSEMBLE_MIN_RIVER_WEIGHT` | `0.55` / `0.15` | Minimum share of each model |
 | `ENSEMBLE_CONF_GAP` | `0.20` | When one model is more confident by this much, it gets its maximum allowed share |

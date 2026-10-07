@@ -15,26 +15,26 @@
       "top3_hi": 0.9869027514622292
     },
     "river": {
-      "top1": 0.87194167559107,
-      "top1_lo": 0.8678628799736388,
-      "top1_hi": 0.8758958728066563,
-      "top3": 0.9618584726913255,
-      "top3_lo": 0.959468448801384,
-      "top3_hi": 0.9642907158744543
+      "top1": 0.9060878161298295,
+      "top1_lo": 0.9026680533816624,
+      "top1_hi": 0.9098772551280995,
+      "top3": 0.9838125051486943,
+      "top3_lo": 0.9820403245736882,
+      "top3_hi": 0.9854600873218552
     },
     "ens": {
-      "top1": 0.9065820907817778,
-      "top1_lo": 0.9029162204464948,
-      "top1_hi": 0.9102901804102479,
-      "top3": 0.9861191201911196,
-      "top3_lo": 0.9845951066809457,
-      "top3_hi": 0.9876853529944806
+      "top1": 0.9102891506713897,
+      "top1_lo": 0.9067468489990939,
+      "top1_hi": 0.913709943158415,
+      "top3": 0.9861603097454485,
+      "top3_lo": 0.9845539171266167,
+      "top3_hi": 0.9875607545926353
     }
   },
   "ece": {
     "xgb": 0.019603109832376498,
-    "river": 0.01770418048473007,
-    "ens": 0.022742605456333727
+    "river": 0.018385803371830996,
+    "ens": 0.012467193915008048
   },
   "probabilistic": {
     "xgb": {
@@ -42,276 +42,245 @@
       "brier": 0.12191752533290261
     },
     "river": {
-      "nll": 0.3808515077776937,
-      "brier": 0.16598798591729755
+      "nll": 0.2417581515827095,
+      "brier": 0.12382244090735549
     },
     "ens": {
-      "nll": 0.22458444103581662,
-      "brier": 0.11879938500678834
+      "nll": 0.21673784804879034,
+      "brier": 0.11327694801025996
     }
   },
   "paired_bootstrap": {
     "top1_ens_minus_xgb": {
-      "delta": -0.00037070598896119943,
-      "lo": -0.0019770986077930638,
-      "hi": 0.001235686629870665
+      "delta": 0.003336353900650795,
+      "lo": 0.00144060466265755,
+      "hi": 0.005437021171430925
     },
     "top3_ens_minus_xgb": {
-      "delta": 0.0007826015322514211,
-      "lo": 4.118955432902216e-05,
-      "hi": 0.0015652030645028421
+      "delta": 0.0008237910865804432,
+      "lo": -0.0002059477716451108,
+      "hi": 0.0018535299448059971
     }
   },
   "off_diagonal_errors": {
     "xgb": 2259,
-    "river": 3109,
-    "ens": 2268
+    "river": 2280,
+    "ens": 2178
   },
   "criteria": {
-    "K1_top1_ensemble_better": false,
+    "K1_top1_ensemble_better": true,
     "K2_top3_ensemble_better": false,
-    "K3_offdiag_reduced": false,
-    "K4_calibration_not_worse": false,
-    "satisfied_main": 0,
-    "no_local_regression_gt_10pp": false,
-    "min_class_n_for_regression": 20,
-    "bad_classes": [
+    "K1_mcnemar": {
+      "vs": "xgb",
+      "ens_only": 369,
+      "best_only": 288,
+      "p_value": 0.0017806144718544386
+    },
+    "K2_mcnemar": {
+      "vs": "xgb",
+      "ens_only": 94,
+      "best_only": 74,
+      "p_value": 0.14245334559436562
+    },
+    "K1_ci_nonoverlap_info": false,
+    "K2_ci_nonoverlap_info": false,
+    "K3_offdiag_reduced": true,
+    "K4_calibration_not_worse": true,
+    "satisfied_main": 2,
+    "no_local_regression_gt_10pp": true,
+    "bad_classes": [],
+    "raw_drops_gt_10pp": [
       {
-        "class": "macular_degeneration",
-        "drop": 0.10784313725490191,
-        "n": 102
+        "class": "schizophrenia",
+        "n": 76,
+        "drop": 0.1710526315789474,
+        "p_value": 0.0001220703125,
+        "p_holm": 0.0694580078125
       },
       {
-        "class": "urethral_disorder",
-        "drop": 0.15000000000000002,
-        "n": 20
+        "class": "skin_polyp",
+        "n": 68,
+        "drop": 0.1029411764705882,
+        "p_value": 0.0078125,
+        "p_holm": 1.0
       },
       {
-        "class": "rosacea",
-        "drop": 0.13846153846153852,
-        "n": 65
-      }
-    ],
-    "bad_classes_below_min_n": [
+        "class": "skin_cancer",
+        "n": 49,
+        "drop": 0.10204081632653061,
+        "p_value": 0.03125,
+        "p_holm": 1.0
+      },
+      {
+        "class": "lymphedema",
+        "n": 26,
+        "drop": 0.11538461538461542,
+        "p_value": 0.125,
+        "p_holm": 1.0
+      },
+      {
+        "class": "aphthous_ulcer",
+        "n": 18,
+        "drop": 0.11111111111111116,
+        "p_value": 0.25,
+        "p_holm": 1.0
+      },
       {
         "class": "chronic_knee_pain",
+        "n": 17,
         "drop": 0.11764705882352944,
-        "n": 17
-      },
-      {
-        "class": "endocarditis",
-        "drop": 0.33333333333333337,
-        "n": 3
-      },
-      {
-        "class": "abscess_of_nose",
-        "drop": 0.11111111111111105,
-        "n": 18
-      },
-      {
-        "class": "tinnitus_of_unknown_cause",
-        "drop": 0.16666666666666663,
-        "n": 18
+        "p_value": 0.25,
+        "p_holm": 1.0
       },
       {
         "class": "sick_sinus_syndrome",
-        "drop": 0.5,
-        "n": 10
-      },
-      {
-        "class": "chronic_rheumatic_fever",
-        "drop": 0.11111111111111105,
-        "n": 9
-      },
-      {
-        "class": "uterine_fibroids",
-        "drop": 0.10526315789473684,
-        "n": 19
-      },
-      {
-        "class": "persistent_vomiting_of_unknown_cause",
-        "drop": 0.10000000000000009,
-        "n": 10
-      },
-      {
-        "class": "soft_tissue_sarcoma",
-        "drop": 0.11111111111111116,
-        "n": 9
-      },
-      {
-        "class": "bladder_disorder",
-        "drop": 0.15789473684210525,
-        "n": 19
-      },
-      {
-        "class": "brain_cancer",
-        "drop": 0.11111111111111105,
-        "n": 18
-      },
-      {
-        "class": "dislocation_of_the_elbow",
-        "drop": 0.125,
-        "n": 8
-      },
-      {
-        "class": "conjunctivitis_due_to_bacteria",
-        "drop": 0.19999999999999996,
-        "n": 5
-      },
-      {
-        "class": "fracture_of_the_pelvis",
+        "n": 10,
         "drop": 0.20000000000000007,
-        "n": 10
-      },
-      {
-        "class": "retinal_detachment",
-        "drop": 0.16666666666666663,
-        "n": 12
-      },
-      {
-        "class": "myositis",
-        "drop": 0.19999999999999996,
-        "n": 5
-      },
-      {
-        "class": "substance_related_mental_disorder",
-        "drop": 0.11111111111111116,
-        "n": 9
-      },
-      {
-        "class": "poisoning_due_to_gas",
-        "drop": 0.125,
-        "n": 8
-      },
-      {
-        "class": "stricture_of_the_esophagus",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "down_syndrome",
-        "drop": 0.16666666666666663,
-        "n": 6
-      },
-      {
-        "class": "thoracic_outlet_syndrome",
-        "drop": 0.16666666666666663,
-        "n": 6
-      },
-      {
-        "class": "hydrocephalus",
-        "drop": 0.11111111111111116,
-        "n": 9
-      },
-      {
-        "class": "injury_to_the_knee",
-        "drop": 0.3333333333333333,
-        "n": 3
-      },
-      {
-        "class": "fracture_of_the_patella",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "adhesive_capsulitis_of_the_shoulder",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "cervical_cancer",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "tic_movement_disorder",
-        "drop": 0.20000000000000007,
-        "n": 5
-      },
-      {
-        "class": "lewy_body_dementia",
-        "drop": 0.33333333333333337,
-        "n": 3
-      },
-      {
-        "class": "mastoiditis",
-        "drop": 0.19999999999999996,
-        "n": 5
-      },
-      {
-        "class": "poisoning_due_to_antimicrobial_drugs",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "ischemia_of_the_bowel",
-        "drop": 0.39999999999999997,
-        "n": 10
-      },
-      {
-        "class": "drug_abuse_barbiturates",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "dislocation_of_the_shoulder",
-        "drop": 0.19999999999999996,
-        "n": 5
-      },
-      {
-        "class": "amblyopia",
-        "drop": 0.5,
-        "n": 2
-      },
-      {
-        "class": "hematoma",
-        "drop": 0.5,
-        "n": 2
-      },
-      {
-        "class": "injury_to_internal_organ",
-        "drop": 0.25,
-        "n": 4
-      },
-      {
-        "class": "vocal_cord_polyp",
-        "drop": 0.6666666666666667,
-        "n": 3
+        "p_value": 0.25,
+        "p_holm": 1.0
       },
       {
         "class": "atelectasis",
+        "n": 3,
         "drop": 0.33333333333333337,
-        "n": 3
+        "p_value": 0.5,
+        "p_holm": 1.0
       },
       {
-        "class": "primary_immunodeficiency",
+        "class": "atrial_fibrillation",
+        "n": 4,
+        "drop": 0.25,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "autonomic_nervous_system_disorder",
+        "n": 3,
+        "drop": 0.33333333333333337,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "bladder_cancer",
+        "n": 9,
+        "drop": 0.11111111111111116,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "dislocation_of_the_shoulder",
+        "n": 5,
+        "drop": 0.20000000000000007,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "down_syndrome",
+        "n": 6,
+        "drop": 0.16666666666666663,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "foreign_body_in_the_gastrointestinal_tract",
+        "n": 6,
+        "drop": 0.16666666666666663,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "hematoma",
+        "n": 2,
         "drop": 0.5,
-        "n": 2
+        "p_value": 0.5,
+        "p_holm": 1.0
       },
       {
-        "class": "hyperhidrosis",
+        "class": "hidradenitis_suppurativa",
+        "n": 5,
+        "drop": 0.19999999999999996,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "lewy_body_dementia",
+        "n": 3,
+        "drop": 0.33333333333333337,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "lung_cancer",
+        "n": 6,
+        "drop": 0.16666666666666674,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "myositis",
+        "n": 5,
+        "drop": 0.19999999999999996,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "neuropathy_due_to_drugs",
+        "n": 2,
         "drop": 0.5,
-        "n": 2
+        "p_value": 0.5,
+        "p_holm": 1.0
       },
       {
-        "class": "metastatic_cancer",
-        "drop": 0.3333333333333333,
-        "n": 3
+        "class": "phimosis",
+        "n": 4,
+        "drop": 0.25,
+        "p_value": 0.5,
+        "p_holm": 1.0
       },
       {
-        "class": "juvenile_rheumatoid_arthritis",
-        "drop": 0.5,
-        "n": 2
+        "class": "pityriasis_rosea",
+        "n": 4,
+        "drop": 0.25,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "poisoning_due_to_gas",
+        "n": 8,
+        "drop": 0.125,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "substance_related_mental_disorder",
+        "n": 9,
+        "drop": 0.11111111111111116,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "thoracic_outlet_syndrome",
+        "n": 6,
+        "drop": 0.16666666666666663,
+        "p_value": 0.5,
+        "p_holm": 1.0
+      },
+      {
+        "class": "vocal_cord_polyp",
+        "n": 3,
+        "drop": 0.33333333333333337,
+        "p_value": 0.5,
+        "p_holm": 1.0
       }
     ],
-    "passed": false
+    "passed": true
   },
   "meta": {
     "test_csv": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\data\\v2\\test.csv",
     "model_path_xgb": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\ml\\xgb_model.joblib",
     "model_path_river": "C:\\Users\\g_sie\\Desktop\\SymptomChecker\\backend\\ml\\river_ovr_ftrl.joblib",
     "model_id_xgb": "xgb_model.joblib@1791385979",
-    "model_id_river": "river_ovr_ftrl.joblib@1791387744",
+    "model_id_river": "river_ovr_ftrl.joblib@1791399544",
     "features_hash": "239cf9a70efe",
     "ensemble_version": {
       "w_xgb": 0.8,

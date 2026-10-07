@@ -43,7 +43,9 @@ class EnsembleTopK:
       - wagi: bazowe ENSEMBLE_W_* skalowane pewnością; jeśli jeden model jest
         wyraźnie pewniejszy (różnica >= ENSEMBLE_CONF_GAP), dostaje maksymalny
         dopuszczalny udział (gating). Minimalne udziały: MIN_XGB / MIN_RIVER;
-      - fuzja w log-space: p = exp(wx*log(px) + wr*log(pr)), normalizacja po wszystkich klasach.
+      - fuzja (ENSEMBLE_FUSION): "linear" p = a*px + (1-a)*pr z wagą a dobraną na zbiorze
+        kalibracyjnym (domyślnie), "log" p ~ px^w * pr^(1-w) z temperaturą, albo "heuristic":
+        dynamiczne wagi jak wyżej i fuzja w log-space.
 
     Publiczne API:
       - predict_topk(vec, k)  – główny UI
@@ -227,28 +229,41 @@ class EnsembleTopK:
             meta.update({"wx_dyn": 0.0, "wr_dyn": 1.0, "gated_to": "river"})
             return {"mx": {}, "mr": mr, "combined": mr, "meta": meta}
 
+        mode = str(getattr(self.st, "ensemble_mode", "heuristic") or "heuristic")
+        learned_w = getattr(self.st, "ensemble_wx", None)
+        names = set(mx) | set(mr)
         if hasattr(self, "wx") and hasattr(self, "wr"):
             wx_dyn, wr_dyn = self._manual_weights()
             gated_to = "manual"
+        elif mode in ("linear", "log") and learned_w is not None:
+            # waga dobrana na zbiorze kalibracyjnym (services/ensemble_calibration.py)
+            wx_dyn = float(learned_w)
+            wr_dyn = 1.0 - wx_dyn
+            gated_to = "learned"
         else:
+            mode = "heuristic"
             wx_dyn, wr_dyn, gated_to = self._compute_weights(mx, mr)
 
-        # temperatura całego ensemble, dobrana na zbiorze kalibracyjnym
-        # (services/ensemble_calibration.py); 1.0 = brak dodatkowej kalibracji
         T = float(getattr(self.st, "ensemble_T", 1.0) or 1.0)
-        fx, fr = self._floor(mx), self._floor(mr)
-        logs: Dict[str, float] = {}
-        for name in set(mx) | set(mr):
-            px = max(mx.get(name, fx), _EPS)
-            pr = max(mr.get(name, fr), _EPS)
-            logs[name] = (wx_dyn * math.log(px) + wr_dyn * math.log(pr)) / T
-        top_log = max(logs.values())
-        combined = self._normalize({n: math.exp(v - top_log) for n, v in logs.items()})
+        if mode == "linear" and gated_to == "learned":
+            # mieszanina liniowa: odporna, gdy jeden z modeli jest pewny, ale się myli
+            combined = self._normalize({n: wx_dyn * mx.get(n, 0.0) + wr_dyn * mr.get(n, 0.0) for n in names})
+        else:
+            # fuzja w log-przestrzeni (+ temperatura całego ensemble z kalibracji)
+            fx, fr = self._floor(mx), self._floor(mr)
+            logs: Dict[str, float] = {}
+            for name in names:
+                px = max(mx.get(name, fx), _EPS)
+                pr = max(mr.get(name, fr), _EPS)
+                logs[name] = (wx_dyn * math.log(px) + wr_dyn * math.log(pr)) / T
+            top_log = max(logs.values())
+            combined = self._normalize({n: math.exp(v - top_log) for n, v in logs.items()})
 
-        meta.update({"wx_dyn": float(wx_dyn), "wr_dyn": float(wr_dyn), "gated_to": gated_to, "T_ens": T})
+        meta.update({"wx_dyn": float(wx_dyn), "wr_dyn": float(wr_dyn), "gated_to": gated_to,
+                     "T_ens": T, "fusion": mode})
         log.info(
-            "[Ensemble] xgb=%.3fs river=%.3fs fuse=%.3fs | classes=%d | wx=%.2f wr=%.2f conf_x=%.2f conf_r=%.2f gated_to=%s",
-            t1 - t0, t2 - t1, time.perf_counter() - t2, len(combined),
+            "[Ensemble] xgb=%.3fs river=%.3fs fuse=%.3fs | classes=%d | %s wx=%.2f wr=%.2f conf_x=%.2f conf_r=%.2f gated_to=%s",
+            t1 - t0, t2 - t1, time.perf_counter() - t2, len(combined), mode,
             wx_dyn, wr_dyn, conf_x, conf_r, gated_to,
         )
         return {"mx": mx, "mr": mr, "combined": combined, "meta": meta}

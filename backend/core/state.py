@@ -25,3 +25,6 @@ class AppState:
     symptom_stats: Optional[Any] = field(default=None)
     # temperatura fuzji XGB + River (services/ensemble_calibration.py)
     ensemble_T: float = field(default=1.0)
+    # sposób łączenia i waga XGB dobrana na zbiorze kalibracyjnym (None = dawna heurystyka)
+    ensemble_mode: str = field(default="heuristic")
+    ensemble_wx: Optional[float] = field(default=None)

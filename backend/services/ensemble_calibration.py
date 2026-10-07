@@ -24,11 +24,17 @@ import numpy as np
 import pandas as pd
 
 from config import MODEL_PATH, RIVER_MODEL_PATH, RIVER_CALIB_PATH, TEST_CSV, XGB_CALIBRATION_CSV
+
+try:
+    from config import ENSEMBLE_FUSION
+except Exception:
+    ENSEMBLE_FUSION = "linear"
 from utils import calibration_metrics, log_metrics_table, update_training_report, Progress, fmt_duration
 
 log = logging.getLogger("symptomchecker.ensemble_cal")
 
 ENS_CALIB_PATH = os.path.join(os.path.dirname(MODEL_PATH), "ensemble_calibration.json")
+CACHE_VERSION = 2
 _EPS = 1e-12
 
 
@@ -135,62 +141,105 @@ def _model_distributions(state, path: str, label: str) -> Tuple[np.ndarray, np.n
     return Px, Pr, y
 
 
-def ensemble_distribution(Px: np.ndarray, Pr: np.ndarray, ens, T: float = 1.0) -> np.ndarray:
-    """Rozkład ensemble identyczny z EnsembleTopK._fuse (fuzja + temperatura T_ens)."""
-    return _softmax(fused_log_scores(Px, Pr, ens) / float(T or 1.0))
+def ensemble_distribution(Px: np.ndarray, Pr: np.ndarray, ens, state=None, T: Optional[float] = None) -> np.ndarray:
+    """Rozkład ensemble identyczny z EnsembleTopK._fuse dla trybu zapisanego w state."""
+    mode = str(getattr(state, "ensemble_mode", "heuristic") or "heuristic") if state is not None else "heuristic"
+    wx = getattr(state, "ensemble_wx", None) if state is not None else None
+    T = float(T if T is not None else (getattr(state, "ensemble_T", 1.0) if state is not None else 1.0) or 1.0)
+    if mode == "linear" and wx is not None:
+        P = wx * Px + (1.0 - wx) * Pr
+        return P / P.sum(1, keepdims=True)
+    if mode == "log" and wx is not None:
+        L = wx * np.log(np.maximum(Px, _EPS)) + (1.0 - wx) * np.log(np.maximum(Pr, _EPS))
+        return _softmax(L / T)
+    return _softmax(fused_log_scores(Px, Pr, ens) / T)
+
+
+def _nll(P: np.ndarray, y: np.ndarray) -> float:
+    return float(-np.log(np.clip(P[np.arange(len(y)), y], 1e-12, 1.0)).mean())
+
+
+def _fit_fusion(Px: np.ndarray, Pr: np.ndarray, y: np.ndarray, ens, mode: str) -> Tuple[Optional[float], float, float]:
+    """Dobiera (waga XGB, temperatura) na zbiorze kalibracyjnym (minimum NLL). Zwraca (wx, T, NLL)."""
+    if mode == "linear":
+        best = (0.5, float("inf"))
+        for a in np.linspace(0.0, 1.0, 101):
+            loss = _nll(a * Px + (1 - a) * Pr, y)
+            if loss < best[1]:
+                best = (float(a), loss)
+        return best[0], 1.0, best[1]
+    if mode == "log":
+        Lx, Lr = np.log(np.maximum(Px, _EPS)), np.log(np.maximum(Pr, _EPS))
+        best = (0.5, 1.0, float("inf"))
+        for w in np.linspace(0.0, 1.0, 21):
+            T, loss = _best_T(w * Lx + (1 - w) * Lr, y)
+            if loss < best[2]:
+                best = (float(w), float(T), loss)
+        return best
+    T, loss = _best_T(fused_log_scores(Px, Pr, ens), y)
+    return None, float(T), loss
 
 
 def ensure_ensemble_calibration(state) -> float:
     """
-    Ustawia state.ensemble_T. Używa cache, jeśli modele się nie zmieniły; w przeciwnym
-    razie liczy kalibrację na zbiorze kalibracyjnym i raport na teście.
+    Dobiera sposób łączenia XGB + River na zbiorze kalibracyjnym (ENSEMBLE_FUSION: waga XGB
+    i/lub temperatura) i liczy raport na teście. Wynik jest cache'owany w
+    ml/ensemble_calibration.json i liczony ponownie tylko po zmianie któregoś modelu.
+    Ustawia state.ensemble_mode, state.ensemble_wx i state.ensemble_T.
     """
     from services.ensemble import EnsembleTopK
 
-    state.ensemble_T = 1.0
+    state.ensemble_T, state.ensemble_mode, state.ensemble_wx = 1.0, "heuristic", None
     if getattr(state, "xgb", None) is None or getattr(state.xgb, "model", None) is None:
         return 1.0
     if getattr(state, "river", None) is None or getattr(state.river, "model", None) is None:
         log.info("[Ensemble][Cal] Brak River - ensemble = sam XGB, bez dodatkowej kalibracji.")
         return 1.0
 
+    mode = str(ENSEMBLE_FUSION or "linear").lower()
+    if mode not in ("linear", "log", "heuristic"):
+        log.warning("[Ensemble][Cal] Nieznany ENSEMBLE_FUSION=%s - używam linear.", mode)
+        mode = "linear"
     sig = models_signature()
     try:
         with open(ENS_CALIB_PATH, "r", encoding="utf-8") as f:
             cached = json.load(f)
-        if cached.get("signature") == sig:
+        if (cached.get("signature") == sig and cached.get("version") == CACHE_VERSION
+                and cached.get("mode") == mode):
             state.ensemble_T = float(cached.get("T", 1.0))
-            log.info("[Ensemble][Cal] Załadowano T_ens=%.4f (modele bez zmian).", state.ensemble_T)
+            state.ensemble_mode = mode
+            state.ensemble_wx = cached.get("wx")
+            log.info("[Ensemble][Cal] Załadowano (modele bez zmian): tryb=%s waga XGB=%s T_ens=%.4f.",
+                     mode, cached.get("wx"), state.ensemble_T)
             return state.ensemble_T
     except Exception:
         pass
 
     if not XGB_CALIBRATION_CSV or not os.path.exists(XGB_CALIBRATION_CSV):
-        log.warning("[Ensemble][Cal] Brak zbioru kalibracyjnego - T_ens=1.")
+        log.warning("[Ensemble][Cal] Brak zbioru kalibracyjnego - dawna heurystyka, T_ens=1.")
         return 1.0
 
     import time
     t0 = time.time()
-    log.info("[Ensemble][Cal] Modele się zmieniły - kalibruję ensemble i liczę raport (to chwilę potrwa).")
+    log.info("[Ensemble][Cal] Modele lub tryb się zmieniły - dobieram łączenie (%s) i liczę raport.", mode)
     ens = EnsembleTopK(state)
     Px, Pr, y = _model_distributions(state, XGB_CALIBRATION_CSV, "kalibracja")
-    L = fused_log_scores(Px, Pr, ens)
-    T, loss = _best_T(L, y)
-    log.info("[Ensemble][Cal] T_ens=%.4f (NLL na zbiorze kalibracyjnym: %.4f -> %.4f)",
-             T, float(-np.log(np.clip(_softmax(L)[np.arange(len(y)), y], 1e-12, 1)).mean()), loss)
-    state.ensemble_T = float(T)
+    wx, T, loss = _fit_fusion(Px, Pr, y, ens, mode)
+    state.ensemble_mode, state.ensemble_wx, state.ensemble_T = mode, wx, float(T)
+    log.info("[Ensemble][Cal] Tryb=%s waga XGB=%s T_ens=%.4f (NLL na zbiorze kalibracyjnym %.4f; "
+             "sam XGB %.4f, sam River %.4f)", mode, None if wx is None else round(wx, 3), T, loss,
+             _nll(Px, y), _nll(Pr, y))
 
-    report: Dict[str, Any] = {"T_ens": round(float(T), 4)}
+    report: Dict[str, Any] = {"mode": mode, "wx": None if wx is None else round(wx, 4), "T_ens": round(float(T), 4)}
     if TEST_CSV and os.path.exists(TEST_CSV):
         Px_t, Pr_t, y_t = _model_distributions(state, TEST_CSV, "test")
-        L_t = fused_log_scores(Px_t, Pr_t, ens)
         report.update({
             "test_xgb_calibrated": calibration_metrics(Px_t, y_t),
             "test_river_calibrated": calibration_metrics(Pr_t, y_t),
-            "test_ensemble_raw": calibration_metrics(_softmax(L_t), y_t),
-            "test_ensemble_calibrated": calibration_metrics(_softmax(L_t / T), y_t),
+            "test_ensemble_heuristic": calibration_metrics(_softmax(fused_log_scores(Px_t, Pr_t, ens)), y_t),
+            "test_ensemble": calibration_metrics(ensemble_distribution(Px_t, Pr_t, ens, state), y_t),
         })
-        log_metrics_table(log, "ENSEMBLE / TEST", report)
+        log_metrics_table(log, "ENSEMBLE / TEST", {k: v for k, v in report.items() if isinstance(v, dict)})
         river_cal = state.river.calibrator
         update_training_report("river", {
             "test_calibrated": report["test_river_calibrated"],
@@ -200,7 +249,8 @@ def ensure_ensemble_calibration(state) -> float:
 
     try:
         with open(ENS_CALIB_PATH, "w", encoding="utf-8") as f:
-            json.dump({"signature": sig, "T": float(T), "report": report}, f, ensure_ascii=False, indent=2)
+            json.dump({"signature": sig, "version": CACHE_VERSION, "mode": mode, "wx": wx, "T": float(T),
+                       "report": report}, f, ensure_ascii=False, indent=2)
     except Exception as e:
         log.warning("[Ensemble][Cal] Nie zapisano %s: %s", ENS_CALIB_PATH, e)
     log.info("[Ensemble][Cal] Gotowe w %s.", fmt_duration(time.time() - t0))

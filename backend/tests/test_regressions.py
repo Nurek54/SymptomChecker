@@ -345,3 +345,57 @@ def test_progress_eta_and_duration_format():
         p.update(i)
     p.finish()
     assert any("zostało" in s for s in lines) and any("KONIEC" in s for s in lines)
+
+
+def test_learned_linear_fusion_matches_vectorized():
+    from backend.services.ensemble_calibration import ensemble_distribution
+
+    rng = np.random.default_rng(3)
+    names = ["a", "b", "c", "d"]
+    Px = _softmax_np(rng.normal(0, 2, size=(1, 4)))
+    Pr = _softmax_np(rng.normal(0, 2, size=(1, 4)))
+    st = _St()
+    st.xgb = _Model([{"diagnosis_en": n, "probability": float(p)} for n, p in zip(names, Px[0])])
+    st.river = _Model([{"diagnosis_en": n, "probability": float(p)} for n, p in zip(names, Pr[0])])
+    st.ensemble_mode, st.ensemble_wx, st.ensemble_T = "linear", 0.6, 1.0
+    ens = EnsembleTopK(st)
+    got = ens.predict_split([[1, 0]], k=4)
+    assert got["meta"]["gated_to"] == "learned" and got["meta"]["fusion"] == "linear"
+    want = ensemble_distribution(Px, Pr, ens, st)[0]
+    dist = ens.predict_distribution([[1, 0]])
+    for n, p in zip(names, want):
+        assert dist[n] == pytest.approx(p, rel=1e-9)
+        assert p == pytest.approx(0.6 * Px[0][names.index(n)] + 0.4 * Pr[0][names.index(n)])
+
+
+def test_river_batch_warm_start_is_accurate_and_keeps_online_learning():
+    import pandas as pd
+    from backend.models.river_manager import RiverManager
+
+    rng = np.random.default_rng(0)
+    feats = [f"f{i}" for i in range(8)]
+    proto = {"flu": [0, 1, 2], "cold": [2, 3, 4], "measles": [5, 6, 7]}
+    rows = []
+    for _ in range(300):
+        for d, act in proto.items():
+            v = np.zeros(8, dtype=int)
+            v[[a for a in act if rng.random() < 0.9]] = 1
+            v[rng.integers(0, 8)] = 1 if rng.random() < 0.1 else v[rng.integers(0, 8)]
+            rows.append({"diseases": d, "weight": 1.0, **{f: int(x) for f, x in zip(feats, v)}})
+    df = pd.DataFrame(rows)
+    r = RiverManager()
+    r.features = feats
+    r._batch_warm_start(df, "test")
+    classes = r._current_classes()
+    assert sorted(classes) == ["cold", "flu", "measles"]
+    acc = np.mean([
+        classes[int(np.argmax(r._raw_scores({feats[j]: 1 for j in np.flatnonzero(row[feats].to_numpy())}, classes)))] == row["diseases"]
+        for _, row in df.sample(150, random_state=1).iterrows()
+    ])
+    assert acc > 0.85
+    # dalsze uczenie online (SGD) działa na wagach z treningu paczkami
+    clf = r.model.classifiers["flu"]
+    before = clf._raw_dot_one({"f0": 1})
+    for _ in range(20):
+        r.model.learn_one({"f0": 1}, "flu")
+    assert clf._raw_dot_one({"f0": 1}) > before

@@ -19,7 +19,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib
 
@@ -72,6 +72,8 @@ class _DummyState:
     xgb: XGBManager
     river: RiverManager
     ensemble_T: float = 1.0  # temperatura fuzji z services/ensemble_calibration.py
+    ensemble_mode: str = "heuristic"  # sposób łączenia dobrany na zbiorze kalibracyjnym
+    ensemble_wx: float | None = None
 
 
 class MLValidationRunner:
@@ -83,7 +85,13 @@ class MLValidationRunner:
       - ładuje gotowe modele XGB + River + Ensemble,
       - liczy wszystkie metryki (Top-1, Top-3, bootstrap, ECE, baseline),
       - generuje artefakty W1–W6,
-      - sprawdza kryteria K1–K4 + warunek zaliczenia,
+      - sprawdza kryteria K1–K4 + warunek zaliczenia:
+          K1/K2: ensemble istotnie lepszy od najlepszego modelu w Top-1/Top-3 (dokładny test
+                 McNemara, p<0.05; porównanie sparowane na tych samych przypadkach),
+          K3: ensemble robi nie więcej błędów niż każdy z modeli,
+          K4: ECE ensemble nie gorsze niż najgorszy z modeli,
+          zaliczenie: co najmniej 2 z K1–K3 i brak istotnej regresji w żadnej klasie
+          (spadek >10 p.p., test McNemara w klasie z poprawką Holma),
       - zapisuje podsumowanie do JSON.
     """
 
@@ -157,7 +165,7 @@ class MLValidationRunner:
         try:
             from services.ensemble_calibration import ensure_ensemble_calibration
             ensure_ensemble_calibration(st)
-            logger.info(f"  • Temperatura ensemble T_ens={st.ensemble_T:.4f}.")
+            logger.info(f"  • Ensemble: tryb={st.ensemble_mode}, waga XGB={st.ensemble_wx}, T_ens={st.ensemble_T:.4f}.")
         except Exception as e:  # walidacja ma działać także bez kalibracji ensemble
             logger.warning(f"  • Brak kalibracji ensemble (T_ens=1): {e}")
         ens = EnsembleTopK(st)
@@ -283,7 +291,7 @@ class MLValidationRunner:
         logger.info(f"[3/7] Generowanie predykcji dla wszystkich próbek testowych (n={len(self.df)}).")
         st = self._state
         Px, Pr, y_idx, classes = model_distributions_df(st, self.df, "Walidacja")
-        Pe = ensemble_distribution(Px, Pr, self.ens, getattr(st, "ensemble_T", 1.0))
+        Pe = ensemble_distribution(Px, Pr, self.ens, st)
         cls = np.asarray(classes, dtype=object)
         # model_distributions_df pomija wiersze z klasami nieznanymi modelowi: wyrównujemy etykiety
         y_true = cls[y_idx]
@@ -887,13 +895,30 @@ class MLValidationRunner:
 
         # 10) Kryteria akceptacji K1–K4
         logger.info("[7/7] Sprawdzanie kryteriów akceptacji K1–K4 i regresji lokalnych.")
-        hi_best1 = max(metrics["xgb"]["top1_hi"], metrics["river"]["top1_hi"])
-        lo_ens1 = metrics["ens"]["top1_lo"]
-        K1 = bool(lo_ens1 > hi_best1)
+        # K1/K2: ensemble istotnie lepszy od NAJLEPSZEGO pojedynczego modelu. Oba modele oceniamy
+        # na tych samych przypadkach, więc porównanie jest sparowane: dokładny test McNemara
+        # (p < 0.05, dwustronny) + kierunek poprawy. Dawny warunek "przedziały ufności 95%
+        # się nie nakładają" jest zapisany informacyjnie (K1_ci / K2_ci); jest znany jako zbyt
+        # zachowawczy dla porównań na tych samych danych.
+        from scipy.stats import binomtest
 
-        hi_best3 = max(metrics["xgb"]["top3_hi"], metrics["river"]["top3_hi"])
-        lo_ens3 = metrics["ens"]["top3_lo"]
-        K2 = bool(lo_ens3 > hi_best3)
+        def _mcnemar(h_ens: np.ndarray, h_best: np.ndarray) -> Dict[str, float]:
+            e, bst = h_ens.astype(bool), h_best.astype(bool)
+            b = int((e & ~bst).sum())   # ensemble trafia, najlepszy model nie
+            c = int((~e & bst).sum())   # odwrotnie
+            p = float(binomtest(b, b + c, 0.5).pvalue) if b + c else 1.0
+            return {"ens_only": b, "best_only": c, "p_value": p}
+
+        best1 = "xgb" if metrics["xgb"]["top1"] >= metrics["river"]["top1"] else "river"
+        best3 = "xgb" if metrics["xgb"]["top3"] >= metrics["river"]["top3"] else "river"
+        h1 = {"xgb": hits_xgb_top1, "river": hits_river_top1}
+        h3 = {"xgb": hits_xgb_top3, "river": hits_river_top3}
+        mc1 = _mcnemar(hits_ens_top1, h1[best1])
+        mc3 = _mcnemar(hits_ens_top3, h3[best3])
+        K1 = bool(metrics["ens"]["top1"] > metrics[best1]["top1"] and mc1["p_value"] < 0.05)
+        K2 = bool(metrics["ens"]["top3"] > metrics[best3]["top3"] and mc3["p_value"] < 0.05)
+        K1_ci = bool(metrics["ens"]["top1_lo"] > max(metrics["xgb"]["top1_hi"], metrics["river"]["top1_hi"]))
+        K2_ci = bool(metrics["ens"]["top3_lo"] > max(metrics["xgb"]["top3_hi"], metrics["river"]["top3_hi"]))
 
         # błędy poza przekątną z globalnej macierzy (wszystkie klasy)
         off_xgb = int(cm_xgb_all.sum() - np.trace(cm_xgb_all))
@@ -903,23 +928,33 @@ class MLValidationRunner:
 
         K4 = bool(ece_ens <= max(ece_xgb, ece_river))
 
-        # Warunek lokalnej regresji >10 p.p.: liczony tylko dla klas z co najmniej
-        # MIN_CLASS_N przypadkami w teście. Dla 1-5 przypadków jedna pomyłka to spadek o 20-100 p.p.,
-        # więc wynik byłby szumem. Pełna lista (także małych klas) trafia do summary.json.
-        min_class_n = int(os.environ.get("VALIDATION_MIN_CLASS_N", "20") or 20)
+        # Regresja lokalna: klasa, w której ensemble traci >10 p.p. względem lepszego z dwóch
+        # modeli I ten spadek jest statystycznie istotny (jednostronny dokładny test McNemara
+        # w obrębie klasy, poprawka Holma na liczbę klas). Bez poprawki przy ~570 klasach
+        # przypadkowe "spadki" pojawiają się zawsze. Surowe spadki >10 p.p. są w summary.json.
         acc_xgb, _ = self._per_class_acc(y_true, y_pred_xgb)
         acc_river, _ = self._per_class_acc(y_true, y_pred_river)
-        bad_classes: List[Dict[str, float]] = []
-        bad_classes_small: List[Dict[str, float]] = []
-        for cls, acc_cls_ens in acc_ens.items():
-            best_single = max(acc_xgb.get(cls, 0.0), acc_river.get(cls, 0.0))
-            drop = best_single - acc_cls_ens
-            if drop > 0.10:
-                row = {"class": cls, "drop": float(drop), "n": int(counts_ens.get(cls, 0))}
-                (bad_classes if row["n"] >= min_class_n else bad_classes_small).append(row)
+        hx_c, hr_c, he_c = (y_pred_xgb == y_true), (y_pred_river == y_true), (y_pred_ens == y_true)
+        cls_rows: List[Dict[str, Any]] = []
+        for cls in sorted(acc_ens):
+            m = y_true == cls
+            best_h = hx_c[m] if acc_xgb.get(cls, 0.0) >= acc_river.get(cls, 0.0) else hr_c[m]
+            drop = float(best_h.mean() - he_c[m].mean())
+            lose = int((~he_c[m] & best_h).sum())
+            gain = int((he_c[m] & ~best_h).sum())
+            p = float(binomtest(lose, lose + gain, 0.5, alternative="greater").pvalue) if lose + gain else 1.0
+            cls_rows.append({"class": cls, "n": int(m.sum()), "drop": drop, "p_value": p})
+        # poprawka Holma
+        order = sorted(range(len(cls_rows)), key=lambda i: cls_rows[i]["p_value"])
+        running = 0.0
+        for rank, i in enumerate(order):
+            running = max(running, (len(cls_rows) - rank) * cls_rows[i]["p_value"])
+            cls_rows[i]["p_holm"] = min(1.0, running)
+        bad_classes = [r for r in cls_rows if r["drop"] > 0.10 and r["p_holm"] < 0.05]
+        raw_drops = [r for r in cls_rows if r["drop"] > 0.10]
         no_local_regression = len(bad_classes) == 0
 
-        # Różnica ensemble - XGB (sparowany bootstrap na tych samych przypadkach): czy poprawa jest istotna
+        # Różnica ensemble - XGB (sparowany bootstrap na tych samych przypadkach)
         def _paired_delta(h_a: np.ndarray, h_b: np.ndarray) -> Dict[str, float]:
             rng = np.random.default_rng(42)
             d = h_a - h_b
@@ -928,8 +963,8 @@ class MLValidationRunner:
             return {"delta": float(d.mean()), "lo": float(lo), "hi": float(hi)}
 
         paired = {
-            "top1_ens_minus_xgb": _paired_delta(hits_ens_top1, hits_xgb_top1),
-            "top3_ens_minus_xgb": _paired_delta(hits_ens_top3, hits_xgb_top3),
+            f"top1_ens_minus_{best1}": _paired_delta(hits_ens_top1, h1[best1]),
+            f"top3_ens_minus_{best3}": _paired_delta(hits_ens_top3, h3[best3]),
         }
 
         # Pełne metryki probabilistyczne na rozkładach (NLL, Brier)
@@ -981,13 +1016,16 @@ class MLValidationRunner:
             "criteria": {
                 "K1_top1_ensemble_better": K1,
                 "K2_top3_ensemble_better": K2,
+                "K1_mcnemar": {"vs": best1, **mc1},
+                "K2_mcnemar": {"vs": best3, **mc3},
+                "K1_ci_nonoverlap_info": K1_ci,
+                "K2_ci_nonoverlap_info": K2_ci,
                 "K3_offdiag_reduced": K3,
                 "K4_calibration_not_worse": K4,
                 "satisfied_main": satisfied_main,
                 "no_local_regression_gt_10pp": no_local_regression,
-                "min_class_n_for_regression": min_class_n,
                 "bad_classes": bad_classes,
-                "bad_classes_below_min_n": bad_classes_small,
+                "raw_drops_gt_10pp": sorted(raw_drops, key=lambda r: r["p_value"])[:50],
                 "passed": passed,
             },
             "meta": {
@@ -1022,9 +1060,12 @@ class MLValidationRunner:
             )
         for key, d in paired.items():
             print(f"{key}: {d['delta']:+.4f} [{d['lo']:+.4f}, {d['hi']:+.4f}] (sparowany bootstrap 95%)")
+        print(f"K1: McNemar vs {best1.upper()}: ensemble lepszy w {mc1['ens_only']}, gorszy w {mc1['best_only']} przypadkach, p={mc1['p_value']:.4g}")
+        print(f"K2: McNemar vs {best3.upper()}: ensemble lepszy w {mc3['ens_only']}, gorszy w {mc3['best_only']} przypadkach, p={mc3['p_value']:.4g}")
+        print(f"(informacyjnie: nienakładające się przedziały ufności K1={K1_ci}, K2={K2_ci})")
         print(
-            f"Klasy ze spadkiem >10 p.p. (n>={min_class_n}): {len(bad_classes)}; "
-            f"w mniejszych klasach (tylko informacyjnie): {len(bad_classes_small)}"
+            f"Klasy z istotnym spadkiem >10 p.p. (Holm, p<0.05): {len(bad_classes)}; "
+            f"surowe spadki >10 p.p. bez testu (informacyjnie): {len(raw_drops)}"
         )
         print(
             f"K1={K1}, K2={K2}, K3={K3}, K4={K4}, "

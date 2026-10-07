@@ -204,6 +204,14 @@ RIVER_WEIGHT_MIN         = _env_float("RIVER_WEIGHT_MIN", 0.2)
 RIVER_CALIBRATION_CSV    = _env_path("RIVER_CALIBRATION_CSV", "data/v2/calibration.csv" if _V2 else "data/calibration.csv")
 XGB_CALIBRATION_CSV      = _env_path("XGB_CALIBRATION_CSV", RIVER_CALIBRATION_CSV)
 RIVER_CALIBRATE_ON_START = _env_bool("RIVER_CALIBRATE_ON_START", True)
+# Start River od zera: "batch" = kilka epok uczenia paczkami (Adam, numpy), potem dalsze
+# uczenie online przez SGD; "online" = dawne jedno przejście online (FTRL), wyraźnie słabsze.
+RIVER_BOOTSTRAP_MODE     = _env_str("RIVER_BOOTSTRAP_MODE", "batch")
+RIVER_BATCH_EPOCHS       = _env_int("RIVER_BATCH_EPOCHS", 12)
+RIVER_BATCH_LR           = _env_float("RIVER_BATCH_LR", 0.02)
+RIVER_BATCH_L2           = _env_float("RIVER_BATCH_L2", 1e-5)
+RIVER_BATCH_SIZE         = _env_int("RIVER_BATCH_SIZE", 1024)
+RIVER_ONLINE_LR          = _env_float("RIVER_ONLINE_LR", 0.01)
 
 # ───────────────────────── Ensemble (XGB + River) – XGB dominuje, River koryguje ────
 ENSEMBLE_W_XGB       = _env_float("ENSEMBLE_W_XGB", 0.8)
@@ -217,6 +225,12 @@ ENSEMBLE_MIN_XGB_WEIGHT   = _env_float("ENSEMBLE_MIN_XGB_WEIGHT", 0.55)
 ENSEMBLE_MIN_RIVER_WEIGHT = _env_float("ENSEMBLE_MIN_RIVER_WEIGHT", 0.15)
 
 ENSEMBLE_CONF_GAP    = _env_float("ENSEMBLE_CONF_GAP", 0.20)
+# Sposób łączenia XGB + River:
+#   "linear"    - p = a*p_xgb + (1-a)*p_river, waga a dobierana na zbiorze kalibracyjnym (domyślnie),
+#   "log"       - p ~ p_xgb^w * p_river^(1-w), w i temperatura z kalibracji,
+#   "heuristic" - dawne dynamiczne wagi (ENSEMBLE_W_*, gating) bez uczenia.
+# Bez pliku kalibracji ensemble zawsze działa "heuristic".
+ENSEMBLE_FUSION      = _env_str("ENSEMBLE_FUSION", "linear")
 
 # ───────────────────────── Logowanie / diagnostyka ─────────────────────────
 LOG_LEVEL           = _env_str("LOG_LEVEL", "INFO")
