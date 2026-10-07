@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { listSymptomsDict } from "@/lib/api";
+import { matchSymptom, normalizeSymptomDict } from "@/lib/symptomDict";
 import { Calendar, Clock, Flame, Check, Clipboard, X } from "lucide-react";
 
 /** Element słownika (z xgb_label do kanonizacji) */
@@ -10,6 +11,7 @@ type SymItem = {
   pl?: string;
   category?: string;
   xgb_label?: string;
+  aliases?: string[];
 };
 
 type Props = {
@@ -98,13 +100,14 @@ export default function PrepOverlay({ open, onClose }: Props) {
         const arr = await listSymptomsDict();
         if (ac.signal.aborted) return;
         if (Array.isArray(arr)) {
-          const normalized: SymItem[] = arr.map((raw) => {
+          const normalized: SymItem[] = normalizeSymptomDict(arr).map((raw) => {
             const it = raw as typeof raw & { xgb_label?: string };
             return {
               en: it.en,
-              pl: it.pl ?? undefined,
+              pl: it.pl || undefined,
               category: it.category ?? undefined,
               xgb_label: it.xgb_label ?? it.en,
+              aliases: it.aliases ?? [],
             };
           });
           setDict(normalized);
@@ -164,7 +167,8 @@ export default function PrepOverlay({ open, onClose }: Props) {
     const s = query.trim().toLowerCase();
     if (!s) return dict.slice(0, 200); // pokaż pierwsze 200 przy pustym wyszukiwaniu
     return dict.filter((it) =>
-      (it.pl ?? "").toLowerCase().includes(s) || (it.en ?? "").toLowerCase().includes(s)
+      matchSymptom({ en: it.en, pl: it.pl ?? "", aliases: it.aliases }, s) !== null ||
+      (it.en ?? "").toLowerCase().includes(s)
     ).slice(0, 200);
   }, [query, dict]);
 
@@ -183,6 +187,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
     if (!v) return;
     const hit =
       dict.find((it) => (it.pl ?? "").toLowerCase() === v.toLowerCase()) ??
+      dict.find((it) => (it.aliases ?? []).some((a) => a.toLowerCase() === v.toLowerCase())) ??
       dict.find((it) => (it.en ?? "").toLowerCase() === v.toLowerCase());
     if (hit) return addByItem(hit);
     setSelected((prev) => {

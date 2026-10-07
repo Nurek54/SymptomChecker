@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TopDiagnosis, SymptomDictItem, SymptomsPatchResponse } from "@/lib/types";
 import { listSymptomsDict, patchSessionSymptoms } from "@/lib/api";
+import { matchSymptom, normalizeSymptomDict } from "@/lib/symptomDict";
 import { ActivitySquare, Plus, X, Search, Eraser, Info as InfoIcon } from "lucide-react";
 
 type SymptomsProps = {
@@ -28,7 +29,7 @@ async function getSymptomsDictCached(): Promise<SymptomDictItem[]> {
   if (SYM_CACHE) return SYM_CACHE;
   if (!SYM_CACHE_PROMISE) {
     SYM_CACHE_PROMISE = listSymptomsDict()
-      .then((d) => (d || []).map((it) => ({ ...it, en: it.en.toLowerCase() })))
+      .then((d) => normalizeSymptomDict(d))
       .then((arr) => {
         SYM_CACHE = arr;
         return arr;
@@ -214,10 +215,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     const q = query.trim().toLowerCase();
     const base = (dict ?? []).filter((it) => !selectedLC.has(it.en.toLowerCase()));
     if (!q) return base;
-    return base.filter((it) => {
-      const label = (lang === "pl" ? it.pl : it.en).toLowerCase();
-      return label.includes(q);
-    });
+    return base.filter((it) => matchSymptom(it, q, lang) !== null);
   }, [dict, selectedLC, query, lang]);
 
   // Reset paginacji przy każdej zmianie filtra/zbioru
@@ -483,6 +481,9 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
                     const label = labelRaw || it.en;
                     const cat = it.category ? String(it.category) : null;
                     const active = idx === activeIdx;
+                    // znalezione po synonimie (np. "ból języka" -> "ból jamy ustnej"): pokaż go obok
+                    const viaAlias = query.trim() ? matchSymptom(it, query, lang) : "";
+                    const allLabels = [label, ...(lang === "pl" ? it.aliases ?? [] : [])].join(", ");
                     return (
                       <li
                         key={it.en}
@@ -494,7 +495,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
                         `}
                         onMouseEnter={() => setActiveIdx(idx)}
                         onClick={() => add(it.en)}
-                        title={label}
+                        title={allLabels}
                       >
                         <span
                           aria-hidden
@@ -511,6 +512,11 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
                         <div className="relative z-[1] flex items-center justify-between gap-3">
                           <span className="min-w-0 truncate">
                             <Highlight text={label} query={query} />
+                            {viaAlias ? (
+                              <span className="ml-1.5 text-[11px] text-muted">
+                                (<Highlight text={viaAlias} query={query} />)
+                              </span>
+                            ) : null}
                           </span>
                           <div className="flex shrink-0 items-center gap-2">
                             {cat ? (

@@ -34,6 +34,8 @@ export type SymptomDictItem = {
   en: string;
   pl: string;
   category?: string | null;
+  /** inne etykiety PL tej samej cechy (np. "ból języka" przy "ból jamy ustnej") */
+  aliases?: string[];
 };
 
 /** Odpowiedź po patchu objawów w sesji */

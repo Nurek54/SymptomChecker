@@ -265,7 +265,38 @@ def test_dicts_panel_hides_dead_features_and_dedupes_labels():
         {"pl": "wzdęcie brzucha", "xgb_label": ["stomach_bloating"]},
     ]
     out = _project_to_xgb_features(raw, set(feats), m.resolve_labels, m._count)
-    assert out == [{"en": "stomach_bloating", "pl": "wzdęcie brzucha", "category": None}]
+    assert out == [{"en": "stomach_bloating", "pl": "wzdęcie brzucha", "category": None, "aliases": []}]
+
+
+def test_dicts_panel_one_row_per_feature_with_aliases():
+    """Kilka wpisów słownika -> ta sama cecha: jeden wiersz (unikalny klucz w UI), reszta jako aliasy."""
+    from backend.api.routers.dicts import _project_to_xgb_features
+
+    feats = ["mouth_pain", "pain_in_eye"]
+    m = SymptomMatcher(features=feats, device="cpu", feature_counts={"mouth_pain": 50, "pain_in_eye": 40})
+    raw = [
+        {"en": "Tongue pain", "pl": "ból języka", "xgb_label": ["mouth_pain"], "category": "Jama ustna"},
+        {"en": "Mouth pain", "pl": "ból jamy ustnej", "xgb_label": ["mouth_pain"], "category": "Jama ustna"},
+        {"en": "Pain behind the eyes", "pl": "ból za oczami", "xgb_label": ["pain_in_eye"]},
+        {"en": "Pain in eye", "pl": "ból oka", "xgb_label": ["pain_in_eye"]},
+        {"en": "Eye pain", "pl": "ból oka", "xgb_label": ["pain_in_eye"]},
+    ]
+    out = _project_to_xgb_features(raw, set(feats), m.resolve_labels, m._count)
+    assert [r["en"] for r in out] == ["mouth_pain", "pain_in_eye"]
+    assert out[0] == {"en": "mouth_pain", "pl": "ból jamy ustnej", "category": "Jama ustna", "aliases": ["ból języka"]}
+    assert out[1] == {"en": "pain_in_eye", "pl": "ból oka", "category": None, "aliases": ["ból za oczami"]}
+
+
+def test_dicts_real_dictionary_has_unique_features():
+    import json
+    from backend.api.routers.dicts import _project_to_xgb_features
+    from backend.config import SYMPTOMS_DICT_PATH
+
+    raw = json.loads(open(SYMPTOMS_DICT_PATH, encoding="utf-8").read())
+    feats = {str(x).strip().lower() for r in raw for x in (r.get("xgb_label") or [])}
+    out = _project_to_xgb_features(raw, feats)
+    ens = [r["en"] for r in out]
+    assert len(ens) == len(set(ens))
 
 
 # ───────────────────────── kalibracja modeli ─────────────────────────

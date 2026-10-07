@@ -60,8 +60,13 @@ def _project_to_xgb_features(
     """
     Wpisy słownika -> cechy modelu. `resolve` (SymptomMatcher.resolve_labels) wybiera
     cechę z danymi treningowymi, więc w panelu nie ma objawów, o których model nic nie wie.
+
+    Wynik ma dokładnie jeden wiersz na cechę ("en" jest unikalne). Gdy kilka wpisów
+    słownika trafia w tę samą cechę ("ból jamy ustnej", "ból języka" -> mouth_pain),
+    główną etykietą zostaje wpis o nazwie cechy, a pozostałe trafiają do "aliases"
+    (panel szuka też po nich).
     """
-    by_label: Dict[str, Dict[str, Any]] = {}
+    by_feat: Dict[str, Dict[str, Any]] = {}
     for row in raw:
         if not isinstance(row, dict):
             continue
@@ -83,14 +88,36 @@ def _project_to_xgb_features(
             continue
 
         label = pl or canon.replace("_", " ")
-        key = label.lower()
-        prev = by_label.get(key)
-        # ta sama etykieta PL w kilku wpisach (np. "wzdęcie brzucha"): zostaje cecha z większą liczbą danych
-        if prev is not None and (count is None or count(prev["en"]) >= count(canon)):
+        # wpis nazwany jak cecha ("Mouth pain" -> mouth_pain) jest najlepszą etykietą główną
+        exact = _canon(row.get("en") or "").replace(" ", "_") == canon
+        g = by_feat.get(canon)
+        if g is None:
+            by_feat[canon] = {"en": canon, "pl": label, "category": cat, "aliases": [], "_exact": exact}
             continue
-        by_label[key] = {"en": canon, "pl": label, "category": cat}
+        if exact and not g["_exact"]:
+            g["aliases"].insert(0, g["pl"])
+            g.update(pl=label, category=cat or g["category"], _exact=True)
+        else:
+            g["aliases"].append(label)
 
-    out = list(by_label.values())
+    # ta sama etykieta PL przy kilku cechach (np. "wzdęcie brzucha"): zostaje cecha z większą liczbą danych
+    by_label: Dict[str, Dict[str, Any]] = {}
+    for g in by_feat.values():
+        key = g["pl"].lower()
+        prev = by_label.get(key)
+        if prev is not None and (count is None or count(prev["en"]) >= count(g["en"])):
+            continue
+        by_label[key] = g
+
+    out: List[Dict[str, Any]] = []
+    for g in by_label.values():
+        seen = {g["pl"].lower()}
+        aliases = []
+        for a in g["aliases"]:
+            if a.lower() not in seen:
+                seen.add(a.lower())
+                aliases.append(a)
+        out.append({"en": g["en"], "pl": g["pl"], "category": g["category"], "aliases": aliases})
 
     out.sort(key=lambda x: ((x.get("pl") or x["en"]).lower(), x["en"].lower()))
     return out
