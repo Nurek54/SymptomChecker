@@ -1,15 +1,18 @@
 {
   "objective": "multi:softprob",
   "eval_metric": "mlogloss",
-  "num_class": 778,
+  "num_class": 569,
   "seed": 42,
   "tree_method": "hist",
   "device": "cuda",
-  "learning_rate": 0.039248074054160684,
-  "subsample": 0.9135102221059554,
-  "colsample_bytree": 0.9092322277263355,
-  "colsample_bylevel": 0.8940232262077057,
-  "gamma": 0.1988424040888052,
-  "alpha": 3.6033775109624446e-05,
-  "lambda": 2.58564931896835
+  "learning_rate": 0.07,
+  "subsample": 0.85,
+  "colsample_bytree": 0.9628590818372673,
+  "colsample_bylevel": 0.85,
+  "gamma": 0.20141757371838737,
+  "alpha": 1e-08,
+  "lambda": 3.999999999999999,
+  "max_depth": 10,
+  "min_child_weight": 2,
+  "max_bin": 933
 }
