@@ -399,3 +399,12 @@ def test_river_batch_warm_start_is_accurate_and_keeps_online_learning():
     for _ in range(20):
         r.model.learn_one({"f0": 1}, "flu")
     assert clf._raw_dot_one({"f0": 1}) > before
+
+
+def test_requirements_have_rapidfuzz_and_no_unused_hf_deps():
+    import pathlib
+    req = (pathlib.Path(__file__).resolve().parents[1] / "requirements.txt").read_text(encoding="utf-8")
+    pkgs = {l.split("#")[0].strip().split("==")[0].split(">=")[0].split("[")[0].lower()
+            for l in req.splitlines() if l.split("#")[0].strip()}
+    assert "rapidfuzz" in pkgs
+    assert not pkgs & {"transformers", "accelerate", "sentence-transformers"}

@@ -32,6 +32,9 @@ pandas==2.3.3
 numpy==2.4.2
 joblib==1.5.3
 
+# ----- Dopasowanie objawow (fuzzy) -----
+rapidfuzz==3.14.5                # bez niego matcher spada do wolniejszego difflib
+
 # ----- Classical ML -----
 scikit-learn==1.8.0
 xgboost==3.2.0
@@ -43,14 +46,12 @@ river==0.23.0                    # OVR + FTRL
 # ----- Visualization (ML validation reports) -----
 matplotlib==3.10.9
 
-# ----- PyTorch + Transformers (embeddings, fallback path) -----
+# ----- PyTorch (wykrywanie GPU: core/startup.py, /health) -----
 torch==2.10.0
-transformers==5.3.0
-accelerate==1.13.0
-sentence-transformers==5.2.3
 
 # ----- LLM loader (GGUF - Bielik) -----
 ctransformers==0.2.27            # primary GGUF backend
+# GPU (NVIDIA, offload warstw Bielika): pip install "ctransformers[cuda]==0.2.27"
 # bitsandbytes                   # 8-bit quant; problematic on Windows - uncomment on Linux
 
 # ----- Testing -----
