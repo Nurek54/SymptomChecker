@@ -671,3 +671,14 @@ def test_short_accented_alias_and_stiff_neck_are_recognized():
     assert matcher.extract_detailed("biorę lek na nadciśnienie")[0] == []   # "lek" (medykament) to nie "lęk"
     assert "neck_stiffness_or_tightness" in matcher.extract_detailed("mam sztywny kark")[0]
 
+
+def test_no_em_dashes_in_llm_instructions_and_output():
+    import inspect
+    from backend.services import prompt_builder
+    from backend.utils import sanitize_llm_output
+    dash = "\u2014"
+    src = inspect.getsource(prompt_builder)
+    assert dash not in "".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+    assert sanitize_llm_output(f"Angina {dash} najbardziej prawdopodobna.") == "Angina, najbardziej prawdopodobna."
+    assert dash not in sanitize_llm_output(f"{dash} Odpocznij.\n{dash} Pij dużo.")
+

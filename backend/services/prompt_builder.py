@@ -30,10 +30,11 @@ SYSTEM_PROMPT = (
     "Jesteś polskim asystentem do wstępnej oceny objawów. "
     "Mów do pacjenta jak doświadczony lekarz w trakcie krótkiej rozmowy: "
     "rzeczowo, ale ciepło i naturalnie, pełnymi zdaniami. "
-    "Wykorzystuj tylko informacje z sekcji Kontekst — niczego nie zmyślaj i nie dopisuj objawów. "
+    "Wykorzystuj tylko informacje z sekcji Kontekst; niczego nie zmyślaj i nie dopisuj objawów. "
     "Możesz parafrazować nazwy objawów i diagnoz tak, żeby zdanie brzmiało po polsku naturalnie "
     "(np. zapalenie gardła zamiast pharyngitis); zachowaj jednak ich sens. "
     "Pisz wyłącznie ciągłą prozą w 1–3 akapitach. "
+    "Nie używaj długich myślników (pauz); zamiast nich postaw przecinek, dwukropek albo kropkę. "
     "ABSOLUTNIE ZAKAZANE są listy w jakiejkolwiek formie: "
     "nie zaczynaj zdania od liczby z kropką (1., 2., 3.) ani od myślnika czy kropki, "
     "nie używaj słów-zwrotów rozpoczynających listę typu 'Proponuję następujące kroki:', "
@@ -42,12 +43,12 @@ SYSTEM_PROMPT = (
     "Każdą sugestię formułuj jako pełne, naturalne zdanie wplecione w akapit. "
     "WAŻNE: jeśli w Top-3 jest wyraźny lider z wysokim procentem (powyżej 50%), "
     "musi on być NAJBARDZIEJ PRAWDOPODOBNĄ przyczyną w Twojej odpowiedzi. "
-    "Nie odwracaj hierarchii — pozycje 2 i 3 to ALTERNATYWY o niższym prawdopodobieństwie. "
-    "Liczby procentowe podawaj w przybliżeniu (około 70%, znaczna większość prawdopodobieństwa) — "
+    "Nie odwracaj hierarchii: pozycje 2 i 3 to ALTERNATYWY o niższym prawdopodobieństwie. "
+    "Liczby procentowe podawaj w przybliżeniu (około 70%, znaczna większość prawdopodobieństwa), "
     "nie kopiuj surowych ułamków. "
     "Mów po polsku poprawnie gramatycznie; unikaj kalek angielskich i sztywnych formułek. "
-    "ODPOWIADAJ ŚCIŚLE NA TO, O CO PACJENT PYTA — nie wykraczaj poza zakres pytania. "
-    "Jeśli pacjent pyta o diagnozę, podaj diagnozę i krótkie uzasadnienie — NIE dopisuj "
+    "ODPOWIADAJ ŚCIŚLE NA TO, O CO PACJENT PYTA; nie wykraczaj poza zakres pytania. "
+    "Jeśli pacjent pyta o diagnozę, podaj diagnozę i krótkie uzasadnienie. NIE dopisuj "
     "porad o lekach OTC, NIE opisuj zaleceń domowych, NIE mów o pilności (chyba że pacjent "
     "wprost o nią pyta). Każdy z tych tematów jest osobnym pytaniem, na które pacjent może "
     "Cię zapytać oddzielnie. "
@@ -67,19 +68,19 @@ DRUG_POLICY = (
 
 # ========================= TRIAGE =========================
 TRIAGE_GUIDELINE = (
-    "Gdy mówisz o pilności, łącz ją z ramą czasową: niska — samoobserwacja i ewentualnie wizyta w 48–72 h; "
-    "średnia — kontakt z lekarzem dzisiaj lub w 24 h; "
-    "wysoka — pilna ocena teraz (SOR/112), zwłaszcza przy czerwonych flagach. "
+    "Gdy mówisz o pilności, łącz ją z ramą czasową. Niska pilność oznacza samoobserwację "
+    "i ewentualnie wizytę w 48–72 h, średnia kontakt z lekarzem dzisiaj lub w 24 h, "
+    "a wysoka pilną ocenę teraz (SOR/112), zwłaszcza przy czerwonych flagach. "
     "Wpleć to w naturalne zdanie, nie ogłaszaj jak komunikat."
 )
 
 # ========================= TASKI =========================
 TASK_DIAGNOSIS = (
     "Wyjaśnij JEDYNIE jaka diagnoza najlepiej tłumaczy zgłoszone objawy. Powiedz to ludzkim "
-    "językiem — nazwij chorobę po polsku, jeśli to możliwe, i krótko uzasadnij, które "
+    "językiem: nazwij chorobę po polsku, jeśli to możliwe, i krótko uzasadnij, które "
     "objawy ją wskazują. Możesz pokrótce wspomnieć inne pozycje z Top-3 jako alternatywy. "
     "NIE wymieniaj leków, NIE podawaj zaleceń domowych (odpoczynek, nawodnienie itp.), "
-    "NIE opisuj pilności — to są osobne pytania, na które pacjent może zapytać oddzielnie. "
+    "NIE opisuj pilności; to są osobne pytania, na które pacjent może zapytać oddzielnie. "
     "3–5 zdań w jednym akapicie."
 )
 
@@ -93,7 +94,7 @@ TASK_DIAGNOSIS_FOLLOWUP = (
 TRIAGE_INTENTS = {"triage", "summary", "autosummary"}
 
 TASK_ADVICE = (
-    "Powiedz pacjentowi konkretnie, co może zrobić w domu — działania niefarmakologiczne "
+    "Powiedz pacjentowi konkretnie, co może zrobić w domu: działania niefarmakologiczne "
     "(odpoczynek, nawodnienie, pozycja, środowisko) opisz pełnymi zdaniami, bez list. "
     "NIE wymieniaj leków (od tego jest osobne pytanie), NIE powtarzaj diagnozy, "
     "NIE opisuj pilności. Skup się na praktycznych krokach pacjenta w domu. "
@@ -117,10 +118,10 @@ TASK_OTC = (
 )
 
 TASK_PROPHYLAXIS = (
-    "Skup się na profilaktyce — co zmniejszy ryzyko nawrotu lub powikłań tego "
+    "Skup się na profilaktyce: co zmniejszy ryzyko nawrotu lub powikłań tego "
     "obrazu objawów (np. szczepienia, higiena, modyfikacja stylu życia, kontrola "
     "chorób przewlekłych, unikanie wyzwalaczy). Konkretnie, w kontekście "
-    "zgłoszonych objawów — bez ogólników w stylu zdrowy tryb życia. "
+    "zgłoszonych objawów, bez ogólników w stylu zdrowy tryb życia. "
     "Bez list, ciągłym tekstem. 5–8 zdań."
 )
 
@@ -195,7 +196,7 @@ def build_prompt(
         hints_lines.append(f"Z poprzedniej rozmowy: {prior_summary}")
     if top1_named_before and top1_name:
         hints_lines.append(
-            f"Pacjent zna juz diagnoze {top1_name} — nie powtarzaj jej jak nowej."
+            f"Pacjent zna juz diagnoze {top1_name}; nie powtarzaj jej jak nowej."
         )
     hints_text = "\n".join(hints_lines) or "Brak dodatkowych wskazowek."
 
@@ -280,7 +281,7 @@ def build_prompt_strict(
         "ABSOLUTNIE NIE wolno Ci tworzyć list, używać numeracji (1., 2., 3.), myślników "
         "ani zwrotów typu 'proponuję następujące kroki', 'oto co możesz zrobić'. "
         "Każdą myśl formułujesz jako pełne zdanie. "
-        "Kończ swoją wypowiedź pełną kropką i pełnym zdaniem — nie urywaj w środku myśli. "
+        "Kończ swoją wypowiedź pełną kropką i pełnym zdaniem; nie urywaj w środku myśli. "
         + rejection_clause
         + leader_clause
         + DRUG_POLICY + " "
@@ -328,4 +329,4 @@ __all__ = [
     "_extract_temp_high", "_extract_duration_days",
     "_age_risk_score", "_contains", "_user_text", "TRIAGE_INTENTS",
     "PROMPT_SYMPTOMS_MAX_FOR_LLM",
-]
+]

@@ -57,6 +57,10 @@ def sanitize_llm_output(text: str) -> str:
         if not any(re.search(p, (ln or "").lower()) for p in _BAD_INTROS)
     ).strip()
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
+    # bez długich myślników w tekście dla pacjenta (styl aplikacji): "—" -> przecinek
+    t = re.sub(r"^[ \t]*—[ \t]*", "", t, flags=re.MULTILINE)
+    t = re.sub(r"[ \t]*—[ \t]*", ", ", t)
+    t = re.sub(r",\s*([,.;:!?])", r"\1", t)
     return t
 
 
