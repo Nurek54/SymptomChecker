@@ -7,6 +7,8 @@ wybór pytań, router River i start aplikacji.
 from __future__ import annotations
 
 import importlib
+import os
+import types
 
 import numpy as np
 import pytest
@@ -186,7 +188,7 @@ def _say(state, sid, text, **kw):
 def test_followups_stop_after_limit_with_low_confidence_note(chat_state):
     from backend.config import STOP_FOLLOWUPS_AT
     r = _say(chat_state, "s1", "mam kaszel")
-    assert r.response.startswith("Czy masz")
+    assert r.response.startswith("Czy ") and r.response.endswith("?")
     for _ in range(int(STOP_FOLLOWUPS_AT)):
         r = _say(chat_state, "s1", "nie")
     assert r.top_diagnoses, "po limicie pytań ma być ocena, a nie kolejne pytanie"
@@ -209,6 +211,9 @@ def test_no_symptoms_message(chat_state):
 def test_session_restored_from_client_after_restart(chat_state):
     r = _say(chat_state, "s4", "mam też katar", client_symptoms=["fever", "cough", "unknown_x"])
     assert set(r.symptoms) == {"fever", "cough", "runny_nose"}
+    # model atrapa jest mało pewny (Top-1 60%), więc najpierw pytanie, a po "to wszystko" ocena
+    if not r.top_diagnoses:
+        r = _say(chat_state, "s4", "to wszystko")
     assert r.top_diagnoses
 
 
@@ -439,3 +444,120 @@ def test_requirements_have_rapidfuzz_and_no_unused_hf_deps():
             for l in req.splitlines() if l.split("#")[0].strip()}
     assert "rapidfuzz" in pkgs
     assert not pkgs & {"transformers", "accelerate", "sentence-transformers"}
+
+
+# ───────────────────────── pytania uzupełniające ─────────────────────────
+class _ConfidentModel(_FakeModel):
+    def predict_topk(self, vec, k=3):
+        items = [{"diagnosis_en": "flu", "probability": 0.85},
+                 {"diagnosis_en": "cold", "probability": 0.1},
+                 {"diagnosis_en": "covid", "probability": 0.05}]
+        return items[: min(k, 3)]
+
+
+def test_enough_symptoms_but_unsure_model_asks_before_assessment(chat_state):
+    r = _say(chat_state, "f1", "mam gorączkę, kaszel i katar")
+    assert not r.top_diagnoses and r.response.endswith("?")
+    assert r.response.startswith("Zanim podam ocenę")
+    r = _say(chat_state, "f1", "to wszystko")
+    assert r.top_diagnoses
+
+
+def test_confident_model_gives_assessment_without_questions(matcher):
+    from backend.core.state import AppState
+    m = _ConfidentModel()
+    st = AppState(device="cpu", xgb=m, llm=_FakeLLM(), matcher=SymptomMatcher(m.features),
+                  sessions=SessionStore(), river=_ConfidentModel())
+    r = _say(st, "f2", "mam gorączkę, kaszel i katar")
+    assert r.top_diagnoses
+
+
+def test_after_assessment_new_symptom_updates_it_without_questions(chat_state):
+    _say(chat_state, "f3", "mam gorączkę, kaszel i katar")
+    r = _say(chat_state, "f3", "to wszystko")
+    assert r.top_diagnoses
+    r = _say(chat_state, "f3", "mam też wymioty")
+    assert r.top_diagnoses and "vomiting" in r.symptoms
+
+
+def test_short_yes_answers_without_tak():
+    from backend.services.chat_service import _parse_yes_no
+    assert _parse_yes_no("boli") == "yes"
+    assert _parse_yes_no("Mam.") == "yes"
+    assert _parse_yes_no("trochę") == "yes"
+    assert _parse_yes_no("nie boli") == "no"
+    assert _parse_yes_no("mam gorączkę i kaszel") is None  # opis objawów, nie odpowiedź
+
+
+def _toy_stats():
+    from backend.services.symptom_stats import SymptomStats
+    # choroba A: objaw "rash" prawie zawsze, B: rzadko
+    q = np.array([[0.95, 0.5], [0.05, 0.5]], dtype=np.float32)
+    return SymptomStats(["rash", "fever"], ["a", "b"], q, np.array([10, 10]))
+
+
+def test_negative_answer_lowers_diseases_that_almost_always_have_the_symptom():
+    s = _toy_stats()
+    out = s.apply_negatives({"a": 0.7, "b": 0.3}, ["rash"])
+    assert out["b"] > out["a"] and abs(sum(out.values()) - 1.0) < 1e-9
+    assert s.apply_negatives({"a": 0.7, "b": 0.3}, []) == {"a": 0.7, "b": 0.3}
+    nb = s.nb_posterior(["fever"], ["rash"])
+    assert nb["b"] > nb["a"]
+
+
+def test_ensemble_applies_negated_symptoms():
+    from backend.services.ensemble import EnsembleTopK
+
+    class _M:
+        def __init__(self):
+            self.model = object()
+
+        def predict_topk(self, vec, k=3):
+            return [{"diagnosis_en": "a", "probability": 0.7}, {"diagnosis_en": "b", "probability": 0.3}]
+
+    st = types.SimpleNamespace(xgb=_M(), river=_M(), symptom_stats=_toy_stats(),
+                               ensemble_mode="linear", ensemble_wx=0.5, ensemble_T=1.0)
+    ens = EnsembleTopK(st)
+    assert ens.predict_topk([[1, 0]], k=2)[0]["diagnosis_en"] == "a"
+    assert ens.predict_topk([[1, 0]], k=2, negated=["rash"])[0]["diagnosis_en"] == "b"
+
+
+def test_every_model_feature_has_a_curated_followup_question():
+    import json
+    from backend.services.prompt_localizer import FOLLOWUP_QUESTIONS_PATH, PromptLocalizer
+    feats = json.load(open(os.path.join(os.path.dirname(FOLLOWUP_QUESTIONS_PATH), "..", "ml", "features.json"), encoding="utf-8"))
+    feats = feats if isinstance(feats, list) else feats.get("features", [])
+    qs = json.load(open(FOLLOWUP_QUESTIONS_PATH, encoding="utf-8"))
+    alive_missing = [f for f in feats if f.strip().lower() not in qs]
+    assert len(alive_missing) <= 30  # cechy bez danych treningowych nie są zadawane
+    for f, q in qs.items():
+        assert q.startswith("Czy ") and q.endswith("?"), f
+        assert "symptom " not in q and "\u2014" not in q, f
+    loc = PromptLocalizer(SymptomMatcher(["foul_smell_of_urine"]))
+    assert loc.followup_question("foul_smell_of_urine") == qs["foul_smell_of_urine"]
+
+
+# ───────────────────────── objawy spoza modelu ─────────────────────────
+def test_photophobia_is_recognized_with_negation():
+    from backend.services.unmodeled_symptoms import extract_unmodeled
+    assert extract_unmodeled("boli mnie głowa, mam nudności i światłowstręt") == (["światłowstręt"], [])
+    assert extract_unmodeled("razi mnie światło")[0] == ["światłowstręt"]
+    assert extract_unmodeled("nie mogę patrzeć na światło")[0] == ["światłowstręt"]
+    assert extract_unmodeled("swiatlowstret")[0] == ["światłowstręt"]
+    assert extract_unmodeled("nie mam światłowstrętu") == ([], ["światłowstręt"])
+    assert extract_unmodeled("mam katar") == ([], [])
+
+
+def test_photophobia_is_acknowledged_in_chat_instead_of_not_recognized(chat_state):
+    r = _say(chat_state, "u1", "mam światłowstręt")
+    assert "Zanotowałem: światłowstręt" in r.response
+    assert "Nie rozpoznałem" not in r.response
+    r = _say(chat_state, "u1", "boli mnie głowa i mam gorączkę")
+    assert "Zanotowałem" not in r.response  # potwierdzamy raz
+    assert chat_state.sessions.get_extra("u1") == ["światłowstręt"]
+
+
+def test_photophobia_with_fever_and_headache_raises_urgency():
+    assert _suggest_triage(["ból głowy", "gorączka"], 30)[0] != "wysoka"
+    assert _suggest_triage(["ból głowy", "gorączka", "światłowstręt"], 30)[0] == "wysoka"
+

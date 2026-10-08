@@ -27,6 +27,7 @@ class _SessionData:
         "stop_warned",
         "last_pred",
         "owner",
+        "extra",
     )
 
     def __init__(self) -> None:
@@ -49,6 +50,8 @@ class _SessionData:
         self.last_pred: Optional[Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]] = None
         # id zalogowanego użytkownika, który pierwszy użył sesji
         self.owner: Optional[int] = None
+        # objawy spoza modelu (np. światłowstręt), etykiety PL: do opisu i oceny pilności
+        self.extra: List[str] = []
 
 
 class SessionStore:
@@ -312,6 +315,24 @@ class SessionStore:
             s.negated.clear()
             s.pending_symptom = None
             s.last_pred = None
+            s.extra.clear()
+
+    # === Objawy spoza modelu (services/unmodeled_symptoms.py) ===
+    def update_extra(self, session_id: str, present: Iterable[str], negated: Iterable[str] = ()) -> List[str]:
+        """Dodaje/usuwa etykiety; zwraca te, które są nowe w tej sesji."""
+        with self._lock:
+            s = self._get_or_create(session_id)
+            new = [x for x in (present or []) if x and x not in s.extra]
+            s.extra.extend(new)
+            for x in negated or []:
+                if x in s.extra:
+                    s.extra.remove(x)
+            return new
+
+    def get_extra(self, session_id: str) -> List[str]:
+        with self._lock:
+            s = self._get_or_create(session_id)
+            return list(s.extra)
 
     def is_stop_warned(self, session_id: str) -> bool:
         with self._lock:

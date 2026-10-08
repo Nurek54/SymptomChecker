@@ -181,6 +181,10 @@ def _suggest_triage(
 
     score = 0.0
     if cl["red"]: score += 3.0
+    # światłowstręt + ból głowy + gorączka: obraz, przy którym trzeba wykluczyć zapalenie opon mózgowych
+    tl = text.lower()
+    if "światłowstręt" in tl and re.search(r"ból\w*\s+głow|głow\w*\s+boli", tl) and re.search(r"gorącz|temperatur", tl):
+        score += 3.0
     if high_fever: score += 1.5
     if cl["resp"]: score += 1.0
     if days is not None:
@@ -189,7 +193,7 @@ def _suggest_triage(
     score += age_score
 
     if score >= 3.0:
-        return "wysoka", "pilna ocena teraz — SOR/112 lub natychmiastowy kontakt z lekarzem"
+        return "wysoka", "pilna ocena teraz: SOR/112 lub natychmiastowy kontakt z lekarzem"
     if score >= 1.5:
         return "średnia", "pilny kontakt z lekarzem dzisiaj lub w ciągu 24 h"
     return "niska", "samoobserwacja i konsultacja planowa w 48–72 h"
