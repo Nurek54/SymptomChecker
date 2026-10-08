@@ -82,8 +82,8 @@ def _print_startup_banner(target: str, host: str, port: int, reload: bool) -> No
         f"  reload_delay  : {os.getenv('UVICORN_RELOAD_DELAY', '0.5')} s\n"
         f"  log_level     : {os.getenv('LOG_LEVEL', 'info')}\n"
         f"  workers       : {os.getenv('WORKERS', '1')}\n"
-        f"  SUPABASE_URL  : {'OK' if supabase_url else '— BRAK —'}\n"
-        f"  JWT secret    : {'set' if (jwt_secret and jwt_secret.strip()) else '— (JWKS/RS256 fallback) —'}\n"
+        f"  SUPABASE_URL  : {'OK' if supabase_url else 'BRAK'}\n"
+        f"  JWT secret    : {'set' if (jwt_secret and jwt_secret.strip()) else 'BRAK (logowanie Supabase nie zadziała)'}\n"
         "===========================\n"
     )
 

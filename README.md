@@ -364,7 +364,7 @@ Passed = at least 2 of K1 to K3 and no regression. K1/K2 originally required non
 | LLM | Bielik 11B v2.3 Instruct (GGUF Q6_K) via `ctransformers` |
 | GPU | PyTorch (CUDA device detection), CUDA for XGBoost training and LLM layer offload |
 | Symptom matching | PL dictionary + synonyms, light Polish stemmer, fuzzy matching (rapidfuzz or difflib) |
-| Auth | Supabase JWT (HS256 + JWKS), python-jose |
+| Auth | Supabase JWT (HS256; only `aud`/`role` = `authenticated`), backend session cookie, python-jose |
 | Persistence | Supabase PostgreSQL via SQLAlchemy (psycopg 3) |
 | Testing | pytest, pytest-asyncio, vitest, Playwright |
 
@@ -399,7 +399,7 @@ SymptomChecker/
 │       ├── lib/              # api, supabaseClient, types
 │       ├── store/            # Zustand store
 │       └── tests/            # unit + e2e
-├── .github/workflows/ci.yml  # CI: pytest, ESLint, vitest, tsc
+├── .github/workflows/ci.yml  # CI: pytest, ESLint, vitest, tsc, next build
 ├── logs/
 ├── .env.example              # backend environment (copy to .env)
 ├── .gitignore
@@ -429,7 +429,7 @@ pip install -r backend/requirements.txt
 cp .env.example .env             # Windows: Copy-Item .env.example .env
 ```
 
-Fill in `.env` (repository root, loaded by `backend/main.py`): `DATABASE_URL` (Supabase pooled Postgres URL), `SUPABASE_URL`, `SUPABASE_JWT_SECRET` and `FRONTEND_ORIGIN`. The backend refuses to start without the first and the third.
+Fill in `.env` (repository root, loaded by `backend/main.py`): `DATABASE_URL` (Supabase pooled Postgres URL), `SUPABASE_URL`, `SUPABASE_JWT_SECRET` and `FRONTEND_ORIGIN`. The backend refuses to start without `DATABASE_URL`, and Supabase login does not work without `SUPABASE_JWT_SECRET`.
 
 ### Download external artifacts
 
@@ -732,8 +732,8 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Source | Default | Purpose |
 |---------|--------|---------|---------|
 | `DATABASE_URL` | env | - | **Required.** Supabase pooled Postgres URL (`postgresql+psycopg://…supabase.com…`) |
-| `SUPABASE_URL` / `SUPABASE_JWKS_URL` | env | - | Supabase project URL and JWKS endpoint |
-| `SUPABASE_JWT_SECRET` | env | - | **Required** (unless `AUTH_SECRET_KEY` is set). Supabase HS256 JWT secret |
+| `SUPABASE_URL` | env | - | Supabase project URL (startup banner only; tokens are verified with `SUPABASE_JWT_SECRET`) |
+| `SUPABASE_JWT_SECRET` | env | - | **Required** for login: Supabase HS256 JWT secret (Project Settings → API). Without `AUTH_SECRET_KEY` it also signs the backend session cookie |
 | `AUTH_SECRET_KEY` | env | `SUPABASE_JWT_SECRET` | Secret for backend session tokens |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | env | `60` | JWT lifetime |
 | `SESSION_COOKIE_SECURE` / `SESSION_COOKIE_SAMESITE` | env | `false` / `lax` | set `true` / `none` for cross-site HTTPS |
