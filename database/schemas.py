@@ -29,8 +29,9 @@ class LoginIn(BaseModel):
 
 class UpdateProfileIn(BaseModel):
     username: str | None = Field(default=None, min_length=3, max_length=50)
-    first_name: str | None = None
-    last_name: str | None = None
+    # długości jak w kolumnach users.first_name / last_name (String(80)); dłuższe dawały 500 w Postgresie
+    first_name: str | None = Field(default=None, max_length=80)
+    last_name: str | None = Field(default=None, max_length=80)
     date_of_birth: date | None = None
 
 # —— HISTORIA CZATÓW —— #

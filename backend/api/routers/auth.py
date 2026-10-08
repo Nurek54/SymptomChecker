@@ -261,15 +261,19 @@ def update_me(data: UpdateProfileIn, request: Request, db: Session = Depends(get
     claims = _decode_supabase_jwt(sb_token)
     user = _ensure_local_profile(db, claims, allow_writes=True)
 
-    user = crud.update_user_profile(
-        db,
-        user,
-        username=getattr(data, "username", None),
-        first_name=getattr(data, "first_name", None),
-        last_name=getattr(data, "last_name", None),
-        date_of_birth=getattr(data, "date_of_birth", None),
-    )
-    db.commit()
+    try:
+        user = crud.update_user_profile(
+            db,
+            user,
+            username=getattr(data, "username", None),
+            first_name=getattr(data, "first_name", None),
+            last_name=getattr(data, "last_name", None),
+            date_of_birth=getattr(data, "date_of_birth", None),
+        )
+        db.commit()
+    except ValueError as e:          # np. "Nazwa użytkownika jest już zajęta." (wcześniej 500)
+        db.rollback()
+        raise HTTPException(409, str(e))
 
     out = UserOut.model_validate(user, from_attributes=True)
     out.age = _age(getattr(user, "date_of_birth", None))

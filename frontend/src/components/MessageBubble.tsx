@@ -88,7 +88,7 @@ export default function MessageBubble({
         >
           {/* Akcje na dymku asystenta */}
           {!isUser && (
-            <div className="absolute -top-3 right-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute -top-3 right-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
               <button
                 onClick={copy}
                 className="inline-flex items-center gap-1 rounded-full border border-base bg-card px-2 py-0.5 text-[10px] shadow-sm hover:brightness-110"

@@ -432,6 +432,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
         role="dialog"
         aria-label="Wybór objawów"
         aria-hidden={!open}
+        inert={!open}
         style={{ maxHeight: "80vh" }}
       >
         <span aria-hidden className="absolute inset-x-0 top-0 h-px" style={{ background: AURORA_SOFT }} />
@@ -682,4 +683,4 @@ export function TopDiagCard({
       )}
     </div>
   );
-}
+}

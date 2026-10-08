@@ -682,3 +682,47 @@ def test_no_em_dashes_in_llm_instructions_and_output():
     assert sanitize_llm_output(f"Angina {dash} najbardziej prawdopodobna.") == "Angina, najbardziej prawdopodobna."
     assert dash not in sanitize_llm_output(f"{dash} Odpocznij.\n{dash} Pij dużo.")
 
+
+# ───────────────────────── limity wejścia i komunikaty błędów ─────────────────────────
+def test_input_limits_reject_oversized_requests(client):
+    r = client.post("/sessions/" + "x" * 65 + "/symptoms", json={"add": ["fever"]})
+    assert r.status_code == 422
+    r = client.post("/sessions/ok-sid/symptoms", json={"remove": ["fever"] * 201})
+    assert r.status_code == 422
+    r = client.post("/sessions/ok-sid/symptoms", json={"add": ["x" * 101]})
+    assert r.status_code == 422
+    r = client.post("/chat", json={"session_id": "s", "user_input": "kaszel", "client_symptoms": ["fever"] * 201})
+    assert r.status_code == 422
+    r = client.post("/chat", json={"session_id": "s", "user_input": "kaszel", "lang": "p" * 50})
+    assert r.status_code == 422
+
+
+def test_removing_unknown_symptoms_does_not_grow_session_memory(client):
+    sid = "sess-remove-unknown"
+    client.post(f"/sessions/{sid}/symptoms", json={"replace": ["fever"]})
+    client.post(f"/sessions/{sid}/symptoms", json={"remove": ["not_a_feature_1", "not_a_feature_2"]})
+    st = client.app.state.app_state
+    assert not ({"not_a_feature_1", "not_a_feature_2"} & st.sessions.get_negated(sid))
+
+
+def test_profile_name_length_matches_db_column():
+    from pydantic import ValidationError
+    from database.schemas import UpdateProfileIn
+    UpdateProfileIn(first_name="a" * 80)
+    with pytest.raises(ValidationError):
+        UpdateProfileIn(first_name="a" * 81)
+
+
+def test_dict_errors_do_not_leak_server_paths(tmp_path):
+    from fastapi import HTTPException
+    from backend.api.routers.dicts import _load_dict_cached
+    missing = tmp_path / "secret_dir" / "brak.json"
+    with pytest.raises(HTTPException) as e:
+        _load_dict_cached(missing)
+    assert "secret_dir" not in str(e.value.detail) and str(tmp_path) not in str(e.value.detail)
+    bad = tmp_path / "bad.json"
+    bad.write_text("{nie json", encoding="utf-8")
+    with pytest.raises(HTTPException) as e:
+        _load_dict_cached(bad)
+    assert str(tmp_path) not in str(e.value.detail) and "Expecting" not in str(e.value.detail)
+

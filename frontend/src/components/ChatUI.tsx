@@ -69,6 +69,17 @@ export default function ChatUI() {
         mq.addEventListener("change", sync);
         return () => mq.removeEventListener("change", sync);
     }, []);
+    // arkusz: fokus na "Zamknij" po otwarciu, po zamknięciu wraca na pasek "Szczegóły"
+    const sheetCloseRef = useRef<HTMLButtonElement | null>(null);
+    useEffect(() => {
+        if (!showPanel) return;
+        const prev = document.activeElement as HTMLElement | null;
+        const id = requestAnimationFrame(() => sheetCloseRef.current?.focus());
+        return () => {
+            cancelAnimationFrame(id);
+            prev?.focus?.();
+        };
+    }, [showPanel]);
     useEffect(() => {
         if (!showPanel) return;
         const onKey = (e: KeyboardEvent) => {
@@ -720,6 +731,7 @@ export default function ChatUI() {
                         <div className="flex items-center justify-between px-4 pb-1 pt-3">
                             <span className="text-sm font-semibold">Objawy i Top-3</span>
                             <button
+                                ref={sheetCloseRef}
                                 type="button"
                                 onClick={() => setShowPanel(false)}
                                 className="rounded-lg border border-base bg-card p-1.5 transition hover:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
@@ -742,4 +754,4 @@ export default function ChatUI() {
             />
         </div>
     );
-}
+}

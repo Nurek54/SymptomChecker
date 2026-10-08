@@ -152,6 +152,7 @@ export default function UserMenu() {
         role="dialog"
         aria-modal="true"
         aria-label="Menu użytkownika"
+        inert={!open}
       >
         {/* Header drawer-a */}
         <div className="flex flex-col">
@@ -352,6 +353,7 @@ export default function UserMenu() {
                 <User2 className="h-4 w-4 opacity-70" />
                 <input
                   value={username}
+                  maxLength={50}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   className="h-9 flex-1 bg-transparent text-sm outline-none"
@@ -366,6 +368,7 @@ export default function UserMenu() {
                   <PencilLine className="h-4 w-4 opacity-70" />
                   <input
                     value={firstName}
+                    maxLength={80}
                     onChange={(e) => setFirstName(e.target.value)}
                     className="h-9 flex-1 bg-transparent text-sm outline-none"
                   />
@@ -377,6 +380,7 @@ export default function UserMenu() {
                   <PencilLine className="h-4 w-4 opacity-70" />
                   <input
                     value={lastName}
+                    maxLength={80}
                     onChange={(e) => setLastName(e.target.value)}
                     className="h-9 flex-1 bg-transparent text-sm outline-none"
                   />

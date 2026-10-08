@@ -66,6 +66,18 @@ export default function ModelSplitOverlay({
     const [loading, setLoading] = React.useState(false);
     const [err, setErr] = React.useState<string | null>(null);
 
+    // fokus na "Zamknij" po otwarciu i powrót fokusu do przycisku, który otworzył okno
+    const closeRef = React.useRef<HTMLButtonElement | null>(null);
+    React.useEffect(() => {
+        if (!open) return;
+        const prev = document.activeElement as HTMLElement | null;
+        const id = requestAnimationFrame(() => closeRef.current?.focus());
+        return () => {
+            cancelAnimationFrame(id);
+            prev?.focus?.();
+        };
+    }, [open]);
+
     // ESC zamyka
     React.useEffect(() => {
         if (!open) return;
@@ -120,6 +132,7 @@ export default function ModelSplitOverlay({
                         Podgląd Top-3: XGBoost, River i Ensemble
                     </h2>
                     <button
+                        ref={closeRef}
                         onClick={onClose}
                         className="ml-auto rounded-lg border border-base bg-input p-1.5 text-xs transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
                         aria-label="Zamknij"

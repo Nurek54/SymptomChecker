@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./AuthProvider";
 import {
   X, LogIn, UserPlus, User2, Mail, Lock, Calendar, PencilLine,
@@ -38,6 +38,15 @@ export default function AuthSheet() {
 
   useEffect(() => setMode(authMode), [authMode]);
 
+  // fokus na polu email przy każdym otwarciu (autoFocus działał tylko raz, przy montowaniu,
+  // i ustawiał fokus w niewidocznym oknie)
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!authOpen) return;
+    const id = requestAnimationFrame(() => emailRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [authOpen]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeAuth(); };
     if (authOpen) window.addEventListener("keydown", onKey);
@@ -71,7 +80,8 @@ export default function AuthSheet() {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 ${authOpen ? "" : "pointer-events-none"}`} aria-hidden={!authOpen}>
+    // inert: zamknięte okno nie przyjmuje fokusu klawiszem Tab (wcześniej było tylko przezroczyste)
+    <div className={`fixed inset-0 z-50 ${authOpen ? "" : "pointer-events-none"}`} aria-hidden={!authOpen} inert={!authOpen}>
       {/* Backdrop */}
       <div
         onClick={closeAuth}
@@ -183,6 +193,7 @@ export default function AuthSheet() {
                             <PencilLine className="h-4 w-4 opacity-70" />
                             <input
                               value={firstName}
+                              maxLength={80}
                               onChange={(e) => setFirstName(e.target.value)}
                               className="h-10 flex-1 bg-transparent text-sm outline-none"
                               placeholder="Jan"
@@ -195,6 +206,7 @@ export default function AuthSheet() {
                             <PencilLine className="h-4 w-4 opacity-70" />
                             <input
                               value={lastName}
+                              maxLength={80}
                               onChange={(e) => setLastName(e.target.value)}
                               className="h-10 flex-1 bg-transparent text-sm outline-none"
                               placeholder="Kowalski"
@@ -231,7 +243,7 @@ export default function AuthSheet() {
                   type="email"
                   required
                   autoComplete="email"
-                  autoFocus
+                  ref={emailRef}
                   className="h-10 flex-1 bg-transparent text-sm outline-none"
                   placeholder="ty@przyklad.pl"
                 />

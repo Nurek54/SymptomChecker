@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Any, Optional, Set
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from core.state import AppState
 from services.prompt_localizer import PromptLocalizer
 from services.ensemble import EnsembleTopK
 from config import MIN_SYMPTOMS, TOPN_DIAGNOSES
+from schemas import MAX_SYMPTOM_ITEMS, SymptomId
 
 from database.db import get_db
 from database import crud
@@ -33,13 +34,17 @@ def get_state(req: Request) -> AppState:
 # Schemy Pydantic
 # =========================================================
 class SymptomsPatch(BaseModel):
-    add: List[str] = Field(default_factory=list)
-    remove: List[str] = Field(default_factory=list)
-    replace: Optional[List[str]] = None
-    lang: Optional[str] = "pl"
+    add: List[SymptomId] = Field(default_factory=list, max_length=MAX_SYMPTOM_ITEMS)
+    remove: List[SymptomId] = Field(default_factory=list, max_length=MAX_SYMPTOM_ITEMS)
+    replace: Optional[List[SymptomId]] = Field(default=None, max_length=MAX_SYMPTOM_ITEMS)
+    lang: Optional[str] = Field(default="pl", max_length=8)
     # Objawy, które pamięta frontend - używane tylko, gdy backend nie zna sesji
     # (np. po restarcie serwera), żeby "dodaj objaw" nie kasowało pozostałych.
-    current: Optional[List[str]] = None
+    current: Optional[List[SymptomId]] = Field(default=None, max_length=MAX_SYMPTOM_ITEMS)
+
+
+# taki sam limit jak ChatRequest.session_id i kolumna conversations.session_id (String(64))
+SessionIdPath = Path(min_length=1, max_length=64)
 
 
 class SymptomsPatchResponse(BaseModel):
@@ -89,8 +94,8 @@ def _make_feature_vector(st: AppState, selected_canons: List[str]) -> List[int]:
 # =========================================================
 @router.post("/{session_id}/symptoms", response_model=SymptomsPatchResponse)
 def patch_session_symptoms(
-    session_id: str,
     patch: SymptomsPatch,
+    session_id: str = SessionIdPath,
     st: AppState = Depends(get_state),
     db: Session = Depends(get_db),
     uid: Optional[int] = Depends(get_current_user_id),
@@ -140,7 +145,7 @@ def patch_session_symptoms(
                 cur.remove(s)
 
     new_symptoms_sorted = sorted(cur)
-    for s in canon_all(patch.remove or []):
+    for s in filter_known(canon_all(patch.remove or [])):   # tylko znane cechy, bez dowolnych napisów w pamięci
         if s not in cur:
             sessions.add_negated_symptom(session_id, s)  # usunięty ręcznie = nie pytaj o niego ponownie
     sessions.set_symptoms(session_id, new_symptoms_sorted)
@@ -259,7 +264,7 @@ def patch_session_symptoms(
 # =========================================================
 @router.get("/{session_id}/top3-split", response_model=Top3SplitResponse)
 def get_top3_split(
-    session_id: str,
+    session_id: str = SessionIdPath,
     k: int = 3,
     lang: str = "pl",
     st: AppState = Depends(get_state),

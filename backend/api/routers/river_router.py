@@ -84,7 +84,7 @@ def status(request: Request):
     mgr = _get_mgr(request)
     return {
         "ready": True,
-        "model_path": RIVER_MODEL_PATH,
+        "model_file": os.path.basename(RIVER_MODEL_PATH),   # bez pełnej ścieżki na serwerze
         "has_file": os.path.exists(RIVER_MODEL_PATH),
         "n_features": len(mgr.features),
         "sample_features": mgr.features[:20],
@@ -104,13 +104,24 @@ def predict_topk(
     payload: Dict[str, Any] = Body(..., examples=[{"active_features": ["fever", "cough"], "k": 3}]),
 ):
     mgr = _get_mgr(request)
-    k = max(1, min(int(payload.get("k", 3)), 50))
+    try:
+        k = max(1, min(int(payload.get("k", 3)), 50))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "'k' musi być liczbą całkowitą.")
 
-    if "active_features" in payload and payload["active_features"]:
-        vec = mgr.make_vec_from_symptoms([str(f).strip().lower() for f in payload["active_features"]])
+    active = payload.get("active_features")
+    feats_in = payload.get("features")
+    if (isinstance(active, list) and len(active) > 1000) or (isinstance(feats_in, dict) and len(feats_in) > 1000):
+        raise HTTPException(413, "Za dużo cech w zapytaniu (maks. 1000).")
+
+    if isinstance(active, list) and active:
+        vec = mgr.make_vec_from_symptoms([str(f).strip().lower()[:100] for f in active])
         vec = vec.astype(np.uint8).tolist()
-    elif "features" in payload and isinstance(payload["features"], dict):
-        vec = _vec_from_dict(mgr, {str(kk): int(v) for kk, v in payload["features"].items()})
+    elif isinstance(feats_in, dict):
+        try:
+            vec = _vec_from_dict(mgr, {str(kk)[:100]: int(v) for kk, v in feats_in.items()})
+        except (TypeError, ValueError):
+            raise HTTPException(400, "Wartości w 'features' muszą być liczbami 0/1.")
     else:
         raise HTTPException(400, "Podaj 'active_features' (lista) lub 'features' (dict).")
 
@@ -191,7 +202,10 @@ def train_one(
         active = {str(f).strip().lower() for f in payload["active_features"]}
         feats = {f: (1 if f in active else 0) for f in mgr.features}
     elif "features" in payload and isinstance(payload["features"], dict):
-        provided = {str(k).strip().lower(): int(v) for k, v in payload["features"].items()}
+        try:
+            provided = {str(k).strip().lower(): int(v) for k, v in payload["features"].items()}
+        except (TypeError, ValueError):
+            raise HTTPException(400, "Wartości w 'features' muszą być liczbami 0/1.")
         feats = {f: (1 if provided.get(f, 0) else 0) for f in mgr.features}
     else:
         raise HTTPException(400, "Podaj 'active_features' (lista) lub 'features' (dict).")

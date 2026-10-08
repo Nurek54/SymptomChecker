@@ -81,6 +81,14 @@ export default function PrepOverlay({ open, onClose }: Props) {
   const [justSaved, setJustSaved] = useState(false);
   const savedTimer = useRef<number | null>(null);
 
+  // fokus na wyszukiwarce przy otwarciu (autoFocus łapał fokus także w zamkniętej nakładce)
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => searchRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [open]);
+
   // zamykanie ESC
   useEffect(() => {
     if (!open) return;
@@ -265,6 +273,8 @@ export default function PrepOverlay({ open, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Przygotuj opis"
+      aria-hidden={!open}
+      inert={!open}
     >
       {/* półprzezroczysty backdrop – klik = zamknij */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -286,7 +296,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
                   onKeyDown={(e) => { if (e.key === "Enter") addSymptom(query); }}
                   placeholder="np. ból głowy • headache…"
                   className="h-10 flex-1 rounded-xl border border-base bg-transparent px-3 text-sm outline-none"
-                  autoFocus
+                  ref={searchRef}
                 />
                 <button onClick={() => addSymptom(query)} className="rounded-xl border border-base bg-card px-3 text-sm">
                   Dodaj

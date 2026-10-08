@@ -21,13 +21,16 @@ _dict_cache: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
 def _load_dict_cached(path: Path) -> List[Dict[str, Any]]:
+    # szczegóły (ścieżki, treść wyjątku) tylko w logu serwera, klient dostaje ogólny komunikat
     if not path.exists():
-        raise HTTPException(500, f"Brak pliku słownika: {path}")
+        log.error("Brak pliku słownika: %s", path)
+        raise HTTPException(500, "Słownik objawów jest niedostępny.")
 
     try:
         mtime = path.stat().st_mtime
-    except OSError as e:
-        raise HTTPException(500, f"Nie można odczytać metadanych: {e}")
+    except OSError:
+        log.exception("Nie można odczytać metadanych słownika %s", path)
+        raise HTTPException(500, "Słownik objawów jest niedostępny.")
 
     key = str(path)
     with _dict_cache_lock:
@@ -38,11 +41,13 @@ def _load_dict_cached(path: Path) -> List[Dict[str, Any]]:
     # poza lockiem czytamy z dysku, żeby nie blokować innych ścieżek
     try:
         data = json.loads(path.read_text(encoding="utf-8")) or []
-    except Exception as e:
-        raise HTTPException(500, f"Błąd czytania słownika: {e}")
+    except Exception:
+        log.exception("Błąd czytania słownika %s", path)
+        raise HTTPException(500, "Słownik objawów jest uszkodzony.")
 
     if not isinstance(data, list):
-        raise HTTPException(500, "Błędny format pliku słownika (oczekiwano listy).")
+        log.error("Błędny format słownika %s (oczekiwano listy)", path)
+        raise HTTPException(500, "Słownik objawów jest uszkodzony.")
 
     with _dict_cache_lock:
         _dict_cache[key] = (mtime, data)
