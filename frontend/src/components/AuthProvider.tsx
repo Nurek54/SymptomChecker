@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/store/chatStore";
 import type { Session } from "@supabase/supabase-js";
@@ -53,6 +53,26 @@ type Ctx = {
     continueAsGuest: () => void;
 };
 
+// Dane lokalne, które należą do konkretnej osoby i muszą zniknąć przy wylogowaniu / zmianie konta
+const PERSONAL_LS_KEYS = ["sc_session_id", "sc_prep_state_split_overlay_v1"];
+
+/** Nowa rozmowa (nowy session_id) bez danych poprzedniej osoby; ChatUI słucha "sc:logout". */
+function resetLocalSession() {
+    try {
+        useChatStore.getState().clearAll();
+    } catch {
+        /* ignore */
+    }
+    for (const k of PERSONAL_LS_KEYS) {
+        try {
+            localStorage.removeItem(k);
+        } catch {}
+    }
+    try {
+        window.dispatchEvent(new CustomEvent("sc:logout"));
+    } catch {}
+}
+
 // Provider zawsze otacza aplikację (layout.tsx), więc wartość domyślna nie jest używana.
 const AuthCtx = createContext<Ctx>(null as unknown as Ctx);
 export const useAuth = () => useContext(AuthCtx);
@@ -68,12 +88,19 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const refreshing = useRef<Promise<void> | null>(null);
     const loggingOut = useRef<Promise<void> | null>(null);
+    // pierwsze ładowanie pokazuje "loading"; późniejsze odświeżenia (np. odnowienie tokenu) są ciche,
+    // inaczej menu użytkownika znikało razem z otwartym formularzem ustawień
+    const loadedOnce = useRef(false);
+    // id użytkownika Supabase z ostatniej znanej sesji (null = brak sesji, undefined = jeszcze nie wiemy)
+    const lastAuthUid = useRef<string | null | undefined>(undefined);
 
-    const openAuth = (mode: AuthMode = "login") => {
+    // stabilne referencje: AutoOpenAuth ma je w zależnościach efektu (nowa funkcja co render
+    // otwierała panel logowania ponownie zaraz po zamknięciu)
+    const openAuth = useCallback((mode: AuthMode = "login") => {
         setAuthMode(mode);
         setAuthOpen(true);
-    };
-    const closeAuth = () => setAuthOpen(false);
+    }, []);
+    const closeAuth = useCallback(() => setAuthOpen(false), []);
 
     const _getSessionWithTimeout = async (ms = 4000) => {
         return Promise.race([
@@ -87,7 +114,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const refreshMe = async () => {
         if (refreshing.current) return refreshing.current;
         const work = (async () => {
-            setLoading(true);
+            if (!loadedOnce.current) setLoading(true);
             try {
                 const { data: sess } = await _getSessionWithTimeout(4000);
 
@@ -114,6 +141,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     setUser(null);
                 }
             } finally {
+                loadedOnce.current = true;
                 setLoading(false);
             }
         })();
@@ -138,8 +166,22 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             setGuest(localStorage.getItem("sc_guest") === "1");
         } catch {}
         void refreshMe();
+        void _getSessionWithTimeout(4000).then(({ data }) => {
+            if (lastAuthUid.current === undefined) lastAuthUid.current = data.session?.user?.id ?? null;
+        });
 
         const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+            // Zmiana osoby bez naszego logout() (sesja wygasła, wylogowanie w innej karcie, logowanie
+            // na inne konto): nowa rozmowa, żeby nie pisać do sesji poprzedniej osoby (403) i nie pokazywać
+            // jej danych. Patrzymy na sesję Supabase, a nie na wynik /auth/me, bo chwilowy błąd sieci
+            // nie może kasować rozmowy. Przejście gość -> zalogowany zostawia rozmowę.
+            const uid = session?.user?.id ?? null;
+            const prev = lastAuthUid.current;
+            if (prev !== undefined && prev !== null && prev !== uid && !loggingOut.current) {
+                resetLocalSession();
+            }
+            lastAuthUid.current = uid;
+
             if (event === "INITIAL_SESSION") return; // mount-effect już to obsłużył
 
             // synchroniczny return — lock zwolniony natychmiast
@@ -166,12 +208,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const onUnauthorized = () => openAuth("login");
         window.addEventListener("auth:unauthorized", onUnauthorized as EventListener);
         return () => window.removeEventListener("auth:unauthorized", onUnauthorized as EventListener);
-    }, []);
+    }, [openAuth]);
 
     // auto-open auth, jeśli brak sesji i nie wybrano gościa
     useEffect(() => {
         if (!loading && !user && !guest) openAuth("login");
-    }, [loading, user, guest]);
+    }, [loading, user, guest, openAuth]);
 
     const _withTimeout = <T,>(p: Promise<T>, ms: number, label: string): Promise<T> =>
         Promise.race([
@@ -258,28 +300,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return u;
     };
 
-    const clearChatUI = () => {
-        try {
-            useChatStore.getState().clearAll();
-        } catch {
-            /* ignore */
-        }
-    };
-
     const clearAfterLogout = () => {
-        clearChatUI();
-
-        try {
-            localStorage.removeItem("sc_session_id");
-        } catch {}
-
         try {
             localStorage.removeItem("sc_guest");
         } catch {}
-
-        try {
-            window.dispatchEvent(new CustomEvent("sc:logout"));
-        } catch {}
+        resetLocalSession();
+        lastAuthUid.current = null;   // zmiana osoby już obsłużona
     };
 
     const hardBackendLogout = async () => {
@@ -324,7 +350,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         try {
             localStorage.setItem("sc_guest", "1");
         } catch {}
-        clearChatUI();
+        // nowa sesja: sam wyczyszczony widok przy starym session_id przywracał objawy z backendu
+        resetLocalSession();
         setUser(null);
         setGuest(true);
         closeAuth();

@@ -181,9 +181,10 @@ def _suggest_triage(
 
     score = 0.0
     if cl["red"]: score += 3.0
-    # światłowstręt + ból głowy + gorączka: obraz, przy którym trzeba wykluczyć zapalenie opon mózgowych
-    tl = text.lower()
-    if "światłowstręt" in tl and re.search(r"ból\w*\s+głow|głow\w*\s+boli", tl) and re.search(r"gorącz|temperatur", tl):
+    # światłowstręt + ból głowy + gorączka: obraz, przy którym trzeba wykluczyć zapalenie opon mózgowych.
+    # Tylko lista objawów (już po obsłudze przeczeń), nie surowy tekst: "nie mam bólu głowy" nie może tu pasować.
+    sl = " | ".join(s.lower() for s in (symptoms or []))
+    if "światłowstręt" in sl and re.search(r"ból\w*\s+głow", sl) and (re.search(r"gorącz", sl) or high_fever):
         score += 3.0
     if high_fever: score += 1.5
     if cl["resp"]: score += 1.0

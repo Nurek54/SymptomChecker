@@ -65,7 +65,7 @@ export default function UserMenu() {
     return () => window.removeEventListener("keydown", onKey);
   }, [showSettings]);
 
-  if (loading) return <span className="text-xs text-muted">…</span>;
+  if (loading && !user) return <span className="text-xs text-muted">…</span>;
 
   // ——— Niezalogowany ———
   if (!user) {

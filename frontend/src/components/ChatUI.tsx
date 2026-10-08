@@ -259,7 +259,7 @@ export default function ChatUI() {
                 addMsg(sessionId, {
                     role: "assistant",
                     content:
-                        "Jeszcze pracuję nad poprzednią odpowiedzią — daj mi chwilę i ponów pytanie, " +
+                        "Jeszcze pracuję nad poprzednią odpowiedzią. Daj mi chwilę i ponów pytanie, " +
                         "gdy zobaczysz, że skończyłem (znak ładowania zniknie).",
                     createdAt: new Date().toISOString(),
                 });

@@ -102,18 +102,17 @@ export default function ModelSplitOverlay({
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-3"
             role="dialog"
             aria-modal="true"
             aria-label="Podgląd predykcji modeli"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
         >
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="relative z-[101] w-full max-w-4xl overflow-hidden rounded-2xl border border-base bg-card/95 backdrop-blur-md shadow-2xl">
+            {/* tło zamyka okno (wcześniej przechwytywało kliknięcia i nic nie robiło) */}
+            <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
+            {/* na telefonie okno jest wyższe niż ekran: ograniczamy wysokość i przewijamy treść */}
+            <div className="relative z-[101] flex max-h-[calc(100svh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-base bg-card/95 backdrop-blur-md shadow-2xl">
                 {/* Header */}
-                <header className="flex items-center gap-2 border-b border-base bg-card/80 px-4 py-2">
+                <header className="flex shrink-0 items-center gap-2 border-b border-base bg-card/80 px-4 py-2">
                     <span className="grid h-8 w-8 place-items-center rounded-full border border-base bg-input">
                         <Info className="h-4 w-4 opacity-80" />
                     </span>
@@ -131,10 +130,12 @@ export default function ModelSplitOverlay({
                 </header>
 
                 {/* Aurora hairline */}
-                <div className="h-[3px] w-full" style={{ background: AURORA }} />
+                <div className="h-[3px] w-full shrink-0" style={{ background: AURORA }} />
+
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 
                 {/* Trzy kolumny: XGBoost / River / Ensemble */}
-                <div className="grid gap-3 p-3 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-3">
                     {/* XGBoost */}
                     <section className="rounded-2xl border border-base bg-card p-3 shadow-sm">
                         <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -332,6 +333,7 @@ export default function ModelSplitOverlay({
                             objawów w tej sesji: {data.meta.n_active ?? 0}.
                         </p>
                     ) : null}
+                </div>
                 </div>
             </div>
         </div>

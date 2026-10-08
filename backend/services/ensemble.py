@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Tuple
+from typing import Iterable, List, Dict, Any, Optional, Tuple
 import heapq
 import time
 import math
@@ -192,7 +192,28 @@ class EnsembleTopK:
         ]
 
     # ───────────────────────── fuzja ─────────────────────────
-    def _fuse(self, vec: List[List[int]], k: int) -> Dict[str, Any]:
+    def _negatives(self, m: Dict[str, float], negated: Optional[Iterable[str]]) -> Dict[str, float]:
+        """Objawy zaprzeczone przez pacjenta (SymptomStats.apply_negatives); bez statystyk bez zmian."""
+        stats = getattr(self.st, "symptom_stats", None)
+        if not m or not negated or stats is None or not hasattr(stats, "apply_negatives"):
+            return m
+        try:
+            return stats.apply_negatives(m, negated)
+        except Exception as e:
+            log.warning("[Ensemble] apply_negatives: %s", e)
+            return m
+
+    def _fuse(self, vec: List[List[int]], k: int, negated: Optional[Iterable[str]] = None) -> Dict[str, Any]:
+        res = self._fuse_models(vec, k)
+        neg = sorted({str(s).strip().lower() for s in (negated or []) if str(s).strip()})
+        if neg:
+            res["mx"] = self._negatives(res["mx"], neg)
+            res["mr"] = self._negatives(res["mr"], neg)
+            res["combined"] = self._negatives(res["combined"], neg)
+            res["meta"]["negated"] = len(neg)
+        return res
+
+    def _fuse_models(self, vec: List[List[int]], k: int) -> Dict[str, Any]:
         k_each = self._k_each(k)
         t0 = time.perf_counter()
         top_x = self._safe_topk("xgb", vec, k=k_each)
@@ -269,19 +290,19 @@ class EnsembleTopK:
         return {"mx": mx, "mr": mr, "combined": combined, "meta": meta}
 
     # ───────────────────────── API ─────────────────────────
-    def predict_distribution(self, vec: List[List[int]]) -> Dict[str, float]:
-        """Pełny rozkład po klasach (używany m.in. do wyboru pytań uzupełniających)."""
-        return dict(self._fuse(vec, k=1)["combined"])
+    def predict_distribution(self, vec: List[List[int]], negated: Optional[Iterable[str]] = None) -> Dict[str, float]:
+        """Pełny rozkład po klasach (z poprawką na objawy zaprzeczone, jeśli podane)."""
+        return dict(self._fuse(vec, k=1, negated=negated)["combined"])
 
-    def predict_topk(self, vec: List[List[int]], k: int = 3) -> List[Dict[str, Any]]:
-        res = self._fuse(vec, k)
+    def predict_topk(self, vec: List[List[int]], k: int = 3, negated: Optional[Iterable[str]] = None) -> List[Dict[str, Any]]:
+        res = self._fuse(vec, k, negated=negated)
         combined = res["combined"]
         if not combined:
             return []
         return self._top(combined, min(max(int(k), 1), len(combined)))
 
-    def predict_split(self, vec: List[List[int]], k: int = 3) -> Dict[str, Any]:
-        res = self._fuse(vec, k)
+    def predict_split(self, vec: List[List[int]], k: int = 3, negated: Optional[Iterable[str]] = None) -> Dict[str, Any]:
+        res = self._fuse(vec, k, negated=negated)
         mx, mr, combined = res["mx"], res["mr"], res["combined"]
         return {
             "xgb_top": self._top(mx, k) if mx else [],

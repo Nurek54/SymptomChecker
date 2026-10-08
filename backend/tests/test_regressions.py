@@ -561,3 +561,113 @@ def test_photophobia_with_fever_and_headache_raises_urgency():
     assert _suggest_triage(["ból głowy", "gorączka"], 30)[0] != "wysoka"
     assert _suggest_triage(["ból głowy", "gorączka", "światłowstręt"], 30)[0] == "wysoka"
 
+
+# ───────────────────────── poprawki po przeglądzie ─────────────────────────
+def _sb_token(secret, **claims):
+    import time
+    from jose import jwt
+    now = int(time.time())
+    base = {"sub": "11111111-1111-1111-1111-111111111111", "aud": "authenticated", "role": "authenticated",
+            "email": "a@example.com", "iat": now, "exp": now + 3600}
+    base.update(claims)
+    base = {k: v for k, v in base.items() if v is not None}
+    return jwt.encode(base, secret, algorithm="HS256")
+
+
+def test_supabase_token_requires_authenticated_user(monkeypatch):
+    from fastapi import HTTPException
+    from backend.api.routers import auth
+    monkeypatch.setattr(auth, "SUPABASE_JWT_SECRET", "s3cret")
+    assert auth._decode_supabase_jwt(_sb_token("s3cret"))["sub"]
+    for bad in (dict(aud=None), dict(role="anon"), dict(role="anon", aud=None, sub=None), dict(sub="")):
+        with pytest.raises(HTTPException) as e:
+            auth._decode_supabase_jwt(_sb_token("s3cret", **bad))
+        assert e.value.status_code == 401
+
+
+def test_email_from_user_metadata_cannot_take_over_account(monkeypatch):
+    from fastapi import HTTPException
+    from backend.api.routers import auth
+    victim = types.SimpleNamespace(id=7, provider_sub="victim-sub", email="victim@example.com")
+    created = {}
+    monkeypatch.setattr(auth.crud, "get_user_by_provider", lambda db, p, s: None)
+    monkeypatch.setattr(auth.crud, "get_user_by_email", lambda db, e: victim if e == "victim@example.com" else None)
+    monkeypatch.setattr(auth.crud, "generate_username", lambda db, base: "nowy")
+
+    def _create(db, **kw):
+        created.update(kw)
+        return types.SimpleNamespace(id=8, **kw)
+    monkeypatch.setattr(auth.crud, "create_user", _create)
+    db = types.SimpleNamespace(commit=lambda: None, add=lambda x: None)
+
+    # email tylko w metadanych (ustawianych przez użytkownika) -> nowe konto, nie konto ofiary
+    u = auth._ensure_local_profile(db, {"sub": "attacker", "email": "", "user_metadata": {"email": "victim@example.com"}})
+    assert u.id == 8 and created["email"] != "victim@example.com"
+    # ten sam email w tokenie, ale konto powiązane z innym sub -> 409, bez przejęcia
+    with pytest.raises(HTTPException) as e:
+        auth._ensure_local_profile(db, {"sub": "attacker", "email": "victim@example.com"})
+    assert e.value.status_code == 409
+
+
+def test_symptom_prefixed_features_reach_the_model():
+    feats = ["symptom_depression", "insomnia", "sharp_abdominal_pain", "abdominal_pain"]
+    m = SymptomMatcher(features=feats, device="cpu",
+                       feature_counts={"symptom_depression": 50, "insomnia": 50, "sharp_abdominal_pain": 100, "abdominal_pain": 4})
+    assert m.expand_to_xgb("symptom_depression") == {"symptom_depression"}
+    assert m.to_pl("symptom_depression") != "symptom depression"
+    assert m.expand_to_xgb("abdominal_pain") == {"sharp_abdominal_pain"}  # alias nadal wskazuje cechę z danymi
+
+
+def test_symptoms_restored_after_restart_even_if_router_created_session(chat_state):
+    chat_state.sessions.claim_owner("r1", None)          # tak robi router /chat przed handle_chat
+    r = _say(chat_state, "r1", "mam też katar", client_symptoms=["fever", "cough"])
+    assert set(r.symptoms) == {"fever", "cough", "runny_nose"}
+
+
+def test_reset_flow_clears_history_used_for_triage(chat_state):
+    _say(chat_state, "r2", "gorączka 40 stopni od 2 tygodni")
+    assert chat_state.sessions.get_history("r2")
+    chat_state.sessions.reset_flow("r2")
+    assert chat_state.sessions.get_history("r2") == []
+
+
+def test_polish_answer_variants():
+    from backend.services.chat_service import _parse_yes_no
+    for t in ("no tak", "no jasne", "no, mam", "niestety tak", "zdecydowanie tak", "oczywiście"):
+        assert _parse_yes_no(t) == "yes", t
+    for t in ("no", "no nie", "niestety nie", "raczej nie", "oczywiście nie"):
+        assert _parse_yes_no(t) == "no", t
+
+
+def test_unclear_answer_repeats_the_same_question(chat_state):
+    r = _say(chat_state, "r3", "mam kaszel")
+    q1 = r.response
+    r = _say(chat_state, "r3", "hmm, trudno")
+    assert "Nie jestem pewien" in r.response and q1 in r.response
+    assert chat_state.sessions.get_followup_count("r3") == 1
+
+
+def test_after_one_more_question_announcement_comes_the_assessment(chat_state):
+    _say(chat_state, "r4", "boli mnie głowa")
+    r = _say(chat_state, "r4", "to wszystko")
+    assert "Jeszcze jedno pytanie" in r.response
+    r = _say(chat_state, "r4", "nie")
+    assert r.top_diagnoses, "po zapowiedzianym ostatnim pytaniu ma być ocena"
+
+
+def test_photophobia_negations_and_triage():
+    from backend.services.unmodeled_symptoms import extract_unmodeled
+    assert extract_unmodeled("nie mam gorączki i światło mnie razi") == (["światłowstręt"], [])
+    assert extract_unmodeled("nie razi mnie światło") == ([], ["światłowstręt"])
+    assert extract_unmodeled("nie mam gorączki ani światłowstrętu") == ([], ["światłowstręt"])
+    # zaprzeczony ból głowy w historii nie podnosi pilności
+    assert _suggest_triage(["gorączka", "światłowstręt"], 30, history_text="nie mam bólu głowy")[0] != "wysoka"
+
+
+def test_short_accented_alias_and_stiff_neck_are_recognized():
+    matcher = SymptomMatcher(features=["anxiety_and_nervousness", "insomnia", "symptom_depression", "neck_stiffness_or_tightness"], device="cpu")
+    pos, _ = matcher.extract_detailed("mam depresję, bezsenność i lęk")
+    assert "anxiety_and_nervousness" in pos and "symptom_depression" in pos
+    assert matcher.extract_detailed("biorę lek na nadciśnienie")[0] == []   # "lek" (medykament) to nie "lęk"
+    assert "neck_stiffness_or_tightness" in matcher.extract_detailed("mam sztywny kark")[0]
+

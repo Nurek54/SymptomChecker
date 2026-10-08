@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TopDiagnosis, SymptomDictItem, SymptomsPatchResponse } from "@/lib/types";
-import { listSymptomsDict, patchSessionSymptoms } from "@/lib/api";
+import { errorMessage, listSymptomsDict, patchSessionSymptoms } from "@/lib/api";
 import { matchSymptom, normalizeSymptomDict } from "@/lib/symptomDict";
 import { ActivitySquare, Plus, X, Search, Eraser, Info as InfoIcon } from "lucide-react";
 
@@ -120,6 +120,16 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
   const [dict, setDict] = useState<SymptomDictItem[] | null>(SYM_CACHE); // ⬅️ start z cache
   const [loadingDict, setLoadingDict] = useState(!SYM_CACHE);
   const [busy, setBusy] = useState(false);
+  const [patchError, setPatchError] = useState<string | null>(null);
+
+  // komunikat dla pacjenta zamiast cichego błędu (backend niedostępny, model się ładuje, inna sesja)
+  const friendlyPatchError = (e: unknown): string => {
+    const msg = errorMessage(e);
+    if (/API 503/.test(msg)) return "Model jeszcze się uruchamia. Spróbuj ponownie za chwilę.";
+    if (/API 403/.test(msg)) return "Ta rozmowa należy do innego konta. Zacznij nową rozmowę.";
+    if (/API 401/.test(msg)) return "Sesja wygasła. Zaloguj się ponownie.";
+    return "Nie udało się zapisać zmiany objawów. Sprawdź połączenie i spróbuj ponownie.";
+  };
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const toggleBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -250,9 +260,12 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
       const canon = (en || "").toLowerCase();
       const res = await patchSessionSymptoms(sessionId, { add: [canon], lang, current: symptoms ?? [] });
       onPatched(res);
+      setPatchError(null);
       setQuery("");
       setActiveIdx(-1);
       setOpen(false);
+    } catch (e) {
+      setPatchError(friendlyPatchError(e));
     } finally {
       setBusy(false);
     }
@@ -265,6 +278,9 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
       const canon = (en || "").toLowerCase();
       const res = await patchSessionSymptoms(sessionId, { remove: [canon], lang, current: symptoms ?? [] });
       onPatched(res);
+      setPatchError(null);
+    } catch (e) {
+      setPatchError(friendlyPatchError(e));
     } finally {
       setBusy(false);
     }
@@ -276,6 +292,9 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     try {
       const res = await patchSessionSymptoms(sessionId, { replace: [], lang });
       onPatched(res);
+      setPatchError(null);
+    } catch (e) {
+      setPatchError(friendlyPatchError(e));
     } finally {
       setBusy(false);
     }
@@ -322,6 +341,12 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
 
       {/* cienki hairline pod tytułem */}
       <span aria-hidden className="mt-2 block h-px w-full rounded-full" style={{ background: AURORA_SOFT }} />
+
+      {patchError ? (
+        <p role="alert" className="mt-2 rounded-lg border border-rose-300/60 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-700 dark:border-rose-400/30 dark:bg-rose-900/20 dark:text-rose-200">
+          {patchError}
+        </p>
+      ) : null}
 
       {/* Actions */}
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -387,7 +412,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-base bg-input/50 p-4 text-center">
-            <p className="text-sm text-muted">Brak — dodaj objawy przyciskiem „Dodaj”.</p>
+            <p className="text-sm text-muted">Brak. Dodaj objawy przyciskiem „Dodaj”.</p>
           </div>
         )}
       </div>

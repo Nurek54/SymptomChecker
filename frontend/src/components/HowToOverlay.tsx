@@ -96,13 +96,13 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
               <em> Profilaktyka</em>, <em>Podsumuj</em>.
             </li>
             <li>
-              Jeśli coś się zmieniło, dopisz po prostu nową wiadomość, np. <em>„jednak nie mam gorączki”</em> — system zaktualizuje stan.
+              Jeśli coś się zmieniło, dopisz po prostu nową wiadomość, np. <em>„jednak nie mam gorączki”</em>, a system zaktualizuje stan.
             </li>
           </ol>
           <div className="mt-2 flex items-start gap-2 rounded-lg border border-base bg-input/50 p-2 text-xs">
             <MousePointerClick className="mt-[2px] h-4 w-4 opacity-70" />
             <p>
-              Pod koniec rozmowy możesz poprosić: <em>„Podsumuj moje objawy i zalecenia w punktach”</em> — dostaniesz czytelną listę.
+              Pod koniec rozmowy możesz poprosić: <em>„Podsumuj moje objawy i zalecenia w punktach”</em>, a dostaniesz czytelną listę.
             </p>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
               <em> „katar = nieżyt nosa”, „duszność = skrócony oddech”</em>.
             </li>
             <li>
-              Negacje działają: <em>„nie mam gorączki”, „brak kaszlu”, „to nie ból ucha”</em> — przestawiają stan na „nieobecny”.
+              Negacje działają: <em>„nie mam gorączki”, „brak kaszlu”, „to nie ból ucha”</em>; przestawiają stan na „nieobecny”.
             </li>
             <li>
               Doprecyzowanie jest mile widziane: czas trwania (<em>„od 3 dni”</em>), okoliczności (<em>„po wysiłku”</em>), pora dnia,
@@ -156,10 +156,10 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
           <p>
             Aplikacja zadaje krótkie pytania o kluczowe objawy (np. <em>„Czy masz niedrożność nosa?”</em>). Najlepsza odpowiedź to
             jednoznaczne <strong>„Tak”</strong> lub <strong>„Nie”</strong>. Dopuszczalne są krótkie warianty typu
-            <em> „raczej tak”</em>, <em>„raczej nie”</em> — zostaną zinterpretowane.
+            <em> „raczej tak”</em>, <em>„raczej nie”</em> też zostaną zinterpretowane.
           </p>
           <ul className="list-disc space-y-1 pl-6">
-            <li>Jeśli nie jesteś pewien/pewna — napisz wprost: „nie wiem” lub opisz krótko wątpliwość.</li>
+            <li>Jeśli nie jesteś pewien/pewna, napisz wprost: „nie wiem” lub opisz krótko wątpliwość.</li>
             <li>Możesz dopisać szczegóły: „Tak, od 2 dni”, „Nie, tylko rano bywa lekka niedrożność”.</li>
           </ul>
         </div>
@@ -182,10 +182,10 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
               <Info className="h-4 w-4 opacity-70" /> Jak czytać Top-3?
             </div>
             <ul className="mt-1 list-disc space-y-1 pl-6">
-              <li><strong>#1</strong> — diagnoza najbardziej zgodna z obecnymi objawami.</li>
-              <li><strong>#2–#3</strong> — sensowne alternatywy; rozważ je, jeśli pojawią się nowe symptomy.</li>
+              <li><strong>#1</strong>: diagnoza najbardziej zgodna z obecnymi objawami.</li>
+              <li><strong>#2–#3</strong>: sensowne alternatywy; rozważ je, jeśli pojawią się nowe symptomy.</li>
               <li>
-                Udziały procentowe mają charakter probabilistyczny z kalibracją — to nie jest pewnik, tylko wskazówka kliniczna.
+                Udziały procentowe mają charakter probabilistyczny z kalibracją. To nie jest pewnik, tylko wskazówka kliniczna.
               </li>
             </ul>
           </div>
@@ -206,7 +206,7 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
               Zakończenie zbierania: napisz <em>„to wszystko”</em> / <em>„koniec”</em> / <em>„podsumuj”</em>.
             </li>
             <li>
-              Korekta: napisz naturalnie, np. <em>„jednak nie mam gorączki”</em> albo <em>„dodaj: ból mięśni”</em> — system zaktualizuje stan.
+              Korekta: napisz naturalnie, np. <em>„jednak nie mam gorączki”</em> albo <em>„dodaj: ból mięśni”</em>, a system zaktualizuje stan.
             </li>
             <li>
               Szybkie akcje pod czatem uruchamiają gotowe odpowiedzi: <em>Choroba?</em>, <em>Zalecenia</em>, <em>Pilność</em> itd.
@@ -225,10 +225,10 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
         <div className="space-y-2">
           <ul className="list-disc space-y-1 pl-6">
             <li>
-              <strong>Historia czatów</strong> — w menu użytkownika; pozwala wrócić do poprzednich sesji i prześledzić decyzje.
+              <strong>Historia czatów</strong>: w menu użytkownika; pozwala wrócić do poprzednich sesji i prześledzić decyzje.
             </li>
             <li>
-              <strong>Ustawienia konta</strong> — uzupełnij imię/nazwisko i datę urodzenia; komunikaty (np. o pilności) mogą być dzięki temu bardziej adekwatne.
+              <strong>Ustawienia konta</strong>: uzupełnij imię/nazwisko i datę urodzenia; komunikaty (np. o pilności) mogą być dzięki temu bardziej adekwatne.
             </li>
             <li>
               Prywatność: rozmowy są przechowywane w Twoim koncie. Możesz je usuwać z historii, gdy uznasz to za potrzebne.

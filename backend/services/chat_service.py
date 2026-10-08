@@ -131,11 +131,17 @@ def _filter_history_for_prompt(history: List[Dict[str, str]], keep: int, strip_s
 
 
 
+# słowa, które mogą poprzedzać "tak"/"nie" bez zmiany sensu: "niestety tak", "no tak", "raczej nie"
+_ANSWER_LEAD = r"(?:(?:no|niestety|zdecydowanie|raczej|chyba|oczywi[sś]cie|ale[zż]|w[lł]a[sś]nie|na\s+pewno|szczerze\s+m[oó]wi[aą]c)[\s,]+)?"
 _YES_RE = re.compile(
-    r"^\s*(?:tak|ta|yes|yep|yeah|jasne|oczywi[sś]cie|owszem|zgadza\s+si[eę]|(?:raczej|chyba)\s+tak)\b",
+    r"^\s*" + _ANSWER_LEAD +
+    r"(?:tak|ta|yes|yep|yeah|jasne|oczywi[sś]cie|owszem|pewnie|zgadza\s+si[eę]|jak\s+najbardziej|potwierdzam|dok[lł]adnie)\b"
+    # po polsku "no" na początku zwykle znaczy "tak": "no tak", "no, mam", "no boli"
+    r"|^\s*no[\s,]+(?:mam|boli|bol[aą]|jest|czuj[eę]|wyst[eę]puje)\b",
     re.IGNORECASE,
 )
-_NO_RE = re.compile(r"^\s*(?:nie|no|nope|(?:raczej|chyba)\s+nie)\b", re.IGNORECASE)
+# "no" samo w sobie = "nie" (np. po angielsku), ale "no tak" = "tak"; "oczywiście nie" = "nie"
+_NO_RE = re.compile(r"^\s*" + _ANSWER_LEAD + r"(?:nie|nope)\b|^\s*no\s*[.!]*\s*$", re.IGNORECASE)
 # krótkie odpowiedzi twierdzące bez "tak" na pytania typu "Czy boli Cię gardło?" / "Czy masz kaszel?".
 # Tylko jako cała wiadomość: "mam gorączkę i kaszel" to opis objawów, nie odpowiedź "tak".
 _YES_SHORT_RE = re.compile(
@@ -159,10 +165,10 @@ def _parse_yes_no(text: str) -> Optional[str]:
         return None
     if _UNKNOWN_RE.match(t):
         return "unknown"
-    if _YES_RE.match(t) or _YES_SHORT_RE.match(t):
-        return "yes"
     if _NO_RE.match(t):
         return "no"
+    if _YES_RE.match(t) or _YES_SHORT_RE.match(t):
+        return "yes"
     return None
 
 
@@ -758,7 +764,9 @@ class ChatService:
 
         if not sessions.exists(sid):
             sessions.init_session(sid)
-            # backend mógł zostać zrestartowany - odtwarzamy objawy, które pamięta frontend
+        # backend mógł zostać zrestartowany - odtwarzamy objawy, które pamięta frontend.
+        # Sprawdzamy "pusta sesja", a nie "brak sesji": router (claim_owner) tworzy ją wcześniej.
+        if not sessions.get_history(sid) and not sessions.get_symptoms(sid):
             restored = self._known_features(getattr(req, "client_symptoms", None))
             if restored:
                 sessions.set_symptoms(sid, restored)
@@ -820,6 +828,14 @@ class ChatService:
         count = len(sess_symptoms)
         user_stop = contains_stop_phrase(user_text)
         recognized = bool(new_syms or neg_syms or answer is not None or extra_new or extra_neg)
+
+        # 2b) było pytanie, a odpowiedź nie jest ani "tak/nie", ani opisem objawów: pytamy jeszcze raz
+        #     o to samo (wcześniej pytanie przepadało, a pacjent dostawał kolejne)
+        if pending and sessions.get_pending_symptom(sid) == pending and not recognized and not user_stop:
+            question = self.loc.followup_question(pending, LANG)
+            msg = (f"Nie jestem pewien, jak zrozumieć tę odpowiedź. {question} "
+                   "Wystarczy „tak”, „nie” albo „nie wiem”.")
+            return self._say(sid, msg, sess_symptoms)
         log.info("DEBUG new=%s neg=%s answer=%s | symptoms=%s (n=%d) stop=%s",
                  new_syms, neg_syms, answer, sess_symptoms[:12], count, user_stop)
 
@@ -827,6 +843,13 @@ class ChatService:
 
         # 3a) ocena była już podana albo pacjent zakończył zbieranie objawów: aktualizujemy ocenę
         if count > 0 and sessions.is_stopped(sid):
+            return self._diagnose(req, sess_symptoms, history, patient_age,
+                                  low_confidence=count < int(MIN_SYMPTOMS), use_llm=use_llm, t_req=t_req, note=note)
+
+        # 3a') pacjent napisał już raz "to wszystko" i dostał zapowiedź jednego pytania: po odpowiedzi
+        #      podajemy ocenę zamiast kolejnych pytań
+        if count > 0 and sessions.is_stop_warned(sid):
+            sessions.set_stopped(sid, True)
             return self._diagnose(req, sess_symptoms, history, patient_age,
                                   low_confidence=count < int(MIN_SYMPTOMS), use_llm=use_llm, t_req=t_req, note=note)
 

@@ -98,15 +98,22 @@ def _decode_supabase_jwt(token: str) -> dict:
     if not SUPABASE_JWT_SECRET:
         raise HTTPException(500, "Błędna konfiguracja serwera (brak SUPABASE_JWT_SECRET).")
     try:
-        return jwt.decode(
+        # tylko tokeny zalogowanego użytkownika: aud/role "authenticated" i niepusty sub.
+        # Odrzuca m.in. publiczny klucz anon (role=anon) i backendowe cookie podpisane tym samym sekretem.
+        claims = jwt.decode(
             token,
             SUPABASE_JWT_SECRET,
             algorithms=["HS256"],
-            options={"verify_aud": False},
+            audience="authenticated",
+            # python-jose bez require_aud przepuszcza token BEZ pola aud
+            options={"require_aud": True, "require_exp": True, "require_sub": True},
         )
     except JWTError as e:
         log.info("HS256 decode failed: %s", e)
         raise HTTPException(401, "Nieprawidłowy lub wygasły token Supabase.")
+    if claims.get("role") != "authenticated" or not str(claims.get("sub") or "").strip():
+        raise HTTPException(401, "Token Supabase nie należy do zalogowanego użytkownika.")
+    return claims
 
 def _age(dob: Optional[date]) -> Optional[int]:
     if not dob:
@@ -132,7 +139,9 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
     if not isinstance(meta, dict):
         meta = {}
 
-    email = (claims.get("email") or meta.get("email") or "").lower().strip()
+    # tylko email z tokenu (ustawia go Supabase). user_metadata pacjent może zmienić sam,
+    # więc dopasowanie konta po emailu z metadanych pozwalało przejąć cudze konto.
+    email = (claims.get("email") or "").lower().strip()
     full_name = (meta.get("full_name") or meta.get("name") or "").strip()
     username_meta = (meta.get("username") or meta.get("preferred_username") or "").strip()
 
@@ -150,9 +159,13 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
     # 1) provider_sub
     user = crud.get_user_by_provider(db, "supabase", sub) if sub else None
 
-    # 2) email fallback
+    # 2) email fallback: tylko konto jeszcze niepowiązane z żadnym logowaniem Supabase
     if not user and email:
-        user = crud.get_user_by_email(db, email)
+        by_email = crud.get_user_by_email(db, email)
+        if by_email is not None:
+            if by_email.provider_sub and by_email.provider_sub != sub:
+                raise HTTPException(409, "Ten adres email jest już powiązany z innym kontem.")
+            user = by_email
 
     # 3) create — to robimy zawsze, bo bez usera nie ma o czym mówić
     if not user:

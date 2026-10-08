@@ -181,7 +181,8 @@ def patch_session_symptoms(
 
     ens = EnsembleTopK(st)
     try:
-        raw_top = ens.predict_topk([vec[0]], k=int(TOPN_DIAGNOSES))
+        raw_top = ens.predict_topk([vec[0]], k=int(TOPN_DIAGNOSES),
+                                   negated=sessions.get_negated(session_id))
     except Exception:
         raw_top = []
 
@@ -279,7 +280,7 @@ def get_top3_split(
     xgb_enabled = bool(getattr(st, "xgb", None) and getattr(st.xgb, "model", None))
     river_enabled = bool(getattr(st, "river", None) and getattr(st.river, "model", None))
 
-    split = ens.predict_split([vec], k=max(1, min(int(k), 20)))
+    split = ens.predict_split([vec], k=max(1, min(int(k), 20)), negated=sessions.get_negated(session_id))
     loc = PromptLocalizer(st.matcher)
     lang = "pl"
 

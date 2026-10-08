@@ -304,9 +304,16 @@ class SessionStore:
             s.stop_warned = bool(value)
 
     def reset_flow(self, session_id: str) -> None:
-        """Pacjent zaczyna od nowa (np. wyczyścił objawy): zerujemy stan dopytywania."""
+        """
+        Pacjent zaczyna od nowa (np. "Wyczyść wszystko"): zerujemy stan dopytywania i historię.
+        Historia idzie do oceny pilności i opisu LLM, więc stare wpisy (np. "gorączka 40 od 2 tygodni")
+        zawyżałyby nową ocenę.
+        """
         with self._lock:
             s = self._get_or_create(session_id)
+            s.history.clear()
+            s.last_assistant = ""
+            s.last_top3 = []
             s.stopped = False
             s.stop_warned = False
             s.followup_count = 0

@@ -183,9 +183,12 @@ XGB_TREE_METHOD     = _env_str("XGB_TREE_METHOD", "hist")
 XGB_CALIBRATE             = _env_bool("XGB_CALIBRATE", True)
 
 # ───────────────────────── Sterowanie przepływem w czacie ─────────────────────────
-# Po tylu pytaniach uzupełniających (bez osiągnięcia MIN_SYMPTOMS) przestajemy
-# dopytywać i podajemy ocenę orientacyjną z wyraźnym zastrzeżeniem.
-STOP_FOLLOWUPS_AT   = _env_int("STOP_FOLLOWUPS_AT", 4)
+# Dopytujemy, dopóki model nie jest dość pewny (Top-1 >= FOLLOWUP_CONFIDENCE przy co najmniej
+# MIN_SYMPTOMS objawach) albo do STOP_FOLLOWUPS_AT pytań w sesji; potem ocena (przy zbyt małej
+# liczbie objawów orientacyjna, z zastrzeżeniem). Progi dobrane symulacją rozmów na zbiorze
+# testowym (backend/tools/simulate_followups.py).
+STOP_FOLLOWUPS_AT   = _env_int("STOP_FOLLOWUPS_AT", 5)
+FOLLOWUP_CONFIDENCE = _env_float("FOLLOWUP_CONFIDENCE", 0.7)
 PREDICT_ONLY_ON_NEW = _env_bool("PREDICT_ONLY_ON_NEW", True)
 TOPN_DIAGNOSES      = _env_int("TOPN_DIAGNOSES", 3)
 

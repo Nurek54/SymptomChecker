@@ -142,6 +142,13 @@ function _isChatEndpoint(path: string): boolean {
 
 /** Ujednolicony wrapper na fetch (Bearer + COOKIES) z timeoutem i selektywnym retry. */
 /** Wyciąga komunikat z dowolnego błędu (catch daje `unknown`). */
+/** Błąd przerwanego żądania (name = "AbortError"), żeby wywołujący mogli go odróżnić i pominąć. */
+function abortError(message: string): Error {
+    const err = new Error(message);
+    err.name = "AbortError";
+    return err;
+}
+
 export function errorMessage(e: unknown): string {
     if (e instanceof Error) return e.message;
     if (typeof e === "string") return e;
@@ -201,10 +208,10 @@ export async function apiFetch<T = unknown>(
                 if (localCtrl.signal.aborted && !externalSignal?.aborted) {
                     throw new Error(
                         `API timeout po ${Math.round(timeoutMs / 1000)}s: ${path}. ` +
-                        `Backend może wciąż liczyć — odśwież stronę za chwilę.`
+                        `Backend może wciąż liczyć, odśwież stronę za chwilę.`
                     );
                 }
-                throw new Error(`Żądanie anulowane: ${path}`);
+                throw abortError(`Żądanie anulowane: ${path}`);
             }
             throw e;
         }
@@ -525,7 +532,7 @@ async function _withAuthRetry<T>(
 ): Promise<T> {
     let lastErr: unknown = null;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        if (signal?.aborted) throw new Error("Aborted");
+        if (signal?.aborted) throw abortError("Aborted");
         try {
             return await fn();
         } catch (e: unknown) {
@@ -546,4 +553,4 @@ async function _withAuthRetry<T>(
         }
     }
     throw lastErr;
-}
+}

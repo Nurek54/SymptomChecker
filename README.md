@@ -134,7 +134,7 @@ Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GP
     <td width="33%" valign="top">
       <img src="docs/icons/message-circle-question.svg" width="44" alt="" /><br />
       <b>Asks the right question</b><br />
-      <sub>Picks the symptom that best separates the likely diseases, skips near-duplicates and stops after a limit instead of asking forever.</sub>
+      <sub>Picks the symptom that best separates the likely diseases, learns from your “no” answers too and stops as soon as the model is confident (at most 5 questions).</sub>
     </td>
     <td width="33%" valign="top">
       <img src="docs/icons/layers.svg" width="44" alt="" /><br />
@@ -381,7 +381,7 @@ SymptomChecker/
 │   ├── reports/              # ML validation outputs (SVG, JSON)
 │   ├── services/             # ensemble, prompt_builder, symptom_matcher, sessions, …
 │   ├── tests/                # pytest
-│   ├── tools/                # export_predictions.py (raw model outputs for analysis)
+│   ├── tools/                # export_predictions.py, simulate_followups.py (follow-up questions benchmark)
 │   ├── weights/bielik-gguf/  # ⬅ drop Bielik GGUF here (gitignored)
 │   ├── config.py             # ALL ML / LLM / auth knobs
 │   ├── app.py                # FastAPI factory
@@ -787,7 +787,8 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `MIN_SYMPTOMS` | `3` | Minimum symptoms before allowing diagnosis |
-| `STOP_FOLLOWUPS_AT` | `4` | After N follow-up questions without reaching `MIN_SYMPTOMS`, give an indicative (low-confidence) assessment instead of asking forever |
+| `STOP_FOLLOWUPS_AT` | `5` | Maximum follow-up questions per session; after that the assessment is given (indicative, with a caveat, if fewer than `MIN_SYMPTOMS` symptoms) |
+| `FOLLOWUP_CONFIDENCE` | `0.7` | With at least `MIN_SYMPTOMS` symptoms, keep asking until the Top-1 probability reaches this level (thresholds tuned with `tools/simulate_followups.py`) |
 | `TOPN_DIAGNOSES` | `3` | Number of diagnoses returned |
 | `SUMMARY_MODE` | `"llm"` | `"llm"` or `"template"` |
 

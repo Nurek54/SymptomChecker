@@ -239,7 +239,12 @@
       "anxiety_and_nervousness",
       "anxiety"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "lęk",
+      "niepokój",
+      "stany lękowe",
+      "nerwowość"
+    ],
     "synonyms_en": [],
     "category": "Psychiatryczny"
   },
@@ -4336,7 +4341,11 @@
       "neck_stiffness_or_tightness",
       "stiff_neck"
     ],
-    "synonyms_pl": [],
+    "synonyms_pl": [
+      "sztywny kark",
+      "sztywna szyja",
+      "zesztywniały kark"
+    ],
     "synonyms_en": [],
     "category": "Mięśniowo-szkieletowy"
   },

@@ -232,6 +232,7 @@ class SymptomMatcher:
         self._pl2xgb: Dict[str, str] = {}
 
         self._med_tokens: Set[str] = set()
+        self._short_accented: Set[str] = set()
 
         if EMB_USE_DICTIONARY and SYMPTOMS_DICT_PATH and os.path.exists(SYMPTOMS_DICT_PATH):
             ok = self._build_alias_index(SYMPTOMS_DICT_PATH)
@@ -392,6 +393,11 @@ class SymptomMatcher:
                     self._alias_keys.append(a_no)
                     self._alias_key_to_feat[a_no] = canon
 
+                # krótkie jednowyrazowe aliasy z polskimi znakami ("lęk"): bez znaków to inne słowo
+                # ("lek" jest na czarnej liście), więc bramkę otwieramy formą z ogonkami
+                if " " not in a and len(a) <= 4 and _has_diacritics(a):
+                    self._short_accented.add(a)
+
                 for tok in a.split():
                     tt = _strip_accents(tok)
                     if len(tt) >= 4 and tt not in _STOP and tt not in MED_BLACKLIST_TOKENS:
@@ -419,10 +425,25 @@ class SymptomMatcher:
         log.info("DICT Wpisów:%d | aliasów:%d | keys:%d | cat:%d | med_tokens:%d", added, len(self.alias_to_feature), len(self._alias_keys), len(self._feat_category), len(self._med_tokens))
         return True
 
+    def _canon_of(self, xgb_or_alias: str) -> str:
+        """
+        Nazwa cechy modelu dla cechy albo aliasu. Najpierw dokładna nazwa cechy: _canonize zamienia "_"
+        na spację, więc np. "symptom_depression" (bez aliasu "symptom depression") przepadał przy budowie
+        wektora i nie trafiał do modelu.
+        """
+        raw = str(xgb_or_alias or "").strip().lower()
+        k = _canonize(raw)
+        canon = self.alias_to_feature.get(k)
+        if canon is not None:
+            return canon            # alias wskazuje cechę z danymi (np. abdominal_pain -> sharp_abdominal_pain)
+        return raw if raw in self._feat_set else k
+
+    # cechy bez własnego wpisu w słowniku PL (inaczej w podsumowaniu pojawiał się angielski tekst)
+    _PL_FALLBACK = {"symptom_anxiety": "lęk", "symptom_indigestion": "niestrawność"}
+
     def to_pl(self, xgb_or_alias: str) -> str:
-        k = _canonize(xgb_or_alias)
-        canon = self.alias_to_feature.get(k, k)
-        return self._xgb2pl.get(canon, canon.replace("_", " "))
+        canon = self._canon_of(xgb_or_alias)
+        return self._xgb2pl.get(canon) or self._PL_FALLBACK.get(canon) or canon.replace("_", " ")
 
     def to_en(self, text_pl_or_alias: str) -> Optional[str]:
         k = _canonize(text_pl_or_alias)
@@ -551,7 +572,8 @@ class SymptomMatcher:
     def _match_fragment(self, frag: str) -> Dict[str, str]:
         hits: Dict[str, str] = {}
         frag_toks = [t for t in _tokens(frag) if t not in MED_BLACKLIST_TOKENS]
-        if not any(self._is_med_token(t) for t in frag_toks):
+        short_hit = bool(self._short_accented & set(_canonize(frag).split()))
+        if not short_hit and not any(self._is_med_token(t) for t in frag_toks):
             return hits
 
         fn = _canonize(frag)
@@ -717,6 +739,5 @@ class SymptomMatcher:
         return self._extract_detailed(text)[0]
 
     def expand_to_xgb(self, canon_or_alias: str) -> Set[str]:
-        k = _canonize(canon_or_alias)
-        canon = self.alias_to_feature.get(k, k)
+        canon = self._canon_of(canon_or_alias)
         return set(self._feat2alts.get(canon, {canon}))

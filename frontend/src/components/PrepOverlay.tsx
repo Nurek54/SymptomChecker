@@ -486,7 +486,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
               <div className="rounded-xl border border-base bg-card p-2 text-xs">
                 <div className="text-[11px] opacity-60">Czas trwania</div>
                 <div className="text-lg font-semibold">
-                  {durationValue ? `${durationValue} ${unitLabel(durationUnit, durationValue)}` : "—"}
+                  {durationValue ? `${durationValue} ${unitLabel(durationUnit, durationValue)}` : "-"}
                 </div>
               </div>
             </div>

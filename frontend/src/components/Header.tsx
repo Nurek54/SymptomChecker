@@ -184,6 +184,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                 if (!alive) return;
                 setHealth(h);
                 setHealthFailCount(0);
+                setOnline(true);   // backend odpowiada: zdejmujemy "Offline" z pierwszego sprawdzenia
             } catch {
                 if (!alive) return;
                 setHealthFailCount((c) => c + 1);
@@ -198,6 +199,20 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
             clearInterval(id);
         };
     }, []);
+
+    // Offline (np. apka otwarta przed startem backendu): sprawdzamy co 5 s, aż backend odpowie
+    useEffect(() => {
+        if (online !== false) return;
+        let alive = true;
+        const id = setInterval(async () => {
+            const ok = await healthcheck();
+            if (alive && ok) setOnline(true);
+        }, 5000);
+        return () => {
+            alive = false;
+            clearInterval(id);
+        };
+    }, [online]);
 
     const healthError = healthFailCount >= 2;
 
@@ -410,7 +425,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                         <div
                             className="hidden md:flex items-center gap-2 rounded-xl border border-amber-400/70 bg-amber-100/90 px-3 py-1.5 text-xs text-amber-900 shadow-sm
                          dark:border-amber-400/40 dark:bg-amber-900/30 dark:text-amber-200"
-                            title="Tryb gościa — historia rozmów nie jest zapisywana."
+                            title="Tryb gościa: historia rozmów nie jest zapisywana."
                         >
                             <ShieldAlert className="h-4 w-4" />
                             <span className="font-medium">Tryb gościa</span>

@@ -15,6 +15,28 @@ except Exception:
 
 _NO_INFLECT_EXACT: set[str] = {}
 
+# Ręcznie napisane pytania uzupełniające dla każdej cechy modelu. Automatyczne
+# "Czy masz {nazwa}?" dawało błędy (np. "Czy masz reakcja alergiczna?",
+# "Czy masz symptom anxiety?") albo pytało o inny objaw niż cecha, bo kilka cech
+# dzieli polską etykietę ("foul_smell_of_urine" -> "ciemny mocz").
+FOLLOWUP_QUESTIONS_PATH = os.environ.get(
+    "FOLLOWUP_QUESTIONS_PATH",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "followup_questions_pl.json"),
+)
+_FOLLOWUP_QUESTIONS: Optional[Dict[str, str]] = None
+
+
+def _followup_questions() -> Dict[str, str]:
+    global _FOLLOWUP_QUESTIONS
+    if _FOLLOWUP_QUESTIONS is None:
+        try:
+            with open(FOLLOWUP_QUESTIONS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f) or {}
+            _FOLLOWUP_QUESTIONS = {str(k).strip().lower(): str(v).strip() for k, v in data.items() if v}
+        except Exception:
+            _FOLLOWUP_QUESTIONS = {}
+    return _FOLLOWUP_QUESTIONS
+
 _PHRASE_HINTS: tuple[str, ...] = (
     "ból", "bol", "uczucie", "pieczenie", "swędzenie", "świąd",
     "brak", "utrata", "zaburzenie", "uczucie", "drętwienie",
@@ -171,6 +193,9 @@ class PromptLocalizer:
         lang: str = "pl",
         **_: Any,
     ) -> str:
+        curated = _followup_questions().get(str(sym_xgb or "").strip().lower())
+        if curated:
+            return curated
         try:
             name_pl = self.matcher.to_pl(sym_xgb) or str(sym_xgb).replace("_", " ")
         except Exception:

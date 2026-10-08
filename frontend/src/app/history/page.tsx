@@ -37,7 +37,7 @@ type Msg = { role: "user" | "assistant"; content: string; created_at: string };
 /* Helpers */
 function timeAgo(iso: string) {
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return "—";
+    if (isNaN(d.getTime())) return "-";
     const diff = (Date.now() - d.getTime()) / 1000;
     const rtf = new Intl.RelativeTimeFormat("pl", { numeric: "auto" });
     const units: Intl.RelativeTimeFormatUnit[] = ["second", "minute", "hour", "day", "week", "month", "year"];
@@ -119,7 +119,8 @@ export default function HistoryPage() {
                 setItems([]);
             }
         } finally {
-            setItemsLoading(false);
+            // przerwane, bo ruszyło nowsze ładowanie: to ono zdejmie wskaźnik ładowania
+            if (listAbort.current === ac) setItemsLoading(false);
         }
     }, []);
 
@@ -135,7 +136,7 @@ export default function HistoryPage() {
         } catch (e: unknown) {
             if ((e as { name?: string } | null)?.name !== "AbortError") setErr(errorMessage(e) || "Błąd");
         } finally {
-            setBusy(false);
+            if (detailAbort.current === ac) setBusy(false);
         }
     };
 
@@ -282,6 +283,8 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
+                    {/* błąd widoczny też na telefonie, gdzie sekcja szczegółów jest ukryta bez wybranej rozmowy */}
+                    {err && !current ? <p className="px-1 text-xs text-rose-600 md:hidden">{err}</p> : null}
                     {itemsLoading ? (
                         <>
                             <ListItemSkeleton />
@@ -324,7 +327,7 @@ export default function HistoryPage() {
                                                         <div className="mt-1 flex items-center gap-2 text-xs text-muted">
                               <span className="inline-flex items-center gap-1">
                                 <Clock className="h-3.5 w-3.5" />
-                                  {it.last_message_at ? timeAgo(it.last_message_at) : "—"}
+                                  {it.last_message_at ? timeAgo(it.last_message_at) : "-"}
                               </span>
                                                             <span className="inline-flex items-center gap-1">
                                 <MessageSquare className="h-3.5 w-3.5" />
@@ -363,14 +366,14 @@ export default function HistoryPage() {
                         </button>
 
                         <div className="min-w-0">
-                            <div className="truncate text-base font-semibold">{current ? current.title : "—"}</div>
+                            <div className="truncate text-base font-semibold">{current ? current.title : "-"}</div>
                             <span aria-hidden className="mt-1 block h-px w-28 rounded-full" style={{ background: AURORA_SOFT }} />
                             <div className="mt-1 flex items-center gap-3 text-xs text-muted">
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
                     {current
                         ? timeAgo(current.messages[current.messages.length - 1]?.created_at ?? new Date().toISOString())
-                        : "—"}
+                        : "-"}
                 </span>
                                 <span className="inline-flex items-center gap-1">
                   <MessageSquare className="h-3.5 w-3.5" />

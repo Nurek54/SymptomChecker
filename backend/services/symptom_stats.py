@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 
@@ -124,6 +124,47 @@ class SymptomStats:
         except Exception as e:
             log.warning("[Stats] Nie udało się policzyć statystyk: %s", e)
             return None
+
+    # ───────────────────────── odpowiedzi "nie" ─────────────────────────
+    def _neg_log_factor(self, negated: Iterable[str]) -> Optional[np.ndarray]:
+        idx = sorted({self.feat_index[s] for s in (negated or []) if s in self.feat_index})
+        if not idx:
+            return None
+        return np.log1p(-self.q[:, idx].astype(np.float64)).sum(axis=1)   # (n_classes,)
+
+    def apply_negatives(self, dist: Dict[str, float], negated: Iterable[str]) -> Dict[str, float]:
+        """
+        Uwzględnia objawy, którym pacjent zaprzeczył: p(d) * prod(1 - P(objaw | d)), potem normalizacja.
+
+        Model (XGB/River) widzi tylko objawy obecne; "nie mam X" i "nic nie wiadomo o X" to dla
+        niego to samo zero. Bez tej poprawki odpowiedź "nie" na pytanie uzupełniające nie zmienia
+        Top-3, choć wyklucza choroby, przy których ten objaw występuje prawie zawsze.
+        """
+        lf = self._neg_log_factor(negated)
+        if lf is None or not dist:
+            return dist
+        f = np.exp(lf - lf.max())
+        out = {c: float(p) * (float(f[self.class_index[c]]) if c in self.class_index else 1.0)
+               for c, p in dist.items()}
+        z = sum(out.values())
+        return {c: v / z for c, v in out.items()} if z > 0 else dist
+
+    def nb_posterior(self, present: Iterable[str], negated: Iterable[str]) -> Dict[str, float]:
+        """
+        Rozkład chorób z samych statystyk (naiwny Bayes, równy prior): objawy obecne i zaprzeczone,
+        a o pozostałych nic nie zakładamy. Do wyboru kolejnego pytania sprawdza się lepiej niż
+        rozkład modelu, który brak informacji traktuje jak brak objawu.
+        """
+        logp = np.zeros(len(self.classes), dtype=np.float64)
+        pos = sorted({self.feat_index[s] for s in (present or []) if s in self.feat_index})
+        if pos:
+            logp += np.log(self.q[:, pos].astype(np.float64)).sum(axis=1)
+        lf = self._neg_log_factor(negated)
+        if lf is not None:
+            logp += lf
+        p = np.exp(logp - logp.max())
+        p /= p.sum()
+        return {c: float(v) for c, v in zip(self.classes, p)}
 
     # ───────────────────────── wybór pytania ─────────────────────────
     def best_question(
