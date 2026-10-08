@@ -1,7 +1,7 @@
 // Poprawki po przeglądzie: komunikat błędu w panelu objawów, zamykanie okna XGBoost / River tłem.
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { SymptomsCard } from "@/components/SidePanel";
@@ -23,7 +23,11 @@ describe("poprawki po przeglądzie", () => {
     it("okno XGBoost / River zamyka się kliknięciem w tło", async () => {
         vi.spyOn(api, "getTop3Split").mockResolvedValue({ xgb_enabled: true, river_enabled: true, symptoms: [] } as never);
         const onClose = vi.fn();
-        const { container } = render(<ModelSplitOverlay open onClose={onClose} sessionId="s1" />);
+        let container!: HTMLElement;
+        // render w act + odczekanie na zakończenie pobierania danych (bez ostrzeżenia "not wrapped in act")
+        await act(async () => {
+            ({ container } = render(<ModelSplitOverlay open onClose={onClose} sessionId="s1" />));
+        });
         const backdrop = container.querySelector('[role="dialog"] > div[aria-hidden]') as HTMLElement;
         fireEvent.click(backdrop);
         expect(onClose).toHaveBeenCalled();
