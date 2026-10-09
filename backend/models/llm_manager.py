@@ -103,30 +103,27 @@ class LLMManager:
         self._eos_strings: List[str] = list(LLM_EOS_STRINGS or [])
         self._min_chars = int(LLM_MIN_OUTPUT_CHARS or 220)
 
-        # bazowe wątki CPU
         if int(LLM_THREADS or 0) > 0:
             self._base_threads = int(LLM_THREADS)
         else:
             self._base_threads = max(1, (os.cpu_count() or 2) - 1)
         self._threads = self._base_threads
 
-        # slot/model
         slot = LLM_SLOTS.get("bielik") or {}
         self.repo = slot.get("REPO") or ""
         self.filename = slot.get("FILENAME") or ""
         self.model_type_hint = (slot.get("MODEL_TYPE") or "").strip().lower() or None
 
-        # stan tuningu
+        # autotuning state
         self._supports_n_batch = False
         self._supports_batch_size = False
         self._prefill_batch = 0
 
-        # efektywne warstwy w TEJ sesji
+        # GPU layers actually used in THIS session (may be autoboosted above the persisted cap)
         self._gpu_layers_effective = int(LLM_GPU_LAYERS or 0)
 
-        self._persist_layers_cap = int(LLM_GPU_LAYERS or 0)  # będzie nadpisany z cache, jeśli istnieje
+        self._persist_layers_cap = int(LLM_GPU_LAYERS or 0)  # overridden from the tuning cache, if present
 
-        # ścieżka do pliku z wynikiem autotuningu
         self._tuning_path = os.path.abspath(".llm_tuning.json")
 
     def _load_ctransformers(self, repo: str, filename: str, gpu_layers: int):
@@ -149,7 +146,7 @@ class LLMManager:
             msg = "".join(traceback.format_exception_only(type(e), e)).strip()
             print("[LLM][INFO] auto-detect failed, retry with explicit model_type. Reason:", msg)
 
-        # 2) kandydaci
+        # 2) explicit model_type candidates
         candidates = []
         if self.model_type_hint:
             candidates.append(self.model_type_hint)
@@ -324,7 +321,7 @@ class LLMManager:
         best_tps = scores[best_th]
 
         pick = best_th
-        for th in sorted(scores):  # preferuj mniejsze CPU przy ≥80% best
+        for th in sorted(scores):  # prefer fewer threads if within 80% of the best tok/s
             if scores[th] >= 0.80 * best_tps:
                 pick = th
                 break
@@ -338,7 +335,7 @@ class LLMManager:
         try:
             cap_before = int(self._persist_layers_cap or 0)
             cap_after = int(min(self._persist_layers_cap or 1e9, self._gpu_layers_effective))
-            self._persist_layers_cap = cap_after  # aktualizuj w pamięci
+            self._persist_layers_cap = cap_after  # persisted cap only ever goes down
 
             data = {
                 "model_file": self.filename,
@@ -401,12 +398,11 @@ class LLMManager:
         elif self._persist_layers_cap > 0:
             hint_layers = self._persist_layers_cap
         else:
-            hint_layers = cfg_cap  # może być 0 -> CPU
+            hint_layers = cfg_cap  # may be 0, meaning CPU only
 
         if not self._load_with_best_layers(hint_layers):
             raise RuntimeError("Nie udało się załadować modelu (ctransformers).")
 
-        # 2) Warmup
         if LLM_WARMUP and self.backend == "ctransformers":
             try:
                 _ = self.model(" ", max_new_tokens=4, temperature=0.0, top_p=0.0,
@@ -414,20 +410,18 @@ class LLMManager:
             except Exception:
                 pass
 
-        # 3) Autoboost TYLKO w sesji, max do aktualnego „sufitu”
+        # GPU layer autoboost applies to this session only, up to the current cap
         session_cap = max(0, self._persist_layers_cap or cfg_cap or 0)
         self._gpu_layers_autoboost_session(upper_cap=session_cap)
 
-        # 4) Prefill batch probe (GPU)
         self._probe_generation_kwargs()
 
-        # 5) Dobór wątków CPU (≥80% best, preferuj mniejsze)
         self._choose_threads_gpu_biased()
 
-        # 6) (opcjonalnie) ponowny prefill po zmianie threads — drobna korekta
+        # re-probe prefill batch after the thread count changed
         self._probe_generation_kwargs()
 
-        # 7) Zapisz tuning tylko w trybie "on" — PERSIST ONLY DOWN
+        # saved only in "on" mode; the persisted layer cap only ever goes down
         self._save_tuning()
 
     def _autosize_tokens(self, prompt_len: int, user_cap: int) -> int:
@@ -462,7 +456,7 @@ class LLMManager:
                 kwargs["repetition_penalty"] = float(LLM_REPETITION_PENALTY)
             if seed is not None:
                 kwargs["seed"] = int(seed)
-            kwargs["last_n_tokens"] = 8  # lżejsze liczenie powtórzeń
+            kwargs["last_n_tokens"] = 8  # short repetition-penalty window (cheaper)
         except Exception:
             pass
         return self.model(prompt, **kwargs)
@@ -557,7 +551,7 @@ class LLMManager:
                     + total_text
                     + ""
                 )
-                approx_used = len(cont_prompt) // 3  # ~3 znaki/token (PL)
+                approx_used = len(cont_prompt) // 3  # ~3 chars per token for Polish
                 room = int(self._ctx_len * 0.9) - approx_used
                 if room < 64:
                     break

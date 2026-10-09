@@ -1,4 +1,3 @@
-# backend/api/routers/history.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -6,7 +5,7 @@ from database.db import get_db
 from database.schemas import ConversationItem, ConversationDetail, MessageOut, SymptomOut, DiagnosisOut
 from database import crud
 
-# Ta sama logika tożsamości co w /chat i /sessions (cookie backendu, a w razie braku Bearer Supabase)
+# Same identity logic as /chat and /sessions: backend cookie, falling back to Supabase Bearer.
 from api.deps import require_user_id
 
 router = APIRouter(prefix="/history", tags=["History"])

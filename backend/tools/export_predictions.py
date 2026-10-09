@@ -1,16 +1,16 @@
 """
-Eksport surowych predykcji XGBoost i River na zbiorze kalibracyjnym i testowym
-(do analizy ensemble bez ponownego trenowania modeli).
+Export raw XGBoost and River predictions on the calibration and test sets
+(for ensemble analysis without retraining the models).
 
-Uruchomienie (w backend/, przy wytrenowanych modelach):
+Run (from backend/, with trained models):
     python tools/export_predictions.py
 
-Zapisuje ml/preds_calibration.npz i ml/preds_test.npz z polami:
-    xgb_margins (N x K)  surowe marginesy XGBoost
-    river_z     (N x K)  surowe logity River (OVR), w kolejności klas XGB
-    river_base  (K,)     logity River dla pustego wejścia
-    y           (N,)     indeks prawdziwej klasy (kolejność klas XGB)
-    classes     (K,)     nazwy klas
+Writes ml/preds_calibration.npz and ml/preds_test.npz with fields:
+    xgb_margins (N x K)  raw XGBoost margins
+    river_z     (N x K)  raw River OvR logits, in XGB class order
+    river_base  (K,)     River logits for an empty input
+    y           (N,)     true class index (XGB class order)
+    classes     (K,)     class names
 """
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def export(xgb: XGBManager, river: RiverManager, path: str, out: str, label: str
     with river.lock:
         Z, _, r_classes = river._scores_for_frame(df, f"{label}: River")
         z_base = river._base_scores(r_classes)
-    # wyrównanie klas River do kolejności XGB (brakujące klasy: bardzo niski logit)
+    # align River classes to XGB order (classes missing in River get a very low logit)
     Zx = np.full((len(df), len(classes)), -30.0, dtype=np.float32)
     bx = np.full(len(classes), -30.0, dtype=np.float32)
     r_idx = {str(c).lower(): j for j, c in enumerate(r_classes)}
@@ -70,7 +70,7 @@ def export(xgb: XGBManager, river: RiverManager, path: str, out: str, label: str
 def main() -> None:
     t0 = time.time()
     xgb = XGBManager()
-    xgb.train()  # przy istniejących artefaktach tylko wczytanie
+    xgb.train()  # with existing artifacts this only loads the model
     river = RiverManager()
     river.set_features(xgb.features)
     river.train()

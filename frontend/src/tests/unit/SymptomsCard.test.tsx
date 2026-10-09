@@ -1,4 +1,3 @@
-// src/tests/unit/SymptomsCard.test.tsx
 import React, { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -15,10 +14,7 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
         vi.resetAllMocks();
     });
 
-    /** Mini–kontener, który zachowuje się jak ChatUI:
-     *  - przechowuje stan `symptoms` i `top`
-     *  - aktualizuje go po `onPatched`
-     */
+    /** Minimal ChatUI stand-in: holds `symptoms` and `top` and updates them from `onPatched`. */
     function SymptomsHarness() {
         const [symptoms, setSymptoms] = useState<string[]>([]);
         const [top, setTop] = useState<TopDiagnosis[] | null>(null);
@@ -42,13 +38,11 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
     }
 
     it("po wpisaniu 'kaszel' pokazuje wynik PL/EN, wywołuje PATCH i aktualizuje listę oraz Top-3", async () => {
-        // 1) Słownik objawów (kaszel -> cough)
         vi.spyOn(api, "listSymptomsDict").mockResolvedValue([
             { en: "cough", pl: "kaszel", category: "oddechowe" },
             { en: "sore_throat", pl: "ból gardła", category: "oddechowe" },
         ]);
 
-        // 2) PATCH /sessions/{id}/symptoms
         const patchSpy = vi
             .spyOn(api, "patchSessionSymptoms")
             .mockResolvedValue({
@@ -62,19 +56,16 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
 
         render(<SymptomsHarness />);
 
-        // Otwórz panel wyboru objawów
         const addButton = screen.getByRole("button", { name: /dodaj/i });
         await user.click(addButton);
 
-        // Wpisz "kaszel" w wyszukiwarce
         const searchInput = await screen.findByPlaceholderText(/szukaj objawu/i);
         await user.type(searchInput, "kaszel");
 
-        // Powinien pojawić się wynik z polską nazwą
         const option = await screen.findByRole("option", { name: /kaszel/i });
         await user.click(option);
 
-        // PATCH został wywołany z canonical "cough"
+        // PATCH must send the canonical EN name
         await waitFor(() => {
             expect(patchSpy).toHaveBeenCalledTimes(1);
         });
@@ -84,14 +75,12 @@ describe("F2 — Panel objawów (SymptomsCard + TopDiagCard)", () => {
             expect.objectContaining({ add: ["cough"], lang: "pl" })
         );
 
-        // UI (harness) dostał nowe objawy + Top-3
         await waitFor(() => {
             expect(screen.getAllByText(/kaszel/i).length).toBeGreaterThan(0);
         });
 
         const topCard = screen.getByText(/Najbardziej prawdopodobne/i).closest("div");
         expect(topCard).toBeInTheDocument();
-        // Sprawdzamy, że w Top-3 jest nasze "Przeziębienie"
         expect(screen.getByText(/przeziębienie/i)).toBeInTheDocument();
     });
 });

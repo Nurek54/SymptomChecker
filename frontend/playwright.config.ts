@@ -1,8 +1,6 @@
-// playwright.config.ts
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-    // Gdzie leżą testy e2e
     testDir: "./src/tests/e2e",
 
     timeout: 30_000,
@@ -17,15 +15,13 @@ export default defineConfig({
     reporter: "list",
 
     use: {
-        // Twój frontend Next.js
         baseURL: "http://localhost:3000",
         trace: "on-first-retry",
         screenshot: "only-on-failure",
         video: "retain-on-failure",
     },
 
-    // Tu definiujemy projekt "chromium",
-    // o który pyta `--project=chromium`
+    // Project name matches the `--project=chromium` CLI flag
     projects: [
         {
             name: "chromium",
@@ -35,7 +31,7 @@ export default defineConfig({
         },
     ],
 
-    // Playwright sam uruchomi `npm run dev` (Next) na potrzeby testów
+    // Playwright starts the Next dev server itself
     webServer: {
         command: "npm run dev",
         port: 3000,

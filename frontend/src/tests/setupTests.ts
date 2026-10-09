@@ -1,7 +1,6 @@
-// src/tests/setupTests.ts
 import "@testing-library/jest-dom/vitest";
 
-// Sztuczne ENV, żeby Supabase / axios nie wybuchały w testach unit
+// Dummy env so Supabase and axios clients can be created in unit tests
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "http://localhost:54321";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
 

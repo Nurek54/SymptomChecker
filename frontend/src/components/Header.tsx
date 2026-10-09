@@ -17,11 +17,9 @@ import {
 } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
 import Logo from "@/components/Logo";
-import { useAuth } from "@/components/AuthProvider"; // używamy tylko isGuest
+import { useAuth } from "@/components/AuthProvider";
 
-/* ─────────────────────────── UI helpers ─────────────────────────── */
-
-// mocniejszy, czytelny zielony dla OK
+// Stronger green for the OK state, readable in both themes
 const OK_DOT_CLASSES = "bg-emerald-600 dark:bg-emerald-400";
 const OK_CHIP_CLASSES =
     "border-emerald-400/80 bg-emerald-100 text-emerald-900 font-semibold " +
@@ -47,7 +45,7 @@ function StatusDot({ state }: { state: "ok" | "starting" | "down" }) {
     );
 }
 
-/** Płynne i BEZ-migowe przełączanie motywu */
+/** Switches theme without a flash: "theme-changing" suppresses transitions for two frames */
 function applyTheme(next: "light" | "dark") {
     const root = document.documentElement;
     root.classList.add("theme-changing");
@@ -60,7 +58,6 @@ function applyTheme(next: "light" | "dark") {
     });
 }
 
-/* mały hook do wykrycia montażu */
 function useMounted() {
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
@@ -69,21 +66,20 @@ function useMounted() {
     return mounted;
 }
 
-/* Zegar na żywo (PL) – bez SSR-owego czasu (zapobiega hydration mismatch) */
+/* Live clock (pl-PL); no time is rendered during SSR to avoid a hydration mismatch */
 function LiveClock() {
     const mounted = useMounted();
 
-    // SSR/first client render: null => rysujemy stałe placeholdery.
+    // null during SSR and the first client render, so fixed placeholders are drawn
     const [now, setNow] = useState<Date | null>(null);
 
     useEffect(() => {
-        // po zamontowaniu ustawiamy czas i interwał
         setNow(new Date());
         const id = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(id);
     }, []);
 
-    // placeholdery deterministyczne (identyczne po stronie serwera i przy 1. renderze klienta)
+    // Deterministic placeholders, identical on the server and the first client render
     if (!mounted || !now) {
         return (
             <span
@@ -100,7 +96,6 @@ function LiveClock() {
         );
     }
 
-    // formatowanie dopiero po montażu (już tylko na kliencie)
     const dateStr = new Intl.DateTimeFormat("pl-PL", {
         weekday: "short",
         year: "numeric",
@@ -134,10 +129,9 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
     const [online, setOnline] = useState<boolean | null>(null);
     const [theme, setTheme] = useState<"light" | "dark">("light");
 
-    // 🔐 Auth state (gość)
     const { isGuest } = useAuth();
 
-    // Ping „online/offline” — zoptymalizowany pod kątem wyścigu wątków w Strict Mode
+    // Initial online check; the alive flag avoids a stale update when Strict Mode re-runs the effect
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -149,7 +143,6 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
         };
     }, []);
 
-    // Inicjalizacja motywu (tylko klient)
     useEffect(() => {
         const saved = localStorage.getItem("theme");
         const initial: "light" | "dark" = saved === "dark" ? "dark" : "light";
@@ -166,14 +159,9 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
         applyTheme("dark");
     };
 
-    // Conversation Health — zoptymalizowany interwał do 45 sekund
     const [health, setHealth] = useState<HealthStatus | null>(null);
-    // v10: zamiast pojedynczego booleana — licznik kolejnych niepowodzeń.
-    // Wcześniej pojedynczy timeout pollu /health (np. 10s timeout pod
-    // load'em LLM) ustawiał `healthError=true` i pasek pokazywał "Błąd",
-    // mimo że backend żył. Teraz status "Błąd" zapala się dopiero po
-    // 2 kolejnych nieudanych pollach (~90 sekund problemów) — pojedynczy
-    // spike nie wyzwala alarmu.
+    // Count consecutive failed /health polls: a single timeout (e.g. under LLM load) must not
+    // flag an error while the backend is alive, so the error state needs 2 failures (~90s).
     const [healthFailCount, setHealthFailCount] = useState(0);
 
     useEffect(() => {
@@ -184,7 +172,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                 if (!alive) return;
                 setHealth(h);
                 setHealthFailCount(0);
-                setOnline(true);   // backend odpowiada: zdejmujemy "Offline" z pierwszego sprawdzenia
+                setOnline(true);   // backend responds: clear an "Offline" result from the first check
             } catch {
                 if (!alive) return;
                 setHealthFailCount((c) => c + 1);
@@ -192,7 +180,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
         }
         poll();
 
-        // Zmieniono z 10000ms na 45000ms, aby uniknąć spamu i kolejkowania żądań podczas generowania LLM
+        // 45s interval avoids piling up requests while the LLM is generating
         const id = setInterval(poll, 45000);
         return () => {
             alive = false;
@@ -200,7 +188,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
         };
     }, []);
 
-    // Offline (np. apka otwarta przed startem backendu): sprawdzamy co 5 s, aż backend odpowie
+    // While offline (e.g. app opened before the backend started), retry every 5s until it responds
     useEffect(() => {
         if (online !== false) return;
         let alive = true;
@@ -218,7 +206,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
 
     const isOk = (v?: boolean) => (v === undefined ? true : !!v);
 
-    // ── Status ogólny: offline ma priorytet nad resztą ──
+    // Overall status: offline takes precedence over everything else
     const overall: "ok" | "starting" | "down" =
         online === false
             ? "down"
@@ -261,7 +249,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
     return (
         <header className="border-b border-base bg-card">
             <div className="flex items-center justify-between gap-2 px-3 py-3 text-basecolor sm:px-4">
-                {/* LEWA: logo + brand */}
+                {/* Left: logo and brand */}
                 <div className="flex min-w-0 flex-1 select-none items-center gap-2 sm:gap-3">
                     <div className="shrink-0 rounded-xl bg-gradient-to-br from-emerald-400/60 via-sky-400/60 to-violet-400/60 p-[1px] shadow-sm">
                         <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-[11px] border border-base bg-input sm:h-11 sm:w-11">
@@ -286,7 +274,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                     </Link>
                 </div>
 
-                {/* ŚRODEK: Pasek statusów (połączony: sieć + komponenty) */}
+                {/* Center: status bar (network and components) */}
                 <div
                     className="hidden min-w-0 items-center gap-2 rounded-full border border-base bg-input/70 px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm xl:flex"
                     title="Stan połączenia i komponentów"
@@ -307,7 +295,6 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                     </span>
                     <span className="mx-1 text-muted">•</span>
 
-                    {/* Sieć — mniejsze, mniej eye-catch */}
                     <span
                         className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] opacity-80 ${
                             online
@@ -334,7 +321,6 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                         Sieć
                     </span>
 
-                    {/* Komponenty — mniejsze badge'y, niższa opacity */}
                     <div className="flex min-w-0 flex-wrap items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
                         <Badge label="XGB / River" ready={health?.xgb_ready} />
                         <Badge label="Matcher" ready={health?.matcher_ready} />
@@ -342,14 +328,14 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                     </div>
                 </div>
 
-                {/* PRAWA: zegar, motyw, nowa rozmowa, informacja o gościu, user */}
+                {/* Right: clock, theme, new chat, guest notice, user menu */}
                 <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-                    {/* zegar dopiero od lg: na węższych ekranach zabierał miejsce logo */}
+                    {/* Clock only from lg up: on narrower screens it squeezed the logo */}
                     <span className="hidden lg:contents">
                         <LiveClock />
                     </span>
 
-                    {/* telefon: jeden przycisk przełączający motyw */}
+                    {/* Phone: a single theme toggle button */}
                     <button
                         onClick={theme === "dark" ? setLight : setDark}
                         className="inline-flex rounded-full border border-base bg-input p-2 shadow-sm transition active:translate-y-[1px] sm:hidden"
@@ -396,7 +382,6 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                         </button>
                     </div>
 
-                    {/* Nowa rozmowa */}
                     <button
                         onClick={onNewChat}
                         className="group relative inline-flex items-center gap-2 rounded-xl border border-base bg-card px-3 py-1.5 text-sm shadow-sm transition-all
@@ -420,7 +405,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                         <span className="hidden font-medium md:inline">Nowa rozmowa</span>
                     </button>
 
-                    {/* 🔔 Informacja o trybie gościa (bez linku/akcji) */}
+                    {/* Guest mode notice (informational only) */}
                     {isGuest && (
                         <div
                             className="hidden md:flex items-center gap-2 rounded-xl border border-amber-400/70 bg-amber-100/90 px-3 py-1.5 text-xs text-amber-900 shadow-sm
@@ -436,7 +421,7 @@ export default function Header({ onNewChat }: { onNewChat: () => void }) {
                 </div>
             </div>
 
-            {/* Wersja mobilna informacji o gościu – tylko komunikat */}
+            {/* Mobile guest mode notice */}
             {isGuest && (
                 <div className="px-4 pb-3 md:hidden">
                     <div

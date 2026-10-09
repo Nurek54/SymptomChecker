@@ -50,7 +50,7 @@ def _resolve_via_supabase(request: Request, db: Session) -> Optional[int]:
         return None
 
     try:
-        # odczyt tożsamości: bez "miękkich" aktualizacji profilu (te robi /auth/session i PUT /auth/me)
+        # identity read only: no soft profile updates here (/auth/session and PUT /auth/me do those)
         user = _ensure_local_profile(db, claims, allow_writes=False)
         return int(user.id)
     except Exception:

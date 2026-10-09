@@ -14,7 +14,6 @@ import {
     ChevronRight,
 } from "lucide-react";
 
-// ❗️Korzystamy z lib/api – retry 401 + Bearer + cookies + signals
 import {
     listHistory,
     getConversation,
@@ -27,14 +26,13 @@ import {
     errorMessage,
 } from "@/lib/api";
 
-/* ——— Aurora akcent (emerald → sky → violet) ——— */
+/* Aurora accent gradients (emerald, sky, violet) */
 const AURORA = "linear-gradient(120deg, rgba(52,211,153,.35), rgba(56,189,248,.35), rgba(167,139,250,.35))";
 const AURORA_SOFT = "linear-gradient(120deg, rgba(52,211,153,.22), rgba(56,189,248,.22), rgba(167,139,250,.22))";
 const AURORA_LINE = "linear-gradient(180deg, rgba(52,211,153,.25), rgba(56,189,248,.25), rgba(167,139,250,.25))";
 
 type Msg = { role: "user" | "assistant"; content: string; created_at: string };
 
-/* Helpers */
 function timeAgo(iso: string) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "-";
@@ -51,7 +49,7 @@ function timeAgo(iso: string) {
 }
 function safeTime(iso?: string | null) {
     const t = iso ? new Date(iso).getTime() : 0;
-    return Number.isFinite(t) ? t : 0; // null → koniec listy
+    return Number.isFinite(t) ? t : 0; // missing timestamps sort last
 }
 
 function pct(n?: number | null) {
@@ -65,7 +63,6 @@ function daysDiff(a: Date, b: Date) {
     return Math.floor((+a - +b) / (1000 * 60 * 60 * 24));
 }
 
-/* Skeleton list item */
 function ListItemSkeleton() {
     return (
         <div className="relative pl-6">
@@ -94,11 +91,11 @@ export default function HistoryPage() {
 
     const [q, setQ] = useState("");
 
-    // Abort Controllers – by nie „wisiały” żądania przy wyjściu z widoku
+    // Aborted when a newer load starts and on unmount
     const listAbort = useRef<AbortController | null>(null);
     const detailAbort = useRef<AbortController | null>(null);
 
-    // dogrzej sesję po wejściu na stronę (chroni przed 401 po przełączeniu kart)
+    // Warm the session on entry to avoid a 401 after switching browser tabs
     useEffect(() => {
         void prewarmAuth();
     }, []);
@@ -119,7 +116,7 @@ export default function HistoryPage() {
                 setItems([]);
             }
         } finally {
-            // przerwane, bo ruszyło nowsze ładowanie: to ono zdejmie wskaźnik ładowania
+            // If a newer load aborted this one, that load clears the spinner
             if (listAbort.current === ac) setItemsLoading(false);
         }
     }, []);
@@ -170,7 +167,6 @@ export default function HistoryPage() {
         if (user) loadList();
     }, [user, loadList]);
 
-    // posprzątaj przy wyjściu z widoku
     useEffect(() => {
         return () => {
             listAbort.current?.abort();
@@ -226,10 +222,9 @@ export default function HistoryPage() {
         );
 
     return (
-        // 🔒 Globalny scroll OFF → tylko lokalne scrollbary
+        // The page itself never scrolls; only the panes do
         <main className="flex h-[100svh] min-h-0 overflow-hidden bg-surface text-basecolor">
-            {/* Sidebar */}
-            {/* telefon: lista albo szczegóły rozmowy (dwie kolumny dopiero od md) */}
+            {/* On phones show either the list or the details; two columns from md up */}
             <aside
                 className={`${current ? "hidden md:flex" : "flex"} h-full min-h-0 w-full shrink-0 flex-col border-base md:w-[320px] md:border-r`}
             >
@@ -283,7 +278,7 @@ export default function HistoryPage() {
                 </div>
 
                 <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
-                    {/* błąd widoczny też na telefonie, gdzie sekcja szczegółów jest ukryta bez wybranej rozmowy */}
+                    {/* Also shown on phones, where the details pane is hidden until a conversation is selected */}
                     {err && !current ? <p className="px-1 text-xs text-rose-600 md:hidden">{err}</p> : null}
                     {itemsLoading ? (
                         <>
@@ -351,7 +346,6 @@ export default function HistoryPage() {
                 </div>
             </aside>
 
-            {/* Detal */}
             <section className={`${current ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col p-3 md:p-4`}>
                 <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
@@ -415,7 +409,6 @@ export default function HistoryPage() {
                 ) : (
                     <div className="flex flex-1 min-h-0 flex-col gap-3">
                         <div className="grid min-h-0 grid-cols-1 items-stretch gap-3 md:grid-cols-2">
-                            {/* Objawy (opcjonalne) */}
                             <div className="flex min-h-0 flex-col rounded-2xl border border-base bg-card shadow-sm">
                                 <div className="flex items-center justify-between px-3 py-2">
                                     <div className="text-sm font-semibold">Wyłapane objawy</div>
@@ -451,7 +444,6 @@ export default function HistoryPage() {
                                 </div>
                             </div>
 
-                            {/* Choroby (opcjonalne) */}
                             <div className="flex min-h-0 flex-col rounded-2xl border border-base bg-card shadow-sm">
                                 <div className="flex items-center justify-between px-3 py-2">
                                     <div className="text-sm font-semibold">Możliwe choroby</div>
@@ -498,7 +490,6 @@ export default function HistoryPage() {
                             </div>
                         </div>
 
-                        {/* CZAT */}
                         <div className="flex-1 min-h-0 overflow-y-auto rounded-2xl border border-base p-3">
                             <div className="space-y-4">
                                 {current.messages.map((m: Msg, i: number) => {

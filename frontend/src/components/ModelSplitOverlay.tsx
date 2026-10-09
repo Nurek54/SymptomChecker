@@ -66,7 +66,7 @@ export default function ModelSplitOverlay({
     const [loading, setLoading] = React.useState(false);
     const [err, setErr] = React.useState<string | null>(null);
 
-    // fokus na "Zamknij" po otwarciu i powrót fokusu do przycisku, który otworzył okno
+    // Focus the close button on open and restore focus to the opener on close
     const closeRef = React.useRef<HTMLButtonElement | null>(null);
     React.useEffect(() => {
         if (!open) return;
@@ -78,7 +78,6 @@ export default function ModelSplitOverlay({
         };
     }, [open]);
 
-    // ESC zamyka
     React.useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
@@ -88,7 +87,6 @@ export default function ModelSplitOverlay({
         return () => window.removeEventListener("keydown", onKey);
     }, [open, onClose]);
 
-    // Ładowanie
     React.useEffect(() => {
         if (!open) return;
         const ac = new AbortController();
@@ -119,11 +117,9 @@ export default function ModelSplitOverlay({
             aria-modal="true"
             aria-label="Podgląd predykcji modeli"
         >
-            {/* tło zamyka okno (wcześniej przechwytywało kliknięcia i nic nie robiło) */}
             <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
-            {/* na telefonie okno jest wyższe niż ekran: ograniczamy wysokość i przewijamy treść */}
+            {/* On phones the dialog is taller than the screen: cap its height and scroll the content */}
             <div className="relative z-[101] flex max-h-[calc(100svh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-base bg-card/95 backdrop-blur-md shadow-2xl">
-                {/* Header */}
                 <header className="flex shrink-0 items-center gap-2 border-b border-base bg-card/80 px-4 py-2">
                     <span className="grid h-8 w-8 place-items-center rounded-full border border-base bg-input">
                         <Info className="h-4 w-4 opacity-80" />
@@ -142,12 +138,10 @@ export default function ModelSplitOverlay({
                     </button>
                 </header>
 
-                {/* Aurora hairline */}
                 <div className="h-[3px] w-full shrink-0" style={{ background: AURORA }} />
 
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 
-                {/* Trzy kolumny: XGBoost / River / Ensemble */}
                 <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-3">
                     {/* XGBoost */}
                     <section className="rounded-2xl border border-base bg-card p-3 shadow-sm">
@@ -293,7 +287,7 @@ export default function ModelSplitOverlay({
                     </section>
                 </div>
 
-                {/* Opis fuzji — bardzo krótki, prosty, z myślnikami */}
+                {/* Fusion explanation */}
                 <div className="border-t border-base bg-input/80 px-4 py-3 text-[13px] leading-relaxed text-[rgb(var(--foreground))]">
                     <p className="mb-1.5 flex items-center gap-2">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-md border border-base bg-card">

@@ -1,4 +1,3 @@
-// src/tests/unit/MessageBubble.hygiene.test.tsx
 import React from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -16,11 +15,11 @@ describe("F3 — Higiena odpowiedzi (UI, MessageBubble)", () => {
         const bubble = screen.getByText(/podejrzewam infekcję/i).closest("div");
         expect(bubble).toBeInTheDocument();
 
-        // 1) Nie pojawiają się typowe wzorce dawek / nazw handlowych
+        // No dosage patterns or brand drug names
         expect(bubble).not.toHaveTextContent(/\b\d+\s*mg\b/i);
         expect(bubble).not.toHaveTextContent(/ibuprofen|apap|ibufen|nurofen/i);
 
-        // 2) Treść jest w jednym akapicie markdown (bez sztucznego dzielenia)
+        // Rendered as a single markdown paragraph, not artificially split
         const paragraphs = container.querySelectorAll("p");
         expect(paragraphs.length).toBe(1);
         expect(paragraphs[0]).toHaveTextContent(/infekcję górnych dróg oddechowych/i);

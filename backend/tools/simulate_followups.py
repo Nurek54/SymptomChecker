@@ -1,20 +1,18 @@
 """
-Symulacja rozmów z pytaniami uzupełniającymi na zbiorze testowym.
+Simulates follow-up question conversations on the test set.
 
-Każdy wiersz testowy to "pacjent" z kompletem objawów. Pacjent zaczyna od kilku losowych
-objawów (--start), a na każde pytanie "Czy ...?" odpowiada zgodnie z prawdą ("tak"/"nie").
-Rozmowa idzie przez prawdziwy ChatService (ta sama logika co w API), bez LLM
-(SUMMARY_MODE=template), więc wynik mierzy dokładnie wybór pytań i moment zakończenia.
+Each test row is a "patient" with a full symptom set. The patient starts with a few random
+symptoms (--start) and answers every "Czy ...?" question truthfully ("tak"/"nie").
+The conversation runs through the real ChatService (same logic as the API) without the LLM
+(SUMMARY_MODE=template), so the result measures only question choice and stopping point.
 
-Uruchomienie (w backend/, przy wytrenowanych modelach):
+Run (from backend/, with trained models):
     python tools/simulate_followups.py --n 200 --start 1 2 3
 
-Raport dla każdej liczby objawów startowych:
-    pytania   średnia liczba zadanych pytań
-    trafione  odsetek pytań z odpowiedzią "tak"
-    top1/top3 trafność końcowej oceny
-    bez pytań trafność Top-1/Top-3 z samych objawów startowych (punkt odniesienia)
-    komplet   trafność, gdyby model znał wszystkie objawy pacjenta (górna granica)
+Report columns, per number of starting symptoms:
+    mean questions asked, share of "tak" answers, final Top-1/Top-3 accuracy,
+    Top-1/Top-3 from the starting symptoms alone (baseline), and Top-1/Top-3 if the
+    model knew all of the patient's symptoms (upper bound).
 """
 from __future__ import annotations
 
@@ -30,7 +28,7 @@ for p in (os.path.dirname(BACKEND), BACKEND):
     if p not in sys.path:
         sys.path.insert(0, p)
 os.chdir(BACKEND)
-os.environ["SUMMARY_MODE"] = "template"   # bez LLM: liczy się wybór pytań, nie tekst
+os.environ["SUMMARY_MODE"] = "template"   # no LLM: we measure question choice, not text
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -51,7 +49,7 @@ log = logging.getLogger("simulate_followups")
 
 
 def _quiet() -> None:
-    # moduły aplikacji ustawiają INFO (log każdej predykcji); w symulacji to tysiące linii
+    # app modules log every prediction at INFO; in a simulation that is thousands of lines
     logging.getLogger().setLevel(logging.WARNING)
     for name in list(logging.root.manager.loggerDict):
         if name.startswith("symptomchecker"):

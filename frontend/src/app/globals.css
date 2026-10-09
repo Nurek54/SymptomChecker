@@ -21,7 +21,7 @@
     --bubble-user-text:   20 20 20;
     --bubble-user-border: 210 210 210;
 
-    /* Akcent aurora bez zmian */
+    /* Aurora accent, shared by both themes */
     --accent-1: 52 211 153;
     --accent-2: 56 189 248;
     --accent-3: 167 139 250;
@@ -49,24 +49,22 @@
   --chip-bg:   38 38 38;
   --chip-text: 245 245 245;
 
-  /* PRZYCISK „Wyślij” – ciemny */
   --btn-bg:     64 64 64;
   --btn-text:   245 245 245;
   --btn-border: 82 82 82;
 
-  /* Dymek użytkownika – ciemny */
   --bubble-user-bg:     52 52 52;
   --bubble-user-text:   245 245 245;
   --bubble-user-border: 82 82 82;
 }
 
-/* ── Guard na czas przełączania motywu (bez migania) ── */
+/* Disable transitions while the theme class switches to avoid flicker */
 .theme-changing *, .theme-changing *::before, .theme-changing *::after {
   transition-property: none !important;
   animation: none !important;
 }
 
-/* ── Klasy narzędziowe oparte o zmienne ── */
+/* Utilities backed by theme variables */
 .bg-surface     { background-color: rgb(var(--surface)); }
 .bg-card        { background-color: rgb(var(--card)); }
 .text-basecolor { color:            rgb(var(--text)); }
@@ -74,7 +72,6 @@
 .border-base    { border-color:     rgb(var(--border)) !important; }
 .bg-input       { background-color: rgb(var(--input)); }
 
-/* przycisk „Wyślij” */
 .btn-primary{
   background-color: rgb(var(--btn-bg));
   color: rgb(var(--btn-text));
@@ -85,7 +82,7 @@
 .btn-primary:active  { transform: translateY(0.5px); }
 .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
 
-/* Chip (etykieta objawu) */
+/* Symptom chip */
 .chip{
   background-color: rgb(var(--chip-bg));
   color: rgb(var(--chip-text));
@@ -96,12 +93,11 @@
   font-weight: 500;  /* medium */
 }
 
-/* Dymek użytkownika */
 .bg-bubble-user     { background-color: rgb(var(--bubble-user-bg)); }
 .text-bubble-user   { color:            rgb(var(--bubble-user-text)); }
 .border-bubble-user { border-color:     rgb(var(--bubble-user-border)) !important; }
 
-/* ── Aurora text utility (opcjonalnie do użycia w innych miejscach) ── */
+/* Gradient text in the aurora accent */
 .aurora-text{
   background: var(--aurora);
   -webkit-background-clip: text;
@@ -110,7 +106,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ── Subtelny podpis autora — w kolorach akcentu ── */
+/* Author signature in the aurora gradient */
 body::after{
   content: "Autor: Grzegorz Sienkiewicz";
   position: fixed;
@@ -119,26 +115,24 @@ body::after{
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .2px;
-  background: var(--aurora);              /* gradient akcentu */
+  background: var(--aurora);
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;                     /* odsłania gradient w tekście */
+  color: transparent;
   -webkit-text-fill-color: transparent;
   opacity: .95;
-  pointer-events: none;                   /* nie klikalne */
+  pointer-events: none;
   z-index: 40;
-  /* delikatny „glow”, różny w jasnym/ciemnym */
   filter: drop-shadow(0 1px 0 rgba(0,0,0,.02)) drop-shadow(0 0 8px rgba(56,189,248,.25));
 }
 :root.dark body::after{
   filter: drop-shadow(0 0 10px rgba(167,139,250,.28));
 }
-/* telefon: podpis jest w linii z disclaimerem (ChatUI), stały by na niego nachodził */
+/* On phones ChatUI shows the signature inline with the disclaimer; the fixed one would overlap it */
 @media (max-width: 767px){
   body::after{ display: none; }
 }
 
-/* ── Scrollbar / Markdown / overscroll ── */
 * { scrollbar-width: thin; scrollbar-color: #9ca3af transparent; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 9999px; }
@@ -150,25 +144,23 @@ body::after{
 .prose code { background: rgba(0,0,0,.06); padding: .1rem .25rem; border-radius: .25rem; }
 :root.dark .prose code { background: rgba(255,255,255,.08); }
 
-/* Zaznaczenie tekstu (subtelne) */
 ::selection            { background: rgba(99,102,241,.18); }
 :root.dark ::selection { background: rgba(255,255,255,.12); }
 
-/* Stabilny scroll i pełna wysokość */
 html, body { overscroll-behavior: contain; }
 html, body, #__next { height: 100%; }
 
-/* ── Stabilizacja wszystkich kontenerów z Tailwindowym .overflow-y-auto ── */
+/* Reserve scrollbar space so .overflow-y-auto containers do not shift */
 @supports (scrollbar-gutter: stable) {
   .overflow-y-auto { scrollbar-gutter: stable both-edges; }
 }
-/* Niech nie „kotwiczy” pozycji przy dogrywaniu węzłów + nie przebija scroll */
+/* No scroll anchoring when messages are appended, and no scroll chaining to the page */
 .overflow-y-auto {
   overscroll-behavior: contain;
   overflow-anchor: none;
 }
 
-/* Efekt pulsu przy mikrofonie (jeśli używasz) */
+/* Recording pulse around the mic button */
 .mic-pulse { box-shadow: 0 0 0 0 rgba(220, 38, 38, .35); animation: micPulse 1.6s ease-out infinite; }
 @keyframes micPulse {
   0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, .35); }
@@ -176,7 +168,7 @@ html, body, #__next { height: 100%; }
   100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
-/* Trzy kropki w bąblu "asystent pisze..." */
+/* Typing indicator dots */
 @keyframes sc-typing {
   0%, 60%, 100% {
     transform: translateY(0);
@@ -188,7 +180,7 @@ html, body, #__next { height: 100%; }
   }
 }
 
-/* Pulsacja "heartbeat" wokół zielonej kropki statusu OK */
+/* Heartbeat ring around the green "OK" status dot */
 @keyframes sc-heartbeat {
   0% {
     transform: scale(1);
@@ -204,14 +196,13 @@ html, body, #__next { height: 100%; }
   }
 }
 
-/* Subtelne wejście dla sugerowanych promptów */
+/* Fade-in for suggested prompts */
 @keyframes sc-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Tailwind-style helper class (gdyby `animate-in fade-in` z tailwindcss-animate
-   nie był zainstalowany — fallback wystarczający) */
+/* Fallback for `animate-in fade-in` when tailwindcss-animate is not installed */
 .animate-in.fade-in {
   animation: sc-fade-in 0.5s ease-out;
 }

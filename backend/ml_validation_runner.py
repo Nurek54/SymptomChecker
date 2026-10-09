@@ -1,14 +1,14 @@
 """
-Standalone walidator modeli ML dla inżynierki.
+Standalone ML model validator (engineering thesis).
 
-Uruchom z katalogu backend:
+Run from the backend directory:
 
     python ml_validation_runner.py
 
-Zakłada, że:
-- config.TEST_CSV wskazuje zamrożony zbiór testowy,
-- modele XGB i River są już nauczone i zapisane w MODEL_PATH / RIVER_MODEL_PATH,
-- EnsembleTopK korzysta z tych samych instancji XGB/River co backend.
+Assumes that:
+- config.TEST_CSV points to the frozen test set,
+- XGB and River models are already trained and saved at MODEL_PATH / RIVER_MODEL_PATH,
+- EnsembleTopK uses the same XGB/River instances as the backend.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Tuple
 
 import matplotlib
 
-# backend bez GUI
+# headless backend; must be set before importing pyplot
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -43,14 +43,14 @@ from config import (  # noqa: E402
     ENSEMBLE_CONF_GAP,
 )
 
-from models.xgb_manager import XGBManager  # przy istniejących artefaktach: tylko load + warm-up
+from models.xgb_manager import XGBManager
 from models.river_manager import RiverManager
 from services.ensemble import EnsembleTopK
 from utils import seed_everywhere
 
 logger = logging.getLogger(__name__)
 
-# Delikatnie podbijamy domyślne parametry rysowania, żeby w PDF-ie/TeX-ie było czytelnie
+# Slightly larger plot defaults so figures stay readable in the PDF/TeX thesis
 plt.rcParams.update(
     {
         "figure.dpi": 120,
@@ -67,32 +67,32 @@ plt.rcParams.update(
 
 @dataclass
 class _DummyState:
-    """Minimalny state dla EnsembleTopK – tylko to, co potrzebne."""
+    """Minimal app state required by EnsembleTopK."""
 
     xgb: XGBManager
     river: RiverManager
-    ensemble_T: float = 1.0  # temperatura fuzji z services/ensemble_calibration.py
-    ensemble_mode: str = "heuristic"  # sposób łączenia dobrany na zbiorze kalibracyjnym
+    ensemble_T: float = 1.0  # fusion temperature from services/ensemble_calibration.py
+    ensemble_mode: str = "heuristic"  # fusion mode chosen on the calibration set
     ensemble_wx: float | None = None
 
 
 class MLValidationRunner:
     """
-    Implementacja procedury z rozdziału „Walidacja jakości predykcji modeli ML”.
+    Implements the procedure from the thesis chapter on ML prediction quality validation.
 
-    Po uruchomieniu:
-      - wczytuje zamrożony TEST_CSV,
-      - ładuje gotowe modele XGB + River + Ensemble,
-      - liczy wszystkie metryki (Top-1, Top-3, bootstrap, ECE, baseline),
-      - generuje artefakty W1–W6,
-      - sprawdza kryteria K1–K4 + warunek zaliczenia:
-          K1/K2: ensemble istotnie lepszy od najlepszego modelu w Top-1/Top-3 (dokładny test
-                 McNemara, p<0.05; porównanie sparowane na tych samych przypadkach),
-          K3: ensemble robi nie więcej błędów niż każdy z modeli,
-          K4: ECE ensemble nie gorsze niż najgorszy z modeli,
-          zaliczenie: co najmniej 2 z K1–K3 i brak istotnej regresji w żadnej klasie
-          (spadek >10 p.p., test McNemara w klasie z poprawką Holma),
-      - zapisuje podsumowanie do JSON.
+    Steps:
+      - load the frozen TEST_CSV,
+      - load the trained XGB + River models and the ensemble,
+      - compute all metrics (Top-1, Top-3, bootstrap, ECE, baseline),
+      - generate artifacts W1-W6,
+      - check criteria K1-K4 and the pass condition:
+          K1/K2: ensemble significantly better than the best single model in Top-1/Top-3
+                 (exact McNemar test, p<0.05; paired comparison on the same cases),
+          K3: ensemble makes no more errors than either model,
+          K4: ensemble ECE no worse than the worse model,
+          pass: at least 2 of K1-K3 and no significant regression in any class
+          (drop >10 pp, per-class McNemar test with Holm correction),
+      - write the summary to JSON.
     """
 
     def __init__(
@@ -114,13 +114,11 @@ class MLValidationRunner:
         self.river: RiverManager | None = None
         self.ens: EnsembleTopK | None = None
 
-    # ────────────────────── IO / load ──────────────────────
-
     def _resolve_path(self, p: str) -> Path:
         path = Path(p)
         if path.is_absolute():
             return path
-        # Spróbuj względem backend/ (plik obok config.py) oraz repo root
+        # try relative to backend/ (next to config.py), then the repo root
         backend_dir = Path(__file__).resolve().parent
         cand1 = backend_dir / path
         if cand1.exists():
@@ -128,7 +126,7 @@ class MLValidationRunner:
         cand2 = backend_dir.parent / path
         if cand2.exists():
             return cand2
-        # ostatnia próba – jak jest, to użyj, jak nie, niech się wysypie później
+        # return as-is; a missing file fails later with a clear error
         return path
 
     def load_testset(self) -> None:
@@ -144,7 +142,6 @@ class MLValidationRunner:
         logger.info(f"Zbiór testowy: {len(self.df)} rekordów, {len(self.df.columns)} kolumn.")
 
     def load_models(self) -> None:
-        # Najpierw sanity-check artefaktów
         logger.info("[2/7] Ładowanie gotowych modeli XGB i River z dysku.")
         if not (self._resolve_path(MODEL_PATH).exists() and self._resolve_path(LE_PATH).exists()):
             raise FileNotFoundError(f"Brak artefaktów XGB: {MODEL_PATH} / {LE_PATH}")
@@ -153,20 +150,20 @@ class MLValidationRunner:
 
         logger.info("  • Ładowanie XGBManager (artefakty istnieją – bez ponownego trenowania).")
         xgb = XGBManager()
-        xgb.train()  # przy istniejących artefaktach: tylko load + warm-up
+        xgb.train()  # with existing artifacts: load + warm-up only
 
         logger.info("  • Ładowanie RiverManager (artefakty istnieją – bez bootstrapu od zera).")
         river = RiverManager()
         river.set_features(xgb.features)
-        river.train()  # przy istniejących artefaktach: load + ewentualna kalibracja
+        river.train()  # with existing artifacts: load + calibration if needed
 
         st = _DummyState(xgb=xgb, river=river)
-        # ta sama temperatura ensemble co w backendzie (cache ml/ensemble_calibration.json)
+        # same ensemble temperature as the backend (cached in ml/ensemble_calibration.json)
         try:
             from services.ensemble_calibration import ensure_ensemble_calibration
             ensure_ensemble_calibration(st)
             logger.info(f"  • Ensemble: tryb={st.ensemble_mode}, waga XGB={st.ensemble_wx}, T_ens={st.ensemble_T:.4f}.")
-        except Exception as e:  # walidacja ma działać także bez kalibracji ensemble
+        except Exception as e:  # validation must also work without ensemble calibration
             logger.warning(f"  • Brak kalibracji ensemble (T_ens=1): {e}")
         ens = EnsembleTopK(st)
 
@@ -176,8 +173,6 @@ class MLValidationRunner:
         self._state = st
 
         logger.info(f"  • Załadowano modele. Liczba cech XGB/River: {len(self.xgb.features)}.")
-
-    # ────────────────────── metryki pomocnicze ──────────────────────
 
     @staticmethod
     def _topk_hits(y_true: np.ndarray, preds_topk: List[List[str]], k: int) -> np.ndarray:
@@ -193,7 +188,7 @@ class MLValidationRunner:
         alpha: float = 0.05,
         seed: int = 42,
     ) -> Tuple[float, float, float]:
-        """Bootstrap dla odsetka trafień (Top-1 lub Top-3)."""
+        """Bootstrap CI for the hit rate (Top-1 or Top-3)."""
         rng = np.random.default_rng(seed)
         n = len(hits)
         if n == 0:
@@ -210,7 +205,7 @@ class MLValidationRunner:
         y_true: np.ndarray,
         preds_top1: np.ndarray,
     ) -> Tuple[Dict[str, float], Dict[str, int]]:
-        """Trafność Top-1 per klasa + liczności."""
+        """Per-class Top-1 accuracy and class counts."""
         acc: Dict[str, float] = {}
         counts: Dict[str, int] = {}
         for yt, yp in zip(y_true, preds_top1):
@@ -228,12 +223,9 @@ class MLValidationRunner:
         n_bins: int = 10,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Dyskretyzacja do koszyków kalibracji.
+        Bin confidences into equal-width calibration bins (empty bins are skipped).
 
-        Zwraca:
-          - mean_conf[b] – średnia pewność w binie,
-          - acc[b]       – odsetek trafień w binie,
-          - counts[b]    – liczba przykładów w binie.
+        Returns (mean_conf, acc, counts) per non-empty bin.
         """
         if len(conf) == 0:
             return np.zeros(0), np.zeros(0), np.zeros(0)
@@ -255,7 +247,7 @@ class MLValidationRunner:
 
     @staticmethod
     def _ece(conf: np.ndarray, hits: np.ndarray, n_bins: int = 10) -> float:
-        """Expected Calibration Error (ECE) w [0,1]."""
+        """Expected Calibration Error (ECE) in [0, 1]."""
         mconf, acc, counts = MLValidationRunner._calibration_bins(conf, hits, n_bins=n_bins)
         n = counts.sum()
         if n == 0:
@@ -267,15 +259,13 @@ class MLValidationRunner:
         s = "|".join(features)
         return hashlib.sha1(s.encode("utf-8")).hexdigest()[:12]
 
-    # ────────────────────── główny krok: predykcje ──────────────────────
-
     def _predict_all(self) -> Dict[str, Dict[str, np.ndarray] | List[List[str]]]:
         """
-        Predykcje XGB, River i Ensemble dla całego zbioru testowego, liczone hurtem.
+        Batch XGB, River and ensemble predictions for the whole test set.
 
-        Używa dokładnie tych samych transformacji co backend (kalibratory XGB i River,
-        fuzja EnsembleTopK z temperaturą T_ens; zgodność sprawdzają testy regresji),
-        ale zamiast 3 wywołań na wiersz liczy całe macierze naraz: minuty zamiast godzin.
+        Uses exactly the same transforms as the backend (XGB and River calibrators,
+        EnsembleTopK fusion with T_ens; parity is covered by regression tests), but computes
+        whole matrices instead of 3 calls per row: minutes instead of hours.
         """
         assert self.df is not None and self.y_true is not None
         assert self.xgb is not None and self.river is not None and self.ens is not None
@@ -293,7 +283,7 @@ class MLValidationRunner:
         Px, Pr, y_idx, classes = model_distributions_df(st, self.df, "Walidacja")
         Pe = ensemble_distribution(Px, Pr, self.ens, st)
         cls = np.asarray(classes, dtype=object)
-        # model_distributions_df pomija wiersze z klasami nieznanymi modelowi: wyrównujemy etykiety
+        # model_distributions_df drops rows with classes unknown to the model, so realign labels
         y_true = cls[y_idx]
         if len(y_true) != len(self.y_true):
             logger.warning(f"  • Pominięto {len(self.y_true) - len(y_true)} wierszy z klasami spoza modelu.")
@@ -336,8 +326,6 @@ class MLValidationRunner:
             "conf_ens": np.asarray(conf_ens, dtype=float),
         }
 
-    # ────────────────────── rysowanie ──────────────────────
-
     def _plot_confusion(
         self,
         cm: np.ndarray,
@@ -355,12 +343,12 @@ class MLValidationRunner:
         else:
             m = cm
 
-        # Rozmiar trochę zależny od liczby klas, ale z górnym i dolnym limitem
+        # size scales with the number of classes, clamped to [6, 14] inches
         n_labels = len(labels)
         size = max(6.0, min(14.0, 0.18 * n_labels))
         fig, ax = plt.subplots(figsize=(size, size))
 
-        # bardziej kontrastowa mapa kolorów niż domyślny jasny "Blues"
+        # higher-contrast colormap than the pale "Blues"
         im = ax.imshow(m, aspect="auto", interpolation="nearest", cmap="viridis")
         ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
@@ -380,7 +368,7 @@ class MLValidationRunner:
 
     def _plot_bars_topk(self, metrics: Dict[str, Dict[str, float]], path: Path) -> None:
         """
-        (W2) Słupki Top-1/Top-3 z „wąsami” bootstrap.
+        (W2) Top-1/Top-3 bars with bootstrap error bars.
         metrics[name] = {top1, top1_lo, top1_hi, top3, top3_lo, top3_hi}
         """
         logger.info(f"[5/7] Rysowanie słupków Top-1/Top-3 z przedziałami bootstrap: {path.name}")
@@ -398,7 +386,6 @@ class MLValidationRunner:
         width = 0.35
         fig, ax = plt.subplots(figsize=(8, 5))
 
-        # Top-1
         ax.bar(idx - width / 2, top1, width, label="Top-1")
         ax.errorbar(
             idx - width / 2,
@@ -408,7 +395,6 @@ class MLValidationRunner:
             capsize=4,
         )
 
-        # Top-3
         ax.bar(idx + width / 2, top3, width, label="Top-3")
         ax.errorbar(
             idx + width / 2,
@@ -441,10 +427,9 @@ class MLValidationRunner:
             sort_desc: bool = True,
     ) -> None:
         """
-        (W3) Trafność per klasa – słupki + liczność (druga oś).
-        Jeżeli top_k jest podane – bierzemy top_k klas po liczności.
-        Jeżeli labels_subset jest podane – filtrujemy tylko do tych klas.
-        sort_desc=True -> sortujemy od najczęstszych, False -> od najrzadszych.
+        (W3) Per-class accuracy bars with class counts on a secondary axis.
+        top_k keeps the top_k classes by count; labels_subset restricts to those classes.
+        sort_desc=True sorts from most to least frequent, False the other way.
         """
         logger.info(f"  • Rysowanie trafności per klasa: {path.name}")
 
@@ -454,7 +439,6 @@ class MLValidationRunner:
             labels_set = set(labels_subset)
             items = [kv for kv in items if kv[0] in labels_set]
 
-        # sortowanie po liczności
         items = sorted(items, key=lambda kv: counts.get(kv[0], 0), reverse=sort_desc)
         if top_k is not None:
             items = items[:top_k]
@@ -468,7 +452,7 @@ class MLValidationRunner:
         ns = [counts.get(k, 0) for k in labels]
 
         x = np.arange(len(labels))
-        # szerokość zależna od liczby klas, ale z limitem
+        # width scales with the number of classes, clamped to [8, 18] inches
         width_fig = max(8.0, min(18.0, 0.12 * len(labels)))
         fig, ax1 = plt.subplots(figsize=(width_fig, 5))
 
@@ -496,9 +480,7 @@ class MLValidationRunner:
         name: str,
         path: Path,
     ) -> float:
-        """
-        (W4) Wykres kalibracji (reliability diagram) + zwrot ECE.
-        """
+        """(W4) Reliability diagram; returns ECE."""
         logger.info(f"  • Rysowanie wykresu kalibracji dla {name}: {path.name}")
         mconf, acc, counts = self._calibration_bins(conf, hits, n_bins=self.n_bins_calibration)
         ece = self._ece(conf, hits, n_bins=self.n_bins_calibration)
@@ -530,9 +512,7 @@ class MLValidationRunner:
         hits_ens: np.ndarray,
         path: Path,
     ) -> None:
-        """
-        (W5) Krzywa pokrycie–dokładność; jedna krzywa na wariant.
-        """
+        """(W5) Coverage vs accuracy curve (sorted by confidence), one curve per model."""
         logger.info(f"[6/7] Rysowanie krzywej pokrycie–dokładność: {path.name}")
 
         def _curve(conf: np.ndarray, hits: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -570,36 +550,25 @@ class MLValidationRunner:
         fig.savefig(path, format="svg")
         plt.close(fig)
 
-    # ────────────────────── główny przebieg ──────────────────────
-
     def run(self) -> bool:
-        """
-        Główna procedura walidacji.
-
-        Zwraca:
-            True  – jeśli warunek zaliczenia spełniony,
-            False – jeśli nie.
-        """
+        """Run the full validation; returns True if the pass condition is met."""
         logger.info("=== Start walidacji modeli ML (XGB / River / Ensemble) ===")
         seed_everywhere(42)
 
-        # 1) Dane
         self.load_testset()
         assert self.df is not None and self.y_true is not None
 
-        # Domyślnie cały zbiór testowy. VALIDATION_MAX_N pozwala na szybki przebieg
-        # na LOSOWEJ (stratyfikacja nie jest potrzebna przy dużym N) próbce z ustalonym ziarnem.
+        # Full test set by default. VALIDATION_MAX_N enables a quick run on a RANDOM
+        # sample with a fixed seed (stratification is unnecessary at large N).
         max_n = int(os.environ.get("VALIDATION_MAX_N", "0") or 0)
         if max_n and len(self.df) > max_n:
             logger.info(f"Tryb szybki: losowa próbka {max_n} z {len(self.df)} rekordów (seed=42).")
             self.df = self.df.sample(n=max_n, random_state=42).reset_index(drop=True)
             self.y_true = self.df["diseases"].astype(str).to_numpy()
 
-        # 2) Modele
         self.load_models()
         assert self.xgb is not None and self.river is not None and self.ens is not None
 
-        # 3) Predykcje dla każdego przykładu testowego
         preds = self._predict_all()
         y_true = self.y_true
         preds_top3_xgb: List[List[str]] = preds["preds_top3_xgb"]  # type: ignore
@@ -611,7 +580,7 @@ class MLValidationRunner:
 
         logger.info("[4/7] Liczenie metryk globalnych (Top-1 / Top-3) i bootstrapu.")
 
-        # 4) Metryki globalne Top-1 / Top-3 + bootstrap (W2)
+        # global Top-1 / Top-3 metrics with bootstrap CIs (W2)
         hits_xgb_top1 = self._topk_hits(y_true, preds_top3_xgb, k=1)
         hits_xgb_top3 = self._topk_hits(y_true, preds_top3_xgb, k=3)
         hits_river_top1 = self._topk_hits(y_true, preds_top3_river, k=1)
@@ -637,7 +606,7 @@ class MLValidationRunner:
                 "top3_hi": t3_hi,
             }
 
-        # Naive baseline: zawsze najczęstsza klasa
+        # naive baseline: always predict the most frequent class
         (unique, counts_arr) = np.unique(y_true, return_counts=True)
         most_idx = int(np.argmax(counts_arr))
         most_class = str(unique[most_idx])
@@ -647,7 +616,7 @@ class MLValidationRunner:
             f"[4/7] Baseline (najczęstsza klasa: {most_class}) – Top-1/Top-3={baseline_top1:.3f}."
         )
 
-        # 5) Macierze pomyłek (W1)
+        # confusion matrices (W1)
         logger.info("[5/7] Liczenie i rysowanie macierzy pomyłek.")
 
         def top1_from_top3(p: List[List[str]]) -> np.ndarray:
@@ -657,7 +626,7 @@ class MLValidationRunner:
         y_pred_river = top1_from_top3(preds_top3_river)
         y_pred_ens = top1_from_top3(preds_top3_ens)
 
-        # globalny zestaw etykiet
+        # union of true and predicted labels so every model's matrix has the same axes
         labels_all = sorted(
             set(y_true.tolist())
             | set(y_pred_xgb.tolist())
@@ -669,7 +638,7 @@ class MLValidationRunner:
         cm_river_all = confusion_matrix(y_true, y_pred_river, labels=labels_all)
         cm_ens_all = confusion_matrix(y_true, y_pred_ens, labels=labels_all)
 
-        # Macierze dla wszystkich klas (surowe + znormalizowane)
+        # all classes, raw and row-normalized
         self._plot_confusion(
             cm_xgb_all,
             labels_all,
@@ -714,7 +683,7 @@ class MLValidationRunner:
             normalize_rows=True,
         )
 
-        # 50 najczęstszych / 50 najrzadszych klas (po y_true)
+        # 50 most / least frequent classes by y_true
         label_counts = {str(lbl): int(cnt) for lbl, cnt in zip(unique, counts_arr)}
 
         sorted_by_freq_desc = sorted(label_counts.items(), key=lambda kv: kv[1], reverse=True)
@@ -723,7 +692,6 @@ class MLValidationRunner:
         sorted_by_freq_asc = sorted(label_counts.items(), key=lambda kv: kv[1])
         labels_top50_rare = [lbl for lbl, _ in sorted_by_freq_asc[:50]]
 
-        # Macierze dla 50 najczęstszych klas
         if len(labels_top50_freq) > 0:
             cm_xgb_top_freq = confusion_matrix(y_true, y_pred_xgb, labels=labels_top50_freq)
             cm_river_top_freq = confusion_matrix(y_true, y_pred_river, labels=labels_top50_freq)
@@ -773,7 +741,6 @@ class MLValidationRunner:
                 normalize_rows=True,
             )
 
-        # Macierze dla 50 najrzadszych klas
         if len(labels_top50_rare) > 0:
             cm_xgb_top_rare = confusion_matrix(y_true, y_pred_xgb, labels=labels_top50_rare)
             cm_river_top_rare = confusion_matrix(y_true, y_pred_river, labels=labels_top50_rare)
@@ -823,14 +790,12 @@ class MLValidationRunner:
                 normalize_rows=True,
             )
 
-        # 6) Słupki Top-1/Top-3 z „wąsami” bootstrap (W2)
         self._plot_bars_topk(metrics, self.out_dir / "bars_topk.svg")
 
-        # 7) Trafność per klasa (W3 – Ensemble)
+        # per-class accuracy for the ensemble (W3)
         logger.info("[5/7] Liczenie trafności per klasa dla Ensemble.")
         acc_ens, counts_ens = self._per_class_acc(y_true, y_pred_ens)
 
-        # wariant globalny – wszystkie klasy
         self._plot_per_class(
             acc_ens,
             counts_ens,
@@ -839,7 +804,6 @@ class MLValidationRunner:
             top_k=None,
         )
 
-        # 50 najczęstszych klas (po liczności w zbiorze testowym)
         self._plot_per_class(
             acc_ens,
             counts_ens,
@@ -850,7 +814,6 @@ class MLValidationRunner:
             sort_desc=True,
         )
 
-        # 50 najrzadszych klas (po liczności w zbiorze testowym)
         self._plot_per_class(
             acc_ens,
             counts_ens,
@@ -861,7 +824,7 @@ class MLValidationRunner:
             sort_desc=False,
         )
 
-        # 8) Wykres kalibracji (W4) + ECE
+        # reliability diagrams and ECE (W4)
         logger.info("[6/7] Liczenie kalibracji (ECE) i rysowanie wykresów.")
         ece_xgb = self._plot_calibration(
             conf_xgb,
@@ -882,7 +845,6 @@ class MLValidationRunner:
             self.out_dir / "calibration_ens.svg",
         )
 
-        # 9) Krzywa pokrycie–dokładność (W5)
         self._plot_coverage_accuracy(
             conf_xgb,
             hits_xgb_top1,
@@ -893,19 +855,17 @@ class MLValidationRunner:
             self.out_dir / "coverage_accuracy_all.svg",
         )
 
-        # 10) Kryteria akceptacji K1–K4
         logger.info("[7/7] Sprawdzanie kryteriów akceptacji K1–K4 i regresji lokalnych.")
-        # K1/K2: ensemble istotnie lepszy od NAJLEPSZEGO pojedynczego modelu. Oba modele oceniamy
-        # na tych samych przypadkach, więc porównanie jest sparowane: dokładny test McNemara
-        # (p < 0.05, dwustronny) + kierunek poprawy. Dawny warunek "przedziały ufności 95%
-        # się nie nakładają" jest zapisany informacyjnie (K1_ci / K2_ci); jest znany jako zbyt
-        # zachowawczy dla porównań na tych samych danych.
+        # K1/K2: ensemble significantly better than the BEST single model. Both are scored on
+        # the same cases, so the comparison is paired: exact McNemar test (p < 0.05, two-sided)
+        # plus direction of improvement. The "95% CIs do not overlap" check is kept for
+        # information only (K1_ci / K2_ci); it is known to be too conservative for paired data.
         from scipy.stats import binomtest
 
         def _mcnemar(h_ens: np.ndarray, h_best: np.ndarray) -> Dict[str, float]:
             e, bst = h_ens.astype(bool), h_best.astype(bool)
-            b = int((e & ~bst).sum())   # ensemble trafia, najlepszy model nie
-            c = int((~e & bst).sum())   # odwrotnie
+            b = int((e & ~bst).sum())   # ensemble correct, best model wrong
+            c = int((~e & bst).sum())   # the reverse
             p = float(binomtest(b, b + c, 0.5).pvalue) if b + c else 1.0
             return {"ens_only": b, "best_only": c, "p_value": p}
 
@@ -920,7 +880,7 @@ class MLValidationRunner:
         K1_ci = bool(metrics["ens"]["top1_lo"] > max(metrics["xgb"]["top1_hi"], metrics["river"]["top1_hi"]))
         K2_ci = bool(metrics["ens"]["top3_lo"] > max(metrics["xgb"]["top3_hi"], metrics["river"]["top3_hi"]))
 
-        # błędy poza przekątną z globalnej macierzy (wszystkie klasy)
+        # off-diagonal errors from the all-classes confusion matrix
         off_xgb = int(cm_xgb_all.sum() - np.trace(cm_xgb_all))
         off_river = int(cm_river_all.sum() - np.trace(cm_river_all))
         off_ens = int(cm_ens_all.sum() - np.trace(cm_ens_all))
@@ -928,10 +888,10 @@ class MLValidationRunner:
 
         K4 = bool(ece_ens <= max(ece_xgb, ece_river))
 
-        # Regresja lokalna: klasa, w której ensemble traci >10 p.p. względem lepszego z dwóch
-        # modeli I ten spadek jest statystycznie istotny (jednostronny dokładny test McNemara
-        # w obrębie klasy, poprawka Holma na liczbę klas). Bez poprawki przy ~570 klasach
-        # przypadkowe "spadki" pojawiają się zawsze. Surowe spadki >10 p.p. są w summary.json.
+        # Local regression: a class where the ensemble loses >10 pp vs the better of the two
+        # models AND the drop is significant (one-sided exact McNemar within the class, Holm
+        # correction over classes). Without correction, ~570 classes always yield chance
+        # "drops". Raw drops >10 pp are still reported in summary.json.
         acc_xgb, _ = self._per_class_acc(y_true, y_pred_xgb)
         acc_river, _ = self._per_class_acc(y_true, y_pred_river)
         hx_c, hr_c, he_c = (y_pred_xgb == y_true), (y_pred_river == y_true), (y_pred_ens == y_true)
@@ -944,7 +904,7 @@ class MLValidationRunner:
             gain = int((he_c[m] & ~best_h).sum())
             p = float(binomtest(lose, lose + gain, 0.5, alternative="greater").pvalue) if lose + gain else 1.0
             cls_rows.append({"class": cls, "n": int(m.sum()), "drop": drop, "p_value": p})
-        # poprawka Holma
+        # Holm step-down correction (monotone adjusted p-values)
         order = sorted(range(len(cls_rows)), key=lambda i: cls_rows[i]["p_value"])
         running = 0.0
         for rank, i in enumerate(order):
@@ -954,7 +914,7 @@ class MLValidationRunner:
         raw_drops = [r for r in cls_rows if r["drop"] > 0.10]
         no_local_regression = len(bad_classes) == 0
 
-        # Różnica ensemble - XGB (sparowany bootstrap na tych samych przypadkach)
+        # ensemble minus best model, paired bootstrap on the same cases
         def _paired_delta(h_a: np.ndarray, h_b: np.ndarray) -> Dict[str, float]:
             rng = np.random.default_rng(42)
             d = h_a - h_b
@@ -967,7 +927,7 @@ class MLValidationRunner:
             f"top3_ens_minus_{best3}": _paired_delta(hits_ens_top3, h3[best3]),
         }
 
-        # Pełne metryki probabilistyczne na rozkładach (NLL, Brier)
+        # proper scoring rules on full distributions (NLL, multiclass Brier)
         prob_metrics: Dict[str, Dict[str, float]] = {}
         yi = getattr(self, "_y_idx", None)
         for name, P in (getattr(self, "_probs", None) or {}).items():
@@ -980,7 +940,7 @@ class MLValidationRunner:
         satisfied_main = sum(1 for flag in (K1, K2, K3) if flag)
         passed = bool(satisfied_main >= 2 and no_local_regression)
 
-        # 11) Odtwarzalność i meta-informacje
+        # reproducibility metadata
         feats_hash = self._features_hash(self.xgb.features)  # type: ignore
         ensemble_version = {
             "w_xgb": ENSEMBLE_W_XGB,
@@ -1042,7 +1002,6 @@ class MLValidationRunner:
         with open(self.out_dir / "summary.json", "w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
 
-        # Proste podsumowanie na stdout
         print("=== ML validation summary ===")
         print(f"Test samples: {len(y_true)}")
         print(
@@ -1086,7 +1045,7 @@ if __name__ == "__main__":
             format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
         )
         runner = MLValidationRunner(
-            n_bootstrap=1000,  # predykcje liczone hurtem, więc pełny bootstrap jest tani
+            n_bootstrap=1000,  # predictions are batched, so a full bootstrap is cheap
             out_dir="reports/ml_validation",
         )
         ok = runner.run()

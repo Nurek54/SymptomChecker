@@ -23,24 +23,19 @@ from config import (
 router = APIRouter(prefix="/auth", tags=["Auth"])
 log = logging.getLogger("api.auth")
 
-# =========================
-#   KONFIG (HS256 only)
-# =========================
+# Supabase tokens are verified with HS256 only (shared secret, no JWKS fetch).
 SUPABASE_JWT_SECRET = (os.getenv("SUPABASE_JWT_SECRET") or "").strip()
 if not SUPABASE_JWT_SECRET:
     log.error("Brak SUPABASE_JWT_SECRET – weryfikacja JWT Supabase nie zadziała (HS256).")
 
-AUTH_SECRET = AUTH_SECRET_KEY  # sekret do backendowego cookie
+AUTH_SECRET = AUTH_SECRET_KEY  # signs the backend session cookie
 COOKIE_NAME = SESSION_COOKIE_NAME
 
-# =========================
-#   PREWARM (rozgrzewka HS256)
-# =========================
 _auth_prewarmed = False
 
 
 def prewarm_auth() -> None:
-    """Rozgrzewa ścieżkę kryptograficzną HS256. Zero sieci, zero I/O."""
+    """Warm up the HS256 encode/decode path so the first request is not slow. No network or I/O."""
     global _auth_prewarmed
     if _auth_prewarmed or not SUPABASE_JWT_SECRET:
         _auth_prewarmed = True
@@ -65,14 +60,10 @@ def prewarm_auth() -> None:
         _auth_prewarmed = True
 
 
-# =========================
-#   Helpers (Bearer, wiek, token cookie)
-# =========================
 def _extract_bearer(request: Request) -> str:
     """
-    Pobiera access_token Supabase z:
-      - Authorization: Bearer <token>
-      - cookies: sb-access-token / supabase-auth-token (Supabase JS trzyma tam JSON)
+    Get the Supabase access_token from the Authorization: Bearer header, or from the
+    sb-access-token / supabase-auth-token cookies (Supabase JS may store JSON there).
     """
     auth = request.headers.get("authorization") or request.headers.get("Authorization")
     if auth and auth.lower().startswith("bearer "):
@@ -94,18 +85,18 @@ def _extract_bearer(request: Request) -> str:
 
 
 def _decode_supabase_jwt(token: str) -> dict:
-    """Weryfikuje token Supabase wyłącznie HS256 (SUPABASE_JWT_SECRET)."""
+    """Verify a Supabase token with HS256 (SUPABASE_JWT_SECRET) only."""
     if not SUPABASE_JWT_SECRET:
         raise HTTPException(500, "Błędna konfiguracja serwera (brak SUPABASE_JWT_SECRET).")
     try:
-        # tylko tokeny zalogowanego użytkownika: aud/role "authenticated" i niepusty sub.
-        # Odrzuca m.in. publiczny klucz anon (role=anon) i backendowe cookie podpisane tym samym sekretem.
+        # Accept only signed-in user tokens: aud/role "authenticated" and a non-empty sub.
+        # This rejects the public anon key (role=anon) and backend cookies signed with the same secret.
         claims = jwt.decode(
             token,
             SUPABASE_JWT_SECRET,
             algorithms=["HS256"],
             audience="authenticated",
-            # python-jose bez require_aud przepuszcza token BEZ pola aud
+            # without require_aud, python-jose accepts a token that has no aud claim at all
             options={"require_aud": True, "require_exp": True, "require_sub": True},
         )
     except JWTError as e:
@@ -123,7 +114,6 @@ def _age(dob: Optional[date]) -> Optional[int]:
     return max(a, 0)
 
 def _mint_backend_token(user_id: int) -> str:
-    # FIX #6: datetime.utcnow() jest deprecated od 3.12 — używamy timezone-aware.
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),
@@ -139,8 +129,8 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
     if not isinstance(meta, dict):
         meta = {}
 
-    # tylko email z tokenu (ustawia go Supabase). user_metadata pacjent może zmienić sam,
-    # więc dopasowanie konta po emailu z metadanych pozwalało przejąć cudze konto.
+    # Security: use only the token's email (set by Supabase). user_metadata is user-editable,
+    # so matching accounts by a metadata email would allow account takeover.
     email = (claims.get("email") or "").lower().strip()
     full_name = (meta.get("full_name") or meta.get("name") or "").strip()
     username_meta = (meta.get("username") or meta.get("preferred_username") or "").strip()
@@ -156,10 +146,10 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
         except Exception:
             dob_meta = None
 
-    # 1) provider_sub
+    # Lookup order: provider_sub, then email, then create.
     user = crud.get_user_by_provider(db, "supabase", sub) if sub else None
 
-    # 2) email fallback: tylko konto jeszcze niepowiązane z żadnym logowaniem Supabase
+    # Email fallback only links an account not yet bound to another Supabase identity.
     if not user and email:
         by_email = crud.get_user_by_email(db, email)
         if by_email is not None:
@@ -167,7 +157,7 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
                 raise HTTPException(409, "Ten adres email jest już powiązany z innym kontem.")
             user = by_email
 
-    # 3) create — to robimy zawsze, bo bez usera nie ma o czym mówić
+    # Creation happens even when allow_writes=False: every request needs a local user.
     if not user:
         base_for_username = username_meta or (email.split("@")[0] if email else (full_name or "user"))
         username = crud.generate_username(db, base_for_username)
@@ -186,7 +176,7 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
         log.info("Utworzono lokalny profil usera (supabase sub=%s, email=%s, id=%s)", sub, email, user.id)
         return user
 
-    # 4) miękka aktualizacja — tylko gdy explicite zezwolone
+    # Soft update: only fill empty fields from claims, and only when writes are allowed.
     if not allow_writes:
         return user
 
@@ -220,15 +210,11 @@ def _ensure_local_profile(db: Session, claims: dict, *, allow_writes: bool = Tru
     return user
 
 
-# =========================
-#   Endpoints
-# =========================
 @router.post("/session", response_model=UserOut)
 def exchange_session(request: Request, response: Response, db: Session = Depends(get_db)):
-    """Wymienia Supabase access_token (Bearer) na backendowe cookie HTTP-only."""
+    """Exchange a Supabase access_token (Bearer) for a backend HTTP-only cookie."""
     sb_token = _extract_bearer(request)
     claims = _decode_supabase_jwt(sb_token)
-    # przy wymianie sesji — ok, tu *celowo* dopuszczamy pełne pierwsze write'y
     user = _ensure_local_profile(db, claims, allow_writes=True)
 
     token = _mint_backend_token(user.id)
@@ -271,7 +257,7 @@ def update_me(data: UpdateProfileIn, request: Request, db: Session = Depends(get
             date_of_birth=getattr(data, "date_of_birth", None),
         )
         db.commit()
-    except ValueError as e:          # np. "Nazwa użytkownika jest już zajęta." (wcześniej 500)
+    except ValueError as e:          # e.g. username already taken
         db.rollback()
         raise HTTPException(409, str(e))
 

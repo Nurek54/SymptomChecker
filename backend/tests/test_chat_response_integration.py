@@ -1,11 +1,8 @@
-# tests/test_chat_response_integration.py
 """
-FIX #20: testy integracyjne dla schematu ChatResponse.
+ChatResponse schema tests run through real Pydantic validation, without stubs.
 
-Wcześniej istniejące testy używały stuba ChatService, który nie zwracał
-diagnosis_en/_pl — i właśnie dlatego nikt nie zauważył, że Pydantic v2 odrzuca
-te pola jako extra (bo nie były w schemacie). Te testy idą bezpośrednio przez
-schemat i przez prawdziwą walidację, bez stubów.
+The stubbed ChatService never returned diagnosis_en/_pl, which hid that Pydantic v2
+silently dropped those fields when they were missing from the schema.
 """
 from __future__ import annotations
 import pytest
@@ -15,7 +12,7 @@ from backend.schemas import ChatResponse, TopDiagnosisItem
 
 
 def test_chat_response_accepts_diagnosis_fields():
-    """Najważniejszy test po FIX #1 — diagnosis_en/_pl nie mogą być cicho odrzucane."""
+    """diagnosis_en/_pl must not be silently dropped by the schema."""
     payload = {
         "response": "Najbardziej prawdopodobna przyczyna to grypa (78%).",
         "symptoms": ["fever", "cough", "sore_throat"],
@@ -30,11 +27,10 @@ def test_chat_response_accepts_diagnosis_fields():
 
     resp = ChatResponse(**payload)
 
-    # po FIX #1 — pola muszą być widoczne w obiekcie:
     assert resp.diagnosis_en == "flu"
     assert resp.diagnosis_pl == "grypa"
 
-    # i muszą się propagować do model_dump (czyli do JSON-a wysyłanego do frontu):
+    # model_dump is what gets serialized to the frontend.
     dumped = resp.model_dump()
     assert dumped["diagnosis_en"] == "flu"
     assert dumped["diagnosis_pl"] == "grypa"
@@ -42,7 +38,7 @@ def test_chat_response_accepts_diagnosis_fields():
 
 
 def test_chat_response_diagnosis_fields_optional():
-    """Krótkie odpowiedzi (np. follow-up) nie mają jeszcze diagnozy — to ma być OK."""
+    """Short replies (e.g. follow-up questions) have no diagnosis yet."""
     payload = {
         "response": "Czy masz gorączkę?",
         "symptoms": ["cough"],
@@ -63,9 +59,9 @@ def test_chat_response_top_diagnoses_default_empty():
 
 def test_chat_response_validation_errors_on_missing_required():
     with pytest.raises(ValidationError):
-        ChatResponse(symptoms=[])  # brak `response`
+        ChatResponse(symptoms=[])
     with pytest.raises(ValidationError):
-        ChatResponse(response="ok")  # brak `symptoms`
+        ChatResponse(response="ok")
 
 
 def test_top_diagnosis_item_accepts_minimal_payload():
@@ -75,7 +71,7 @@ def test_top_diagnosis_item_accepts_minimal_payload():
 
 
 def test_chat_response_propagates_top_diagnosis_pl():
-    """Element listy top_diagnoses też niesie polską nazwę — frontend z niej korzysta."""
+    """Each top_diagnoses item keeps its Polish name, which the frontend displays."""
     payload = {
         "response": "...",
         "symptoms": ["fever"],
@@ -87,22 +83,13 @@ def test_chat_response_propagates_top_diagnosis_pl():
     assert resp.top_diagnoses[0].diagnosis_pl == "grypa"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Test integracyjny przez prawdziwy ChatService — wymaga "lekkich" stubów dla
-# XGB/LLM/Matchera. Nie używamy globalnych stubów testowych, które maskowały
-# pierwotny bug. Jeśli środowisko CI nie ma modeli, ten test zostaje skipnięty.
-# ──────────────────────────────────────────────────────────────────────────────
+# Runs through the real ChatService (not the global stub that hid the original bug);
+# skipped until a lightweight AppState fixture exists.
 @pytest.mark.integration
 def test_chat_service_returns_diagnosis_fields_when_enough_symptoms(monkeypatch):
-    """
-    Sprawdza, że ChatService.handle_chat() zwraca obiekt ChatResponse, w którym
-    Pydantic NIE wycina diagnosis_en/_pl (regresja po FIX #1).
-    """
+    """ChatService.handle_chat() must keep diagnosis_en/_pl in its ChatResponse."""
     pytest.importorskip("backend.services.chat_service")
 
     from backend.schemas import ChatRequest, ChatResponse  # noqa: F401
 
-    # Lekka atrapa AppState — wystarczająca, żeby przejść przez handle_chat
-    # do gałęzi `enough`. Jeśli faktyczne klasy wymagają cięższego setupu,
-    # ten test ma marker @pytest.mark.integration i można go pominąć w fast CI.
     pytest.skip("Wymaga lekkiego AppState fixture — uzupełnij wg lokalnej infra.")

@@ -1,9 +1,9 @@
 import type { SymptomDictItem } from "@/lib/types";
 
 /**
- * Jeden wpis na cechę modelu (`en` jest kluczem w listach React).
- * Backend już grupuje wpisy po cesze; tu dodatkowo zabezpieczamy się przed duplikatami
- * (np. starsza wersja API): kolejne etykiety tej samej cechy trafiają do `aliases`.
+ * One entry per model feature (`en` is used as the React list key).
+ * The backend already groups by feature; this guards against duplicates (e.g. an older API)
+ * by folding extra labels of the same feature into `aliases`.
  */
 export function normalizeSymptomDict(items: SymptomDictItem[] | null | undefined): SymptomDictItem[] {
   const byEn = new Map<string, SymptomDictItem>();
@@ -29,8 +29,8 @@ export function normalizeSymptomDict(items: SymptomDictItem[] | null | undefined
 }
 
 /**
- * Czy wpis pasuje do zapytania. Zwraca null (brak dopasowania), "" (pasuje etykieta główna)
- * albo alias, po którym znaleziono wpis (do pokazania obok etykiety).
+ * Returns null (no match), "" (main label matched) or the matching alias
+ * (shown next to the label).
  */
 export function matchSymptom(it: SymptomDictItem, query: string, lang: "pl" | "en" = "pl"): string | null {
   const q = query.trim().toLowerCase();

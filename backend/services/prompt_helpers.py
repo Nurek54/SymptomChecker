@@ -1,4 +1,4 @@
-# services/prompt_helpers.py
+"""Helpers for prompt_builder: intent detection, triage scoring, OTC hints and context rendering."""
 from __future__ import annotations
 
 import re
@@ -51,9 +51,9 @@ _RED_FLAGS = re.compile(
     re.I,
 )
 
-# Temperatura ciała: liczba 35-43 z jednostką ("39 stopni", "39,5°C", "40 st")
-# albo w kontekście słów gorączka/temperatura ("gorączka 40", "temperatura 38,9").
-# Zakres chroni przed "45 cm", "10 czerwca" itp.
+# Body temperature: a number 35-43 with a unit ("39 stopni", "39,5°C", "40 st")
+# or after a fever/temperature keyword ("temperatura 38,9").
+# The range guards against matches like "45 cm" or "10 czerwca".
 _TEMP_UNIT = re.compile(
     r"(?<![\d.,])(3[5-9]|4[0-3])(?:[.,](\d))?\s*(?:°\s*c?|stopni\w*|st\.?(?=\s|$)|c\b)",
     re.I,
@@ -123,7 +123,7 @@ def _estimate_fit(diag_summary: Optional[str], symptoms: List[str]) -> Dict[str,
     return results
 
 def _extract_temp_high(text: str) -> bool:
-    """Wysoka gorączka ~≥39°C w tekście (np. "39 stopni", "gorączka 40", "39,5°C")."""
+    """True if the text reports a high fever (>= 39°C), e.g. "39 stopni", "39,5°C"."""
     t = (text or "").lower()
     for pat in (_TEMP_UNIT, _TEMP_CTX):
         for m in pat.finditer(t):
@@ -136,7 +136,7 @@ def _extract_temp_high(text: str) -> bool:
     return False
 
 def _extract_duration_days(text: str) -> Optional[int]:
-    """Najdłuższy podany czas trwania objawów w dniach ("od 3 dni", "od tygodnia", "2 tygodnie")."""
+    """Longest stated symptom duration in days ("od 3 dni", "od tygodnia", "2 tygodnie")."""
     t = (text or "").lower()
     best: Optional[int] = None
     for m in _DUR_DAYS.finditer(t):
@@ -151,7 +151,7 @@ def _extract_duration_days(text: str) -> Optional[int]:
 
 
 def _user_text(hist: List[Dict[str, str]]) -> str:
-    """Tylko wypowiedzi pacjenta - ostrzeżenia asystenta ("jeśli gorączka przekroczy 39°C") nie są objawami."""
+    """Patient messages only: assistant warnings (e.g. "if fever exceeds 39°C") are not symptoms."""
     return " ".join(
         (m.get("content") or "") for m in (hist or [])
         if (m.get("role") or "").lower() == "user"
@@ -181,8 +181,8 @@ def _suggest_triage(
 
     score = 0.0
     if cl["red"]: score += 3.0
-    # światłowstręt + ból głowy + gorączka: obraz, przy którym trzeba wykluczyć zapalenie opon mózgowych.
-    # Tylko lista objawów (już po obsłudze przeczeń), nie surowy tekst: "nie mam bólu głowy" nie może tu pasować.
+    # Photophobia + headache + fever: meningitis must be ruled out.
+    # Uses the symptom list (negations already handled), not raw text, so a denied headache cannot match.
     sl = " | ".join(s.lower() for s in (symptoms or []))
     if "światłowstręt" in sl and re.search(r"ból\w*\s+głow", sl) and (re.search(r"gorącz", sl) or high_fever):
         score += 3.0

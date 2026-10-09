@@ -1,4 +1,3 @@
-# backend/core/startup.py
 from __future__ import annotations
 import logging
 import time
@@ -44,7 +43,7 @@ class StartupManager:
         matcher = SymptomMatcher(
             xgb.features,
             device=str(device),
-            # liczby tylko gdy statystyki są sensowne (inaczej wszystkie cechy uznane za martwe)
+            # pass counts only if stats are non-empty, otherwise every feature would be treated as dead
             feature_counts=(
                 symptom_stats.feature_counts
                 if symptom_stats is not None and any(symptom_stats.feature_counts.values())

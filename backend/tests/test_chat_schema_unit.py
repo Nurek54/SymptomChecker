@@ -1,4 +1,3 @@
-# tests/test_chat_schema_unit.py
 import pytest
 from pydantic import ValidationError
 
@@ -24,20 +23,16 @@ def test_chat_response_valid_payload():
 
 
 def test_chat_response_requires_key_fields():
-    """
-    Wymagane: response, symptoms, top_diagnoses (jak masz w schemas.py).
-    """
+    """response and symptoms are required fields."""
     with pytest.raises(ValidationError):
-        # brak 'response'
         ChatResponse(symptoms=[], top_diagnoses=[])
 
     with pytest.raises(ValidationError):
-        # brak 'symptoms'
         ChatResponse(response="OK", top_diagnoses=[])
 
 
 def test_chat_response_no_validator_errors_on_correct_payload():
-    """Przy poprawnych danych nie ma wyjątków walidacji."""
+    """diagnosis_pl is optional in top_diagnoses items."""
     payload = {
         "response": "Diagnoza stub.",
         "symptoms": ["fever"],
@@ -45,4 +40,4 @@ def test_chat_response_no_validator_errors_on_correct_payload():
             {"diagnosis_en": "flu", "probability": 0.9},
         ],
     }
-    ChatResponse(**payload)  # brak wyjątku = OK
+    ChatResponse(**payload)

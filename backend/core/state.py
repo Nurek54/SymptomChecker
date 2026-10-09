@@ -21,10 +21,10 @@ class AppState:
     matcher: SymptomMatcher
     sessions: SessionStore
     river: Optional["RiverManager"] = field(default=None)
-    # P(objaw | choroba) do wyboru pytań uzupełniających (services.symptom_stats.SymptomStats)
+    # P(symptom | disease) for choosing follow-up questions (services.symptom_stats.SymptomStats)
     symptom_stats: Optional[Any] = field(default=None)
-    # temperatura fuzji XGB + River (services/ensemble_calibration.py)
+    # XGB + River fusion temperature (services/ensemble_calibration.py)
     ensemble_T: float = field(default=1.0)
-    # sposób łączenia i waga XGB dobrana na zbiorze kalibracyjnym (None = dawna heurystyka)
+    # fusion mode and XGB weight fitted on the calibration set (None = legacy heuristic)
     ensemble_mode: str = field(default="heuristic")
     ensemble_wx: Optional[float] = field(default=None)

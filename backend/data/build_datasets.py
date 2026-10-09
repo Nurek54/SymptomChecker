@@ -1,28 +1,28 @@
 """
-Buduje poprawione zbiory danych w backend/data/v2/ (oryginały zostają bez zmian).
+Builds cleaned datasets in backend/data/v2/ (the original files are left untouched).
 
-Problemy w poprzednich plikach (wykryte analizą):
-  1. Final_Testset_for_Eval.csv w 100% powtarza wiersze (wektor objawów + choroba)
-     z train_remainder.csv (77%) i calibration.csv (23%) -> metryki testowe były zawyżone.
-  2. Dołączony Dataset_2 (Kaggle) wniósł duplikaty istniejących chorób pod innymi
-     nazwami (bronchial_asthma/asthma, osteoarthristis/osteoarthritis, dengue/dengue_fever,
-     gerd/..., chicken_pox/chickenpox, aids/hiv, ...) -> model dzieli prawdopodobieństwo
-     między dwie etykiety tej samej choroby.
-  3. Setki klas mają po kilka przykładów (min. 1), a wagi klas sięgały ~209 -> model
-     przecenia choroby, o których prawie nic nie wie.
+Problems found in the previous files:
+  1. Final_Testset_for_Eval.csv repeats 100% of its rows (symptom vector + disease)
+     from train_remainder.csv (77%) and calibration.csv (23%) -> inflated test metrics.
+  2. The merged Dataset_2 (Kaggle) added duplicates of existing diseases under other
+     names (bronchial_asthma/asthma, osteoarthristis/osteoarthritis, dengue/dengue_fever,
+     gerd/..., chicken_pox/chickenpox, aids/hiv, ...) -> the model splits probability
+     between two labels of the same disease.
+  3. Hundreds of classes have only a few rows (min. 1) and class weights reached ~209 ->
+     the model overrates diseases it knows almost nothing about.
 
-Co robi skrypt:
-  - łączy train_remainder + calibration + test w jedną pulę i usuwa duplikaty,
-  - scala zduplikowane etykiety (MERGE_LABELS),
-  - usuwa klasy z mniej niż --min-rows przykładami,
-  - dzieli dane stratyfikowanie na train/calibration/test tak, że ten sam wektor
-    objawów nigdy nie trafia do dwóch zbiorów,
-  - liczy wagi klas sqrt(N / (K * n_c)) obcięte do [--w-min, --w-max],
-  - zapisuje raport build_report.json.
+What the script does:
+  - pools train_remainder + calibration + test and removes duplicates,
+  - merges duplicate labels (MERGE_LABELS),
+  - drops classes with fewer than --min-rows rows,
+  - splits stratified into train/calibration/test so that the same symptom
+    vector never lands in two sets,
+  - computes class weights sqrt(N / (K * n_c)) clipped to [--w-min, --w-max],
+  - writes the build_report.json report.
 
-Uruchomienie (z katalogu backend/):
+Run (from backend/):
     python data/build_datasets.py
-Potem usuń stare artefakty modeli z backend/ml (patrz README), żeby przetrenować modele.
+Then delete the old model artifacts in backend/ml (see README) to retrain the models.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ DATA_DIR = Path(__file__).resolve().parent
 SOURCES = ["train_remainder.csv", "calibration.csv", "Final_Testset_for_Eval.csv"]
 SPECIAL = {"diseases", "weight", "xgb_label"}
 
-# Etykiety z Dataset_2, które są tą samą chorobą co etykieta z Dataset_1
+# Dataset_2 labels that denote the same disease as a Dataset_1 label
 MERGE_LABELS = {
     "bronchial_asthma": "asthma",
     "osteoarthristis": "osteoarthritis",
@@ -78,7 +78,7 @@ def _vector_keys(X: np.ndarray) -> np.ndarray:
 
 
 def _split(df: pd.DataFrame, frac_cal: float, frac_test: float, seed: int) -> pd.Series:
-    """Stratyfikowany podział per klasa; potem cały wektor objawów trafia do jednego zbioru."""
+    """Stratified per-class split; then each symptom vector is moved entirely into one set."""
     rng = np.random.default_rng(seed)
     part = pd.Series("train", index=df.index)
     for _, idx in df.groupby("diseases").groups.items():
@@ -87,11 +87,11 @@ def _split(df: pd.DataFrame, frac_cal: float, frac_test: float, seed: int) -> pd
         n = len(idx)
         n_test = max(1, int(round(n * frac_test)))
         n_cal = max(1, int(round(n * frac_cal)))
-        if n - n_test - n_cal < 1:  # bardzo małe klasy: przynajmniej 1 do treningu
+        if n - n_test - n_cal < 1:  # very small classes: keep at least 1 row for training
             n_cal = max(0, n - n_test - 1)
         part.loc[idx[:n_test]] = "test"
         part.loc[idx[n_test:n_test + n_cal]] = "calibration"
-    # ten sam wektor (różne choroby) -> jeden zbiór; preferujemy train
+    # same vector (different diseases) -> one set; train wins, then calibration
     order = {"train": 0, "calibration": 1, "test": 2}
     best = part.map(order).groupby(df["vk"]).transform("min")
     inv = {v: k for k, v in order.items()}
@@ -123,7 +123,7 @@ def main() -> None:
     pool["diseases"] = pool["diseases"].astype(str).str.strip().str.lower().replace(MERGE_LABELS)
     pool["vk"] = _vector_keys(pool[feats].to_numpy(np.uint8))
 
-    # przeciek w starych plikach: ile wierszy testu było też w train/calibration
+    # leakage in the old files: share of test rows also present in train/calibration
     old_test = pool["source"] == "Final_Testset_for_Eval.csv"
     seen = set(zip(pool.loc[~old_test, "vk"], pool.loc[~old_test, "diseases"]))
     report["old_test_rows_also_in_train_or_calib_pct"] = round(
@@ -159,7 +159,7 @@ def main() -> None:
     pool.loc[pool["part"] == "test", cols].to_csv(out / "test.csv", index=False)
     weights.to_csv(out / "class_weight.csv", index=False)
 
-    # kontrola: żaden wektor objawów nie występuje w dwóch zbiorach
+    # sanity check: no symptom vector appears in two sets
     sets = {p: set(pool.loc[pool["part"] == p, "vk"]) for p in ("train", "calibration", "test")}
     report["vector_overlap"] = {
         "train_calibration": len(sets["train"] & sets["calibration"]),
@@ -172,7 +172,7 @@ def main() -> None:
     report["class_weight"] = {"min": float(w.min()), "max": float(w.max())}
     report["classes_total"] = int(pool["diseases"].nunique())
 
-    # zgodność słownika objawów z danymi: które wpisy prowadzą do cech bez danych
+    # symptom dictionary vs data: entries that map only to features with no training data
     fcount = train[feats].sum()
     report["features_without_train_data"] = [f for f in feats if int(fcount[f]) == 0]
     try:
@@ -190,7 +190,7 @@ def main() -> None:
         report["features_with_data_but_no_dictionary_entry"] = [
             f for f in feats if int(fcount[f]) > 0 and f not in covered
         ]
-    except Exception as e:  # słownik jest opcjonalny dla samego budowania danych
+    except Exception as e:  # the dictionary is optional for building the data
         report["dictionary_check_error"] = str(e)
 
     with open(out / "build_report.json", "w", encoding="utf-8") as f:

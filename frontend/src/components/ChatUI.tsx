@@ -35,14 +35,12 @@ function newSessionId() {
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-// Wyraźniejsza „aurora” (emerald → sky → violet)
 const AURORA_SOFT = "linear-gradient(120deg, rgba(52,211,153,.25), rgba(56,189,248,.25), rgba(167,139,250,.25))";
 const AURORA_HALO = "linear-gradient(120deg, rgba(52,211,153,.55), rgba(56,189,248,.55), rgba(167,139,250,.55))";
 
 type QuickIntent = { label: string; text: string; icon: ElementType; tint: string };
 
 export default function ChatUI() {
-    // === SessionId ===
     const [sessionId, setSessionId] = useState<string>(() => {
         if (typeof window === "undefined") return "web";
         const key = "sc_session_id";
@@ -54,13 +52,12 @@ export default function ChatUI() {
         return id;
     });
 
-    // Overlay: split modeli
     const [showSplit, setShowSplit] = useState(false);
 
-    // Telefon: panel objawów i Top-3 w wysuwanym arkuszu (na desktopie jest prawa kolumna)
+    // Phone: symptoms panel and Top-3 live in a slide-up sheet (desktop uses the right column)
     const [showPanel, setShowPanel] = useState(false);
 
-    // Wąski ekran: krótszy placeholder (podpowiedź o Enter/Shift+Enter dotyczy klawiatury)
+    // Narrow screen: shorter placeholder (the Enter/Shift+Enter hint only applies to keyboards)
     const [narrow, setNarrow] = useState(false);
     useEffect(() => {
         const mq = window.matchMedia("(max-width: 639px)");
@@ -69,7 +66,7 @@ export default function ChatUI() {
         mq.addEventListener("change", sync);
         return () => mq.removeEventListener("change", sync);
     }, []);
-    // arkusz: fokus na "Zamknij" po otwarciu, po zamknięciu wraca na pasek "Szczegóły"
+    // Sheet: focus the close button on open, return focus to the details bar on close
     const sheetCloseRef = useRef<HTMLButtonElement | null>(null);
     useEffect(() => {
         if (!showPanel) return;
@@ -95,7 +92,7 @@ export default function ChatUI() {
         };
     }, [showPanel]);
 
-    // Reakcja na logout: nadaj nową sesję i przewiń na dół (pustej listy)
+    // On logout: assign a new session and scroll the (now empty) list to the bottom
     useEffect(() => {
         const onLogout = () => {
             const id = newSessionId();
@@ -110,7 +107,6 @@ export default function ChatUI() {
         return () => window.removeEventListener("sc:logout", onLogout as EventListener);
     }, []);
 
-    // === Store: wiadomości + streszczenia (symptoms/top) ===
     const storedMsgs = useChatStore((s) => s.bySession[sessionId]);
     const addMsg = useChatStore((s) => s.addMessage);
     const setSummary = useChatStore((s) => s.setSummary);
@@ -131,7 +127,7 @@ export default function ChatUI() {
         [storedMsgs, EMPTY_LIST]
     );
 
-    // Powitanie tylko raz
+    // Greeting only for an empty conversation
     useEffect(() => {
         const tid = setTimeout(() => {
             const arr = (useChatStore.getState().bySession[sessionId] ?? []) as typeof EMPTY_LIST;
@@ -142,12 +138,11 @@ export default function ChatUI() {
                     createdAt: new Date().toISOString(),
                 });
             }
-        }, 100); // 100ms na hydrację persist'a; jest synchronous dla localStorage,
-                 // ale w Strict Mode efekty mogą reentrować — opóźnienie chroni.
+        }, 100); // Delay lets persist hydrate; localStorage is sync, but Strict Mode
+                 // re-runs effects and the delay prevents a duplicate greeting.
         return () => clearTimeout(tid);
     }, [sessionId, addMsg]);
 
-    // === Lokalne ===
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
 
@@ -156,8 +151,8 @@ export default function ChatUI() {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [showScrollBtn, setShowScrollBtn] = useState(false);
 
-    // dynamiczna wysokość kompozytora (żeby przycisk był zawsze nad nim)
-    const [composerH, setComposerH] = useState<number>(84); // sensowny default
+    // Measured composer height keeps the scroll-to-bottom button above it
+    const [composerH, setComposerH] = useState<number>(84);
 
     useEffect(() => {
         const el = composerRef.current;
@@ -181,7 +176,7 @@ export default function ChatUI() {
         };
     }, []);
 
-    // poprzednia długość listy (do wykrycia nowych wiadomości)
+    // Previous list length, used to detect new messages
     const prevLenRef = useRef<number>(0);
 
     const isNearBottom = useCallback(
@@ -198,7 +193,6 @@ export default function ChatUI() {
         setShowScrollBtn(!isNearBottom(el));
     }, [isNearBottom]);
 
-    // ── Quick intents ──
     const quickIntents: QuickIntent[] = useMemo(
         () => [
             {
@@ -243,7 +237,7 @@ export default function ChatUI() {
 
     const abortRef = useRef<AbortController | null>(null);
 
-    // Anuluj trwające żądanie gdy komponent się odmonowuje albo zmienia się sesja.
+    // Abort the in-flight request on unmount or session change.
     useEffect(() => {
         return () => {
             abortRef.current?.abort();
@@ -251,16 +245,13 @@ export default function ChatUI() {
         };
     }, [sessionId]);
 
-    // Wspólna wysyłka
     const sendText = useCallback(
         async (text: string) => {
             const trimmed = text.trim();
             if (!trimmed) return;
 
-            // v7: gdy backend wciąż liczy poprzednią odpowiedź — informujemy użytkownika.
-            // Wcześniej cichaczem odrzucało (return bez śladu), więc użytkownik nie wiedział,
-            // dlaczego druga wiadomość "nie zadziałała". Teraz pokazujemy assistantowi
-            // krótki komunikat, żeby było widać, że żądanie zostało zauważone.
+            // While the backend is still answering, acknowledge the extra message visibly
+            // instead of silently dropping it.
             if (busy) {
                 addMsg(sessionId, {
                     role: "user",
@@ -284,11 +275,11 @@ export default function ChatUI() {
             });
             setBusy(true);
 
-            abortRef.current?.abort(); // jakby coś zostało z poprzedniej iteracji
+            abortRef.current?.abort(); // in case a previous request is still pending
             const ctrl = new AbortController();
             abortRef.current = ctrl;
 
-            const SAFETY_MS = 200_000; // 3:20 — trochę więcej niż timeout w apiFetch (180s)
+            const SAFETY_MS = 200_000; // slightly above the apiFetch timeout (180s)
             const safetyTimer = setTimeout(() => {
                 if (abortRef.current === ctrl) {
                     ctrl.abort();
@@ -350,7 +341,7 @@ export default function ChatUI() {
         await sendText(trimmed);
     };
 
-    // ——— Auto-scroll na sam dół PRZY KAŻDEJ nowej wiadomości ———
+    // Always scroll to the bottom when a new message arrives
     useEffect(() => {
         const added = messages.length > prevLenRef.current;
         prevLenRef.current = messages.length;
@@ -362,7 +353,6 @@ export default function ChatUI() {
         }
     }, [messages, updateScrollBtn]);
 
-    // Aktualizuj widoczność przycisku na: scroll i resize
     const onScroll = () => updateScrollBtn();
     useEffect(() => {
         updateScrollBtn();
@@ -373,7 +363,7 @@ export default function ChatUI() {
         return () => window.removeEventListener("resize", handler);
     }, [updateScrollBtn]);
 
-    // Stabilizacja scrolla: obserwuj zmiany wymiarów listy
+    // Keep the list pinned to the bottom while its content resizes (if already near the bottom)
     useEffect(() => {
         const el = scrollRef.current;
         if (!el) return;
@@ -425,8 +415,7 @@ export default function ChatUI() {
     const isEmptyState =
         messages.length <= 1 && (!messages[0] || messages[0].role === "assistant");
 
-    // Lista przykładowych otwarć — short, conversational, klikalne wstawiają
-    // tekst od razu do inputu (nie wysyła, user może edytować).
+    // Clicking a suggestion fills the input without sending, so the user can edit it.
     const SUGGESTED_PROMPTS = [
         "Boli mnie głowa od 2 dni",
         "Mam gorączkę i kaszel",
@@ -434,7 +423,7 @@ export default function ChatUI() {
         "Ból brzucha po posiłku",
     ];
 
-    // Zawartość panelu (prawa kolumna na desktopie, arkusz na telefonie)
+    // Panel content: right column on desktop, bottom sheet on phones
     const renderPanel = () => (
         <div className="flex flex-col gap-3">
                 <SymptomsCard
@@ -468,22 +457,19 @@ export default function ChatUI() {
     const symptomCount = summary?.symptoms?.length ?? 0;
     const top1 = summary?.topDiag?.[0] ?? null;
 
-    // ====== RENDER ======
     return (
         <div className="flex h-full w-full flex-col overflow-hidden bg-surface text-basecolor">
             <Header onNewChat={newChat} />
 
             <div className="flex min-h-0 flex-1">
-                {/* LEWA kolumna */}
                 <section className="relative min-h-0 min-w-0 flex-1 border-base md:border-r">
-                    {/* Subtelna pionowa poświata */}
                     <span
                         aria-hidden
                         className="pointer-events-none absolute inset-y-0 right-0 hidden w-px opacity-60 md:block"
                         style={{ background: AURORA_SOFT }}
                     />
                     <div className="flex h-full min-h-0 flex-col">
-                        {/* Telefon: skrót objawów i Top-1, otwiera arkusz z pełnym panelem */}
+                        {/* Phone: symptoms and Top-1 summary bar, opens the sheet with the full panel */}
                         <button
                             type="button"
                             onClick={() => setShowPanel(true)}
@@ -506,7 +492,6 @@ export default function ChatUI() {
                             </span>
                         </button>
 
-                        {/* lista wiadomości */}
                         <div
                             ref={scrollRef}
                             onScroll={onScroll}
@@ -590,7 +575,7 @@ export default function ChatUI() {
                             )}
                         </div>
 
-                        {/* KOMPOZYTOR */}
+                        {/* Composer */}
                         <div
                             ref={composerRef}
                             className="relative border-base border-t p-3"
@@ -601,7 +586,6 @@ export default function ChatUI() {
                   style={{ background: AURORA_SOFT }}
               />
 
-                            {/* QUICK INTENTS */}
                             <div className="mb-2 w-full overflow-hidden pb-[6px]">
                                 <div className="-mb-[6px] w-full overflow-x-auto overflow-y-hidden">
                                     <div className="mx-auto flex w-max min-w-full justify-start sm:justify-center">
@@ -635,7 +619,6 @@ export default function ChatUI() {
                             </div>
 
                             <div className="flex items-end gap-2">
-                                {/* INPUT */}
                                 <div className="relative flex-1">
                   <span
                       aria-hidden
@@ -660,7 +643,6 @@ export default function ChatUI() {
                                     />
                                 </div>
 
-                                {/* SEND */}
                                 <button
                                     onClick={send}
                                     disabled={busy || !input.trim()}
@@ -681,7 +663,7 @@ export default function ChatUI() {
                             <p className="mt-2 text-center text-xs text-muted md:text-left">
                                 To narzędzie ma charakter edukacyjny i nie zastępuje porady
                                 medycznej.
-                                {/* na telefonie podpis autora w tej linii (stały podpis z globals.css nachodziłby na tekst) */}
+                                {/* On phones the author credit sits on this line (the fixed credit from globals.css would overlap the text) */}
                                 <span className="aurora-text ml-1 whitespace-nowrap font-semibold md:hidden">
                                     Autor: Grzegorz Sienkiewicz
                                 </span>
@@ -689,7 +671,6 @@ export default function ChatUI() {
                         </div>
                     </div>
 
-                    {/* ⬇️ PRZYCISK „NA DÓŁ” */}
                     {showScrollBtn && (
                         <div
                             className="pointer-events-none absolute right-4 z-20"
@@ -714,13 +695,13 @@ export default function ChatUI() {
                     )}
                 </section>
 
-                {/* PRAWA kolumna (bez scrolla) */}
+                {/* Right column (desktop) */}
                 <aside className="hidden h-full w-[440px] shrink-0 overflow-hidden md:block">
                     <div className="h-full p-3">{renderPanel()}</div>
                 </aside>
             </div>
 
-            {/* Telefon: arkusz z panelem objawów i Top-3 */}
+            {/* Phone: sheet with the symptoms panel and Top-3 */}
             {showPanel && (
                 <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Objawy i Top-3" id="mobile-panel">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowPanel(false)} aria-hidden />
@@ -746,7 +727,7 @@ export default function ChatUI() {
                 </div>
             )}
 
-            {/* Overlay: podgląd Top-3 XGB vs River */}
+            {/* Overlay: Top-3 XGB vs River breakdown */}
             <ModelSplitOverlay
                 open={showSplit}
                 onClose={() => setShowSplit(false)}

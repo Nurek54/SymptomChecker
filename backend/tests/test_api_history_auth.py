@@ -1,4 +1,3 @@
-# tests/test_api_history_auth.py
 from backend.config import SESSION_COOKIE_NAME
 
 
@@ -18,19 +17,13 @@ def test_history_delete_unauthorized_without_cookie(client):
 
 
 def test_auth_session_cookie_attributes_on_login(client):
-    """
-    A2: po poprawnym POST /auth/session cookie ma HttpOnly i SameSite.
-    Jeżeli nie masz w seedzie użytkownika, test łagodnie przechodzi,
-    ale nie wymusza 200 (401 kończy się „miękkim” return).
-    """
+    """A successful POST /auth/session sets a session cookie with HttpOnly and SameSite."""
     payload = {"email": "test@example.com", "password": "secret123"}
 
     resp = client.post("/auth/session", json=payload)
 
-    # Jeżeli endpoint wymaga prawdziwego usera i go nie ma → 401.
-    # Wtedy nie jesteśmy w stanie sprawdzić ciasteczka w testach unitowych.
+    # No seeded user in unit tests: 401 is accepted, the cookie cannot be checked then.
     if resp.status_code == 401:
-        # Test działa jako „szkielet” – endpoint istnieje i reaguje.
         return
 
     assert resp.status_code == 200
@@ -39,10 +32,8 @@ def test_auth_session_cookie_attributes_on_login(client):
     cookie_name = SESSION_COOKIE_NAME or "sc_session"
     assert cookie_name in cookies
 
-    # Sprawdzamy atrybuty w nagłówku Set-Cookie
     raw = resp.headers.get("set-cookie", "")
     raw_low = raw.lower()
     assert "httponly" in raw_low
-    # W prod powinno być "secure"; w dev/test bywa wyłączone.
-    # assert "secure" in raw_low
+    # "Secure" is not asserted: it is required in prod but may be off in dev/test.
     assert "samesite" in raw_low

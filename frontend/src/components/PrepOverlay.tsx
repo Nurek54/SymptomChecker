@@ -5,7 +5,7 @@ import { listSymptomsDict } from "@/lib/api";
 import { matchSymptom, normalizeSymptomDict } from "@/lib/symptomDict";
 import { Calendar, Clock, Flame, Check, Clipboard, X } from "lucide-react";
 
-/** Element słownika (z xgb_label do kanonizacji) */
+/** Dictionary entry; xgb_label is the canonical model feature name */
 type SymItem = {
   en: string;
   pl?: string;
@@ -22,8 +22,6 @@ type Props = {
 const LS_KEY = "sc_prep_state_split_overlay_v1";
 const MAX_SYMPTOMS = 12;
 const MAX_NOTES = 300;
-
-/* ───────── Utils ───────── */
 
 function toXgbSlug(free: string): string {
   const basic = free
@@ -63,10 +61,8 @@ function joinPolish(arr: string[]): string {
   return `${arr.slice(0, -1).join(", ")} i ${arr[arr.length - 1]}`;
 }
 
-/* ───────── Komponent ───────── */
-
 export default function PrepOverlay({ open, onClose }: Props) {
-  // Izolowane od czatu: brak store’ów, tylko lokalny stan + localStorage.
+  // Isolated from the chat: no stores, only local state persisted to localStorage.
   const [dict, setDict] = useState<SymItem[]>([]);
   const [loadingDict, setLoadingDict] = useState(true);
 
@@ -81,7 +77,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
   const [justSaved, setJustSaved] = useState(false);
   const savedTimer = useRef<number | null>(null);
 
-  // fokus na wyszukiwarce przy otwarciu (autoFocus łapał fokus także w zamkniętej nakładce)
+  // Focus search on open (autoFocus also grabbed focus while the overlay was closed)
   const searchRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (!open) return;
@@ -89,7 +85,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
     return () => cancelAnimationFrame(id);
   }, [open]);
 
-  // zamykanie ESC
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -99,9 +94,8 @@ export default function PrepOverlay({ open, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // słownik (z AbortController)
   useEffect(() => {
-    if (!open) return; // ładuj tylko gdy overlay otwarty
+    if (!open) return; // load the dictionary only while open
     const ac = new AbortController();
     (async () => {
       try {
@@ -121,7 +115,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
           setDict(normalized);
         }
       } catch {
-        // fallback: free text → slug
+        // Without a dictionary, free text is converted to a slug
       } finally {
         if (!ac.signal.aborted) setLoadingDict(false);
       }
@@ -129,7 +123,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
     return () => ac.abort();
   }, [open]);
 
-  // odczyt stanu
   useEffect(() => {
     if (!open) return;
     try {
@@ -145,7 +138,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
     } catch {}
   }, [open]);
 
-  // zapis stanu
   useEffect(() => {
     if (!open) return;
     try {
@@ -170,10 +162,9 @@ export default function PrepOverlay({ open, onClose }: Props) {
     return it?.pl || it?.en || xgb;
   }
 
-  /* — Lista filtrowana (zamiast „sugestii”) — */
   const filtered = useMemo(() => {
     const s = query.trim().toLowerCase();
-    if (!s) return dict.slice(0, 200); // pokaż pierwsze 200 przy pustym wyszukiwaniu
+    if (!s) return dict.slice(0, 200); // empty query shows the first 200
     return dict.filter((it) =>
       matchSymptom({ en: it.en, pl: it.pl ?? "", aliases: it.aliases }, s) !== null ||
       (it.en ?? "").toLowerCase().includes(s)
@@ -264,7 +255,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
     setTimeout(() => el.remove(), 1200);
   }
 
-  /* — Overlay — */
   return (
     <div
       className={`fixed inset-0 z-[80] transition ${
@@ -276,17 +266,15 @@ export default function PrepOverlay({ open, onClose }: Props) {
       aria-hidden={!open}
       inert={!open}
     >
-      {/* półprzezroczysty backdrop – klik = zamknij */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      {/* PŁYTA NAKŁADKI – pełnoekranowa, split 50/50 (bez headera) */}
+      {/* Full-screen panel, 50/50 split, no header */}
       <div className="absolute inset-4 z-[81] overflow-hidden rounded-2xl border border-base bg-surface shadow-2xl">
         <div className="grid h-full grid-cols-1 md:grid-cols-2">
-          {/* LEWA — wejście (scrollowalna kolumna) */}
+          {/* Left: input (scrollable) */}
           <section className="relative flex h-full min-h-0 flex-col overflow-auto px-4 py-4 md:pr-6">
             <div className="mb-3 text-xs font-medium text-muted">Dane wejściowe</div>
 
-            {/* Wyszukiwarka */}
             <div>
               <label className="mb-1 block text-[11px] text-muted">Wyszukaj objaw (PL lub EN) i kliknij, aby dodać</label>
               <div className="flex gap-2">
@@ -304,7 +292,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Lista filtrowana (zamiast sugestii) */}
             <div className="mt-2">
               <label className="mb-1 block text-[11px] text-muted">Lista objawów</label>
               <ul className="max-h-64 overflow-auto rounded-xl border border-base">
@@ -336,7 +323,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
               </ul>
             </div>
 
-            {/* Wybrane (chipsy) */}
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
                 <label className="text-[11px] text-muted">Wybrane objawy (XGB)</label>
@@ -367,7 +353,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Pigułki */}
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
                 <div className="mb-1 flex items-center gap-1 text-[11px] text-muted">
@@ -417,7 +402,6 @@ export default function PrepOverlay({ open, onClose }: Props) {
               </div>
             </div>
 
-            {/* Notatki (dopasowane, żeby się mieściło) */}
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
                 <label className="text-[11px] text-muted">Dodatkowe informacje</label>
@@ -434,16 +418,14 @@ export default function PrepOverlay({ open, onClose }: Props) {
             </div>
           </section>
 
-          {/* PRAWA — podgląd (scrollowalna) */}
+          {/* Right: preview (scrollable) */}
           <section className="relative flex h-full min-h-0 flex-col overflow-auto px-4 py-4 md:pl-6">
-            {/* pionowa linia akcentu między kolumnami */}
             <div
               aria-hidden
               className="pointer-events-none absolute left-0 top-0 hidden h-full w-[3px] md:block"
               style={{ background: "linear-gradient(180deg,#34d399,#38bdf8,#a78bfa)" }}
             />
 
-            {/* Pasek akcji (przeniesione z headera) */}
             <div className="mb-3 flex items-center justify-end gap-2">
               <span
                 className={`mr-auto inline-flex items-center gap-1 rounded-full border border-base px-2 py-0.5 text-[11px] transition ${

@@ -16,11 +16,10 @@ def verify_password(plain: str, hashed: str) -> bool:
     except Exception:
         return False
 
-# ——— token JWT ———
 def create_access_token(
     subject: str,
     secret_key: str,
-    expires_minutes: int = 60 * 24 * 7,  # 7 dni
+    expires_minutes: int = 60 * 24 * 7,  # 7 days
     algorithm: str = "HS256",
     extra: Optional[Dict[str, Any]] = None,
 ) -> str:

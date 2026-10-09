@@ -1,3 +1,4 @@
+"""Thread-safe in-memory chat session store with TTL expiry and LRU eviction."""
 from __future__ import annotations
 
 import logging
@@ -40,17 +41,16 @@ class _SessionData:
         self.followups: List[str] = []
         self.last_top3: List[str] = []
         self.last_seen: float = time.monotonic()
-        # wszystkie zadane pytania uzupełniające (żeby nie pytać drugi raz)
+        # every follow-up ever asked, so none is repeated
         self.asked: Set[str] = set()
-        # ile pytań uzupełniających zadaliśmy w tej sesji
         self.followup_count: int = 0
-        # użytkownik raz napisał "to wszystko" przy zbyt małej liczbie objawów
+        # user already said "that's all" once with too few symptoms
         self.stop_warned: bool = False
-        # cache predykcji: (wektor cech, k, wynik)
+        # prediction cache: (feature vector, k, result)
         self.last_pred: Optional[Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]] = None
-        # id zalogowanego użytkownika, który pierwszy użył sesji
+        # id of the first logged-in user to use the session
         self.owner: Optional[int] = None
-        # objawy spoza modelu (np. światłowstręt), etykiety PL: do opisu i oceny pilności
+        # unmodeled symptoms (Polish labels), used for the description and urgency only
         self.extra: List[str] = []
 
 
@@ -62,13 +62,12 @@ class SessionStore:
     ) -> None:
         self._ttl: int = int(ttl_seconds if ttl_seconds is not None else SESSION_STORE_TTL_SECONDS)
         self._max: int = int(max_sessions if max_sessions is not None else SESSION_STORE_MAX_SESSIONS)
-        # OrderedDict, żeby tanio odsuwać najstarsze przy LRU
+        # OrderedDict makes LRU eviction of the oldest entry cheap
         self._data: "OrderedDict[str, _SessionData]" = OrderedDict()
         self._lock = threading.RLock()
         self._janitor_thread: threading.Thread | None = None
         self._janitor_stop = threading.Event()
 
-    # ===== Janitor =====
     def start_janitor(self, interval_seconds: int = 300) -> None:
         if self._janitor_thread and self._janitor_thread.is_alive():
             return
@@ -79,7 +78,7 @@ class SessionStore:
                     self._sweep_expired()
                 except Exception:
                     log.exception("Session janitor sweep error")
-                # czekaj z możliwością wczesnego wybudzenia (na shutdown)
+                # Event.wait so shutdown can wake the loop early
                 self._janitor_stop.wait(timeout=interval_seconds)
 
         t = threading.Thread(target=_loop, name="session-store-janitor", daemon=True)
@@ -107,26 +106,23 @@ class SessionStore:
         return removed
 
     def _evict_if_needed(self) -> None:
-        # zakładamy, że trzymamy lock z zewnątrz
+        # caller must hold the lock
         while len(self._data) > self._max:
-            sid, _ = self._data.popitem(last=False)  # FIFO/LRU najstarszy
+            sid, _ = self._data.popitem(last=False)  # least recently used
             log.debug("SessionStore LRU evict: %s", sid)
 
-    # ===== Internal =====
     def _get_or_create(self, session_id: str) -> _SessionData:
-        # pod lockiem
+        # caller must hold the lock
         s = self._data.get(session_id)
         if s is None:
             s = _SessionData()
             self._data[session_id] = s
             self._evict_if_needed()
         else:
-            # bumpnij na koniec OrderedDict (LRU)
             self._data.move_to_end(session_id)
         s.last_seen = time.monotonic()
         return s
 
-    # ===== API publiczne =====
     def exists(self, session_id: str) -> bool:
         with self._lock:
             return session_id in self._data
@@ -140,12 +136,10 @@ class SessionStore:
         with self._lock:
             self._data.clear()
 
-    # === Historia ===
     def get_history(self, session_id: str) -> List[Dict[str, str]]:
         with self._lock:
             s = self._get_or_create(session_id)
-            # zwracamy referencję — dla kompatybilności z istniejącym kodem,
-            # ale konsumenci nie powinni jej mutować bez locka.
+            # returns the live list for backward compatibility; do not mutate it without the lock
             return s.history
 
     def get_recent_history(self, session_id: str, max_messages: int = 8) -> List[Dict[str, str]]:
@@ -153,9 +147,8 @@ class SessionStore:
             s = self._get_or_create(session_id)
             return list(s.history[-max_messages:]) if max_messages > 0 else list(s.history)
 
-    # === Objawy ===
     def get_symptoms(self, session_id: str) -> Set[str]:
-        """Zwraca KOPIĘ zbioru objawów (zmiany tylko przez metody store'a)."""
+        """Return a COPY of the symptom set; mutate only through store methods."""
         with self._lock:
             s = self._get_or_create(session_id)
             return set(s.symptoms)
@@ -195,7 +188,7 @@ class SessionStore:
         with self._lock:
             s = self._get_or_create(session_id)
             s.symptoms = {str(x).strip().lower() for x in (items or []) if x}
-            s.negated -= s.symptoms  # potwierdzony objaw przestaje być zaprzeczony
+            s.negated -= s.symptoms  # a confirmed symptom is no longer negated
 
     def replace_symptoms(self, session_id: str, items: Iterable[str] | None) -> None:
         self.set_symptoms(session_id, items)
@@ -205,7 +198,6 @@ class SessionStore:
             s = self._get_or_create(session_id)
             s.symptoms.clear()
 
-    # === Wiadomości ===
     def append_user(self, session_id: str, content: str) -> None:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -222,7 +214,6 @@ class SessionStore:
             s = self._get_or_create(session_id)
             return s.last_assistant
 
-    # === Stop ===
     def set_stopped(self, session_id: str, value: bool = True) -> None:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -233,7 +224,6 @@ class SessionStore:
             s = self._get_or_create(session_id)
             return s.stopped
 
-    # === Follow-up Tak/Nie ===
     def set_pending_symptom(self, session_id: str, feat_en: Optional[str]) -> None:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -249,21 +239,19 @@ class SessionStore:
             s = self._get_or_create(session_id)
             return s.pending_symptom
 
-    # === Negacje ===
     def add_negated_symptom(self, session_id: str, feat_en: str) -> None:
         with self._lock:
             s = self._get_or_create(session_id)
             key = (feat_en or "").strip().lower()
             if key:
                 s.negated.add(key)
-                s.symptoms.discard(key)  # zaprzeczony objaw nie może jednocześnie być potwierdzony
+                s.symptoms.discard(key)  # a symptom cannot be both negated and confirmed
 
     def get_negated(self, session_id: str) -> Set[str]:
         with self._lock:
             s = self._get_or_create(session_id)
-            return set(s.negated)  # kopia, nie pozwalamy mutować z zewnątrz
+            return set(s.negated)
 
-    # === Anti-loop (ostatnie follow-upy) ===
     def mark_followup_asked(self, session_id: str, feat_en: str, keep_last: int = 5) -> None:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -274,7 +262,7 @@ class SessionStore:
             s.followup_count += 1
             arr = s.followups
             arr.append(f)
-            # deduplikacja z zachowaniem kolejności + przycięcie
+            # dedupe keeping the latest occurrence, then trim to keep_last
             seen: Set[str] = set()
             dedup: List[str] = []
             for x in reversed(arr):
@@ -305,9 +293,9 @@ class SessionStore:
 
     def reset_flow(self, session_id: str) -> None:
         """
-        Pacjent zaczyna od nowa (np. "Wyczyść wszystko"): zerujemy stan dopytywania i historię.
-        Historia idzie do oceny pilności i opisu LLM, więc stare wpisy (np. "gorączka 40 od 2 tygodni")
-        zawyżałyby nową ocenę.
+        Patient starts over ("clear all"): reset follow-up state and history.
+        History feeds urgency scoring and the LLM description, so stale entries
+        (e.g. a high fever for 2 weeks) would inflate the new assessment.
         """
         with self._lock:
             s = self._get_or_create(session_id)
@@ -324,9 +312,8 @@ class SessionStore:
             s.last_pred = None
             s.extra.clear()
 
-    # === Objawy spoza modelu (services/unmodeled_symptoms.py) ===
     def update_extra(self, session_id: str, present: Iterable[str], negated: Iterable[str] = ()) -> List[str]:
-        """Dodaje/usuwa etykiety; zwraca te, które są nowe w tej sesji."""
+        """Add/remove unmodeled symptom labels (services/unmodeled_symptoms.py); return the newly added ones."""
         with self._lock:
             s = self._get_or_create(session_id)
             new = [x for x in (present or []) if x and x not in s.extra]
@@ -346,7 +333,6 @@ class SessionStore:
             s = self._get_or_create(session_id)
             return bool(s.stop_warned)
 
-    # === Cache predykcji ===
     def get_last_pred(self, session_id: str) -> Optional[Tuple[Tuple[int, ...], int, List[Dict[str, Any]]]]:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -357,12 +343,11 @@ class SessionStore:
             s = self._get_or_create(session_id)
             s.last_pred = (tuple(vec), int(k), [dict(d) for d in top])
 
-    # === Właściciel sesji ===
     def claim_owner(self, session_id: str, user_id: Optional[int]) -> bool:
         """
-        Pierwszy zalogowany użytkownik "przejmuje" sesję. Zwraca False, jeśli
-        sesja należy już do INNEGO zalogowanego użytkownika.
-        Anonimowe żądania (user_id=None) nie zmieniają właściciela.
+        The first logged-in user claims the session. Returns False if it already
+        belongs to a DIFFERENT logged-in user.
+        Anonymous requests (user_id=None) never change the owner.
         """
         with self._lock:
             s = self._get_or_create(session_id)
@@ -373,7 +358,6 @@ class SessionStore:
                 return True
             return s.owner == int(user_id)
 
-    # === Top-3 ===
     def get_last_top3(self, session_id: str) -> List[str]:
         with self._lock:
             s = self._get_or_create(session_id)
@@ -384,7 +368,6 @@ class SessionStore:
             s = self._get_or_create(session_id)
             s.last_top3 = list(names_en or [])
 
-    # === Diagnostyka ===
     def stats(self) -> Dict[str, Any]:
         with self._lock:
             return {

@@ -216,9 +216,9 @@ def _calibration_csv_available() -> bool:
 
 def _warn_if_trained_on_other_data() -> None:
     """
-    Kalibracja ma sens tylko na danych, których model nie widział przy treningu.
-    Jeśli model był trenowany na innym pliku niż obecny DATA_CSV (np. na pełnym
-    zbiorze, który zawiera też calibration.csv), ostrzegamy.
+    Calibration is only meaningful on data the model did not see in training.
+    Warn when the model was trained on a file other than the current DATA_CSV
+    (e.g. the full dataset that also contains calibration.csv).
     """
     try:
         with open(RIVER_META_PATH, "r", encoding="utf-8") as f:
@@ -237,16 +237,14 @@ def _warn_if_trained_on_other_data() -> None:
 
 class RiverTemperatureCalibrator:
     """
-    Kalibracja OvR -> rozkład wieloklasowy. Dla każdej klasy bierzemy surowy wynik
-    klasyfikatora binarnego z_c (logit), odejmujemy część "priora" (wynik dla pustego
-    wejścia, czyli intercept) i robimy softmax z temperaturą:
+    Turns OvR scores into a multiclass distribution. For each class take the raw binary
+    classifier score z_c (logit), subtract part of the "prior" (score for an empty input,
+    i.e. the intercept) and apply a temperature softmax:
 
         p = softmax((z - lam * z_base) / T)
 
-    Oba parametry (lam, T) dobieramy na odłożonym zbiorze kalibracyjnym (minimum NLL)
-    i DOKŁADNIE tę samą transformację stosujemy przy predykcji. Wcześniej predykcja
-    używała innego lam (zależnego od liczby objawów) i dodatkowego "wyostrzania",
-    więc wyznaczone T nie odpowiadało temu, co widział użytkownik.
+    Both lam and T are fitted on a held-out calibration set (minimum NLL), and prediction
+    must apply EXACTLY the same transform, otherwise the fitted T does not match what users see.
     """
 
     LAM_GRID = (0.0, 0.25, 0.5, 0.75, 1.0)
@@ -285,7 +283,7 @@ class RiverTemperatureCalibrator:
         return best_T, best_loss
 
     def fit_scores(self, Z: np.ndarray, z_base: np.ndarray, y_idx: np.ndarray) -> Tuple[float, float]:
-        """Z: surowe wyniki (N x K), z_base: wyniki dla pustego wejścia (K,), y_idx: klasy."""
+        """Z: raw scores (N x K), z_base: empty-input scores (K,), y_idx: true class indices."""
         best = (1.0, 1.0, float("inf"))
         for lam in self.LAM_GRID:
             T, loss = self._best_T(Z - lam * z_base[None, :], y_idx)
@@ -310,7 +308,7 @@ class RiverTemperatureCalibrator:
             return None
         payload = joblib.load(path)
         if int(payload.get("version", 1)) < 2:
-            # stary kalibrator był liczony na innej transformacji niż predykcja
+            # v1 calibrators were fitted on a different transform than prediction uses
             log.warning("[River][Cal] Stary format kalibratora - zostanie wyznaczony ponownie.")
             return None
         cal = cls(T=float(payload.get("T", 1.0)), classes=list(payload.get("classes", [])),
@@ -326,9 +324,9 @@ class RiverManager:
         self.calibrator: Optional[RiverTemperatureCalibrator] = None
         self._vec_template: Optional[np.ndarray] = None
         self._feat_index: Optional[Dict[str, int]] = None
-        self._forced_features: List[str] = []  # wymuszone przez set_features()
-        self._base_proba: Optional[Dict[str, Any]] = None  # cache wyników dla pustego wejścia
-        # Chroni model przed równoczesnym uczeniem (router /river) i predykcją (czat).
+        self._forced_features: List[str] = []  # forced by set_features()
+        self._base_proba: Optional[Dict[str, Any]] = None  # cached empty-input scores
+        # Guards the model against concurrent learning (/river router) and prediction (chat).
         self.lock = threading.RLock()
 
     def set_features(self, feats: Optional[List[str]]) -> None:
@@ -342,8 +340,7 @@ class RiverManager:
     def _new_model(self) -> OneVsRestClassifier:
         log.info("[River][Model] Start: inicjalizacja modelu i optymalizatora")
         t0 = time.time()
-        # river nazywa ten optymalizator FTRLProximal (wcześniej szukaliśmy nieistniejącego
-        # "FTRL", więc zawsze wpadał AdaGrad)
+        # river names this optimizer FTRLProximal (there is no optim.FTRL)
         if hasattr(optim, "FTRLProximal"):
             opt = optim.FTRLProximal(alpha=RIVER_ALPHA, beta=RIVER_BETA, l1=RIVER_L1, l2=RIVER_L2)
             log.info("[River][Model] Używam optim.FTRLProximal (alpha=%s beta=%s l1=%s l2=%s).",
@@ -395,8 +392,8 @@ class RiverManager:
                 v[0, idx] = 1.0
         return v
 
-    # ───────────── surowe wyniki OvR (logity klasyfikatorów binarnych) ─────────────
     def _raw_scores(self, x: Dict[str, int], classes: List[str]) -> np.ndarray:
+        # raw OvR scores (logits of the per-class binary classifiers)
         clfs = self.model.classifiers  # type: ignore[union-attr]
         out = np.empty(len(classes), dtype=np.float64)
         for j, c in enumerate(classes):
@@ -408,13 +405,13 @@ class RiverManager:
         return out
 
     def _base_scores(self, classes: List[str]) -> np.ndarray:
-        """Wyniki dla pustego wejścia (intercepty) - cache, zerowany po każdym uczeniu."""
+        """Scores for an empty input (intercepts); cached, reset after every learning step."""
         key = tuple(classes)
         if self._base_proba is None or self._base_proba.get("key") != key:
             self._base_proba = {"key": key, "z": self._raw_scores({}, classes)}
         return self._base_proba["z"]
 
-    def _baseline_proba(self) -> Dict[str, float]:  # zgodność wsteczna
+    def _baseline_proba(self) -> Dict[str, float]:  # kept for backward compatibility
         classes = self._current_classes()
         if self.model is None or not classes:
             return {}
@@ -422,7 +419,7 @@ class RiverManager:
         return {c: float(1.0 / (1.0 + np.exp(-v))) for c, v in zip(classes, z)}
 
     def _scores_for_frame(self, df: pd.DataFrame, label: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-        """Surowe wyniki dla wszystkich wierszy CSV (z postępem). Zwraca (Z, y_idx, classes)."""
+        """Raw scores for all CSV rows, with progress logging. Returns (Z, y_idx, classes)."""
         classes = self._current_classes()
         cidx = {c: i for i, c in enumerate(classes)}
         feats = [f for f in self.features if f in df.columns]
@@ -450,7 +447,7 @@ class RiverManager:
         return df
 
     def calibrate(self, csv_path: Optional[str] = None, limit: Optional[int] = None) -> float:
-        """Wyznacza (lam, T) na odłożonym zbiorze kalibracyjnym (nie na treningu ani teście)."""
+        """Fit (lam, T) on the held-out calibration set (never on train or test data)."""
         if self.model is None or not self.features:
             raise RuntimeError("Najpierw uruchom train().")
         path = csv_path
@@ -484,7 +481,7 @@ class RiverManager:
         return cal.T
 
     def evaluate(self, csv_path: str, limit: Optional[int] = None) -> Dict[str, Any]:
-        """Metryki trafności i kalibracji na wskazanym CSV (np. test.csv)."""
+        """Accuracy and calibration metrics on the given CSV (e.g. test.csv)."""
         df = self._read_eval_csv(csv_path, limit)
         with self.lock:
             Z, y_idx, classes = self._scores_for_frame(df, "River/ewaluacja")
@@ -498,9 +495,9 @@ class RiverManager:
 
     def _learn_frame(self, df: pd.DataFrame, label: str) -> int:
         """
-        Jedno przejście uczenia online po wierszach (kolejność losowa, stały seed).
-        Wejście rzadkie: tylko obecne objawy (jak przy predykcji), co jest ~50x
-        szybsze niż słownik z 412 zerami i nie zmienia wyników predykcji.
+        One online learning pass over the rows (random order, fixed seed).
+        Sparse input with only present symptoms (as in prediction) is ~50x faster
+        than a dict with 412 zeros and does not change predictions.
         """
         feats = list(self.features)
         X = df.reindex(columns=feats, fill_value=0).to_numpy(dtype=np.uint8)
@@ -517,13 +514,13 @@ class RiverManager:
 
     def _batch_warm_start(self, df: pd.DataFrame, label: str) -> int:
         """
-        Start River od zera: ten sam model (OneVsRest + regresja logistyczna dla każdej klasy),
-        ale wagi dopasowane kilkoma epokami uczenia paczkami (Adam) zamiast jednego przejścia
-        online. Jedno przejście FTRL zostawiało model niedouczony (Top-1 87% zamiast ~90%).
+        Cold start for River: the same model (OneVsRest + per-class logistic regression),
+        but weights are fitted with a few epochs of mini-batch Adam instead of a single
+        online pass. A single FTRL pass left the model underfit (Top-1 87% instead of ~90%).
 
-        Funkcja kosztu: średnia ważona sum binarnych entropii krzyżowych (OvR) + L2.
-        Potem wagi trafiają do zwykłych obiektów River z optymalizatorem SGD, więc dalsze
-        uczenie online (train_one, douczanie z CSV) działa jak wcześniej.
+        Loss: weighted mean of summed binary cross-entropies (OvR) + L2.
+        The weights are then copied into regular River objects with an SGD optimizer, so
+        further online learning (train_one, CSV updates) works unchanged.
         """
         feats = list(self.features)
         X = df.reindex(columns=feats, fill_value=0).to_numpy(dtype=np.float32)
@@ -557,8 +554,8 @@ class RiverManager:
                 z = xb @ W + b
                 p = 1.0 / (1.0 + np.exp(-np.clip(z, -30, 30)))
                 p_true = p[np.arange(len(idx)), y[idx]].copy()
-                g = p                                           # liczone w miejscu (oszczędza pamięć)
-                g[np.arange(len(idx)), y[idx]] -= 1.0          # dL/dz dla BCE (OvR)
+                g = p                                           # computed in place (saves memory)
+                g[np.arange(len(idx)), y[idx]] -= 1.0          # dL/dz for BCE (OvR)
                 g *= (wb / len(idx))[:, None]
                 gW = xb.T @ g + 2.0 * l2 * W
                 gb = g.sum(0)
@@ -605,7 +602,7 @@ class RiverManager:
                         "[River][Train] Zbiór cech artefaktów różni się od XGB - retrain. "
                         "missing=%d extra=%d", len(missing), len(extra),
                     )
-                    model = None  # wymuś bootstrap
+                    model = None  # force bootstrap
                 else:
                     self.model = model
                     self.features = list(self._forced_features)
@@ -623,7 +620,6 @@ class RiverManager:
                 self._base_proba = None
                 log.info("[River][Train] Artefakty istnieją – pomijam bootstrap.")
         if self.model is None:
-            # bootstrap
             log.info("[River][Train] Bootstrap: wczytywanie danych i inicjalizacja modelu")
             df = _load_train_dataframe()
 
@@ -645,7 +641,7 @@ class RiverManager:
             _save_artifacts(self.model, self.features)  # type: ignore
             self._prepare_vector_template()
             self.warmup()
-            self._base_proba = None  # reset wyników bazowych po uczeniu
+            self._base_proba = None  # base scores change after learning
             log.info("[River][Train] Bootstrap ukończony w %s (N=%d, D=%d).", fmt_duration(time.time() - t0), n, len(self.features))
 
         self.calibrator = self._load_calibrator()
@@ -694,7 +690,7 @@ class RiverManager:
 
         _save_artifacts(self.model, self.features)  # type: ignore
         self.warmup()
-        self._base_proba = None  # reset priory po douczeniu
+        self._base_proba = None  # base scores change after learning
         log.info("[River][INC] Doleczono %d rekordów w %.2fs.", n, time.time() - t0)
 
         try:
@@ -719,11 +715,10 @@ class RiverManager:
         if need == 0:
             return {}, 0
 
-        # dict nazw cech
+        # accepts a {feature: 0/1} dict, a set/tuple of feature names, or a 0/1 vector
         if isinstance(vec, dict):
             x = {f: int(bool(v)) for f, v in vec.items() if f in set(self.features) and int(bool(v)) == 1}
             return x, len(x)
-        # set/tuple nazw
         if isinstance(vec, (set, tuple)) and (len(vec) and isinstance(next(iter(vec)), str)):
             x = {f: 1 for f in vec if f in set(self.features)}
             return x, len(x)
@@ -758,22 +753,20 @@ class RiverManager:
         if self.model is None or not self.features:
             raise RuntimeError("Model/features niegotowe – wywołaj train().")
 
-        # 1) zbuduj x + liczba aktywnych
         x, active = self._x_from_vec(vec)
 
-        # jeżeli brak aktywnych cech - nie zwracaj stale tych samych priors
+        # no active features: return nothing instead of the same constant priors
         if active == 0:
             log.info("[River][Predict] Brak aktywnych cech → zwracam pustą listę (unikam stałych priors).")
             return []
 
-        # debug: pokaż kilka aktywnych cech
         try:
             dbg_feats = list(x.keys())[:12]
             log.debug("[River][Predict] active=%d feats=%s", active, dbg_feats)
         except Exception:
             pass
 
-        # 2) surowe wyniki klasyfikatorów OvR + kalibracja identyczna jak przy jej wyznaczaniu
+        # raw OvR scores + exactly the transform the calibrator was fitted with
         classes = self._current_classes()
         if not classes:
             log.info("[River][Predict] active=%d | classes=0 | %.3fs", active, time.perf_counter() - t0)
@@ -785,10 +778,10 @@ class RiverManager:
             probs = cal.transform(z[None, :], z_base)[0]
             lam, T = cal.lam, cal.T
         else:
-            lam, T = 0.5, 1.0  # bez kalibratora: neutralne ustawienia
+            lam, T = 0.5, 1.0  # no calibrator: neutral defaults
             probs = _softmax(((z - lam * z_base) / T)[None, :])[0]
 
-        # 5) deterministyczny tie-break (bez zmiany wartości)
+        # deterministic tie-break via a tiny per-class jitter (reported probabilities unchanged)
         eps = 1e-12
         jitter = np.array([
             (int(hashlib.md5(c.encode("utf-8")).hexdigest(), 16) % 65535) / 65535.0 * eps
@@ -796,8 +789,7 @@ class RiverManager:
         ], dtype=float)
         score_for_sort = probs + jitter
 
-        # 6) Top-K
-        k = int(min(max(k, 1), len(probs)))
+        k =int(min(max(k, 1), len(probs)))
         idxs = heapq.nlargest(k, range(len(probs)), key=lambda i: score_for_sort[i])
         res = [{"diagnosis_en": str(classes[i]), "probability": float(probs[i])} for i in idxs]
 
@@ -916,8 +908,8 @@ class RiverIncrementalTrainer:
         self.mgr.warmup()
         self.mgr._base_proba = None
 
-        # Pełna re-kalibracja to przejście po całym calibration.csv (dziesiątki sekund),
-        # więc po pojedynczym kroku robimy ją tylko na żądanie.
+        # Full recalibration scans all of calibration.csv (tens of seconds),
+        # so after a single step it runs only on request.
         try:
             if recalibrate and _calibration_csv_available():
                 log.info("[River][Cal][Trainer] Re-kalibracja po train_one")

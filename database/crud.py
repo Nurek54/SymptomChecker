@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from .models import User, Conversation, Message, Extraction, TriageResult
 from .security import hash_password, verify_password
 
-# ───────────────────────────── Helpers (tytułowanie) ─────────────────────────────
+# Title helpers
 _GENERIC_TITLES = {
     "rozmowa", "nowa rozmowa", "czat", "chat", "conversation", "new chat",
 }
@@ -59,7 +59,7 @@ def _normalize_title(s: str, max_len: int = 120) -> str:
         s = s[: max_len - 1].rstrip() + "…"
     return s
 
-# ───────────────────────────── USERS ─────────────────────────────
+# Users
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(User.email == (email or "").lower().strip()).first()
 
@@ -98,11 +98,9 @@ def create_user(
     date_of_birth: Optional[date] = None,
     auth_provider: str = "local",
     provider_sub: Optional[str] = None,
-    **_ignore,  # ← ignorujemy nieznane parametry (np. email_verified, avatar_url)
+    **_ignore,  # extra provider fields (e.g. email_verified, avatar_url) are ignored
 ) -> User:
-    """
-    Tworzy użytkownika. Dla kont OAuth podaj password=None (password_hash będzie NULL).
-    """
+    """Create a user. For OAuth accounts pass password=None (password_hash stays NULL)."""
     u = User(
         username=username.strip(),
         email=email.lower().strip(),
@@ -151,7 +149,7 @@ def update_user_profile(
     db.add(user); db.flush()
     return user
 
-# ───────────────────────────── CONVERSATIONS / MESSAGES ─────────────────────────────
+# Conversations and messages
 def get_or_create_conversation(db: Session, user_id: int, session_id: str, title_hint: str) -> Conversation:
     c = db.query(Conversation).filter(
         Conversation.user_id == user_id,
@@ -196,7 +194,7 @@ def delete_conversation(db: Session, user_id: int, conv_id: int) -> bool:
     db.delete(conv)
     return True
 
-# ───────────────────────────── SMART TITLING ─────────────────────────────
+# Smart titling
 def suggest_conversation_title(db: Session, conv_id: int) -> str:
     conv = db.get(Conversation, conv_id)
     if not conv:
@@ -271,7 +269,7 @@ def smart_update_conversation_title(db: Session, conv_id: int, *, force: bool = 
 
     return current or "Rozmowa"
 
-# ───────────────────────────── EXTRACTED SYMPTOMS / TRIAGE ─────────────────────────────
+# Extracted symptoms and triage
 def replace_extractions(db: Session, conv_id: int, items: Iterable[dict]) -> None:
     db.execute(delete(Extraction).where(Extraction.conversation_id == conv_id))
     for it in items or []:

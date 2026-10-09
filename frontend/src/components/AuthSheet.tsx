@@ -38,8 +38,8 @@ export default function AuthSheet() {
 
   useEffect(() => setMode(authMode), [authMode]);
 
-  // fokus na polu email przy każdym otwarciu (autoFocus działał tylko raz, przy montowaniu,
-  // i ustawiał fokus w niewidocznym oknie)
+  // Focus the email field on every open (autoFocus ran only once on mount,
+  // focusing the still-hidden dialog)
   const emailRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (!authOpen) return;
@@ -80,15 +80,13 @@ export default function AuthSheet() {
   };
 
   return (
-    // inert: zamknięte okno nie przyjmuje fokusu klawiszem Tab (wcześniej było tylko przezroczyste)
+    // inert keeps the closed (merely transparent) dialog out of Tab focus order
     <div className={`fixed inset-0 z-50 ${authOpen ? "" : "pointer-events-none"}`} aria-hidden={!authOpen} inert={!authOpen}>
-      {/* Backdrop */}
       <div
         onClick={closeAuth}
         className={`absolute inset-0 bg-black/40 transition-opacity ${authOpen ? "opacity-100" : "opacity-0"}`}
       />
 
-      {/* Dialog */}
       <div
         role="dialog"
         aria-modal="true"
@@ -103,10 +101,8 @@ export default function AuthSheet() {
             "flex flex-col",
           ].join(" ")}
         >
-          {/* Pasek akcentu */}
           <div className="h-1 w-full rounded-t-2xl bg-gradient-to-r from-emerald-400 via-sky-400 to-violet-400" />
 
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-base bg-card px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-lg border border-base bg-input">
@@ -125,7 +121,6 @@ export default function AuthSheet() {
             </button>
           </div>
 
-          {/* Tryb */}
           <div className="px-4 pt-3">
             <div className="inline-flex overflow-hidden rounded-xl border border-base bg-card">
               <button
@@ -151,7 +146,6 @@ export default function AuthSheet() {
             </div>
           </div>
 
-          {/* Formularz */}
           <form onSubmit={submit} className="px-4 pb-4 space-y-3">
             {mode === "register" && (
               <>
@@ -172,7 +166,6 @@ export default function AuthSheet() {
                   </div>
                 </div>
 
-                {/* Opcjonalne dane */}
                 <div className="mt-1">
                   <button
                     type="button"

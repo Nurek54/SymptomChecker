@@ -4,19 +4,17 @@ import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-# ── Ścieżki importów ──────────────────────────────────────────────────────────
-# Cały backend używa krótkich importów (config, core, services, models, api)
-# oraz pakietu "database" z katalogu głównego. Ustawiamy oba katalogi na
-# sys.path ZANIM zaimportujemy cokolwiek z projektu, dzięki czemu aplikacja
-# startuje tak samo z "python main.py", "uvicorn app:create_app --factory"
-# (w backend/) oraz "uvicorn backend.app:create_app --factory" (w katalogu głównym).
+# The backend uses short imports (config, core, services, models, api) plus the
+# top-level "database" package. Both dirs go on sys.path BEFORE any project import,
+# so the app starts the same way via "python main.py", "uvicorn app:create_app --factory"
+# (from backend/) and "uvicorn backend.app:create_app --factory" (from the repo root).
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 for _p in (str(PROJECT_ROOT), str(BASE_DIR)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-# Ścieżki w config.py są względne względem backend/
+# Relative paths (ml/, data/, weights/) assume cwd = backend/.
 os.chdir(BASE_DIR)
 
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
@@ -38,7 +36,6 @@ log = logging.getLogger("symptomchecker.app")
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # === STARTUP ===
         from database.db import engine
         from sqlalchemy import inspect
         from core.startup import StartupManager
@@ -51,20 +48,18 @@ def create_app() -> FastAPI:
         except Exception:
             log.info("🗄️  DB URL: %s", engine.url)
 
-        # 1) Rozgrzej HS256
         try:
             prewarm_auth()
             log.info("🔐 Auth prewarmed (HS256).")
         except Exception as e:
             log.debug("Auth prewarm skipped: %s", e)
 
-        # 2) Reszta startu (modele itp.)
         import time as _time
         from utils import fmt_duration
         t_start = _time.time()
         state: AppState = await StartupManager().run()
 
-        # 3) River
+        # River runs after StartupManager because it reuses the XGB feature order.
         t_river = _time.time()
         log.info("🤖 [ETAP 4/5] Trening/ładowanie River…")
         try:
@@ -86,7 +81,7 @@ def create_app() -> FastAPI:
             state.river = None
             log.exception("River init failed: %s", e)
 
-        # 4) Kalibracja całego ensemble + raport jakości (tylko gdy modele się zmieniły)
+        # Ensemble calibration and quality report (recomputed only when models changed).
         log.info("⚖️ [ETAP 5/5] Kalibracja ensemble i raport jakości…")
         try:
             from services.ensemble_calibration import ensure_ensemble_calibration
@@ -100,7 +95,6 @@ def create_app() -> FastAPI:
 
         yield
 
-        # === SHUTDOWN ===
         try:
             sessions = getattr(state, "sessions", None)
             if sessions and hasattr(sessions, "stop_janitor"):
@@ -114,7 +108,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[FRONTEND_ORIGIN] if FRONTEND_ORIGIN else ["http://localhost:3000"],
@@ -126,7 +119,6 @@ def create_app() -> FastAPI:
     from api.routers.errors import validation_exception_handler
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-    # === Routery ===
     from api.routers.chat import router as chat_router
     from api.routers.health import router as health_router
     from api.routers.auth import router as auth_router

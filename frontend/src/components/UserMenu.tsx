@@ -3,8 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
-import PrepOverlay from "./PrepOverlay"; // ← istniejący overlay 1:1
-import HowToOverlay from "./HowToOverlay"; // ← NEW: overlay z instrukcją
+import PrepOverlay from "./PrepOverlay";
+import HowToOverlay from "./HowToOverlay";
 import {
   LogOut,
   ScrollText,
@@ -16,10 +16,9 @@ import {
   Calendar,
   PencilLine,
   ClipboardList,
-  BookOpenText, // ← NEW ikona dla „Jak używać”
+  BookOpenText,
 } from "lucide-react";
 
-/* —————————————————— Mini spinner —————————————————— */
 function MiniSpinner() {
   return (
     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
@@ -33,10 +32,10 @@ export default function UserMenu() {
   const { user, openAuth, logout, loading, updateProfile } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
-  const [showPrep, setShowPrep] = React.useState(false); // ← istniejący
-  const [showGuide, setShowGuide] = React.useState(false); // ← NEW: overlay „Jak używać”
+  const [showPrep, setShowPrep] = React.useState(false);
+  const [showGuide, setShowGuide] = React.useState(false);
 
-  // formularz ustawień
+  // Settings form
   const [username, setUsername] = React.useState(user?.username ?? "");
   const [firstName, setFirstName] = React.useState(user?.first_name ?? "");
   const [lastName, setLastName] = React.useState(user?.last_name ?? "");
@@ -45,7 +44,6 @@ export default function UserMenu() {
   const [err, setErr] = React.useState<string | null>(null);
   const [ok, setOk] = React.useState<string | null>(null);
 
-  /* Sync user fields on change */
   React.useEffect(() => {
     setUsername(user?.username ?? "");
     setFirstName(user?.first_name ?? "");
@@ -53,7 +51,7 @@ export default function UserMenu() {
     setDob(user?.date_of_birth ?? "");
   }, [user]);
 
-  /* Esc zamyka (drawer lub podwidok) */
+  /* Esc closes the settings subview first, then the drawer */
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -67,7 +65,6 @@ export default function UserMenu() {
 
   if (loading && !user) return <span className="text-xs text-muted">…</span>;
 
-  // ——— Niezalogowany ———
   if (!user) {
     return (
       <button
@@ -112,7 +109,7 @@ export default function UserMenu() {
 
   return (
     <>
-      {/* — Trigger — */}
+      {/* Trigger */}
       <button
         onClick={() => setOpen((val) => !val)}
         title={user.username}
@@ -121,7 +118,6 @@ export default function UserMenu() {
         aria-controls="user-drawer"
         className="group relative inline-flex items-center gap-2 rounded-full border border-base bg-card p-1 sm:pr-3 text-sm shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
       >
-        {/* delikatny aurora-shine w tle przy hover */}
         <span
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-20"
@@ -143,7 +139,7 @@ export default function UserMenu() {
         <span className="hidden max-w-[140px] truncate sm:inline">{user.username}</span>
       </button>
 
-      {/* — Drawer — */}
+      {/* Drawer */}
       <div
         id="user-drawer"
         className={`fixed right-0 top-0 z-40 h-full w-[360px] max-w-[92vw] transform border-l border-base bg-card/85 backdrop-blur-md shadow-2xl transition-transform ${
@@ -154,7 +150,6 @@ export default function UserMenu() {
         aria-label="Menu użytkownika"
         inert={!open}
       >
-        {/* Header drawer-a */}
         <div className="flex flex-col">
           <div className="flex items-center gap-2 border-b border-base bg-card/80 px-3 py-2">
             {showSettings ? (
@@ -174,7 +169,6 @@ export default function UserMenu() {
             </div>
           </div>
 
-          {/* Aurora accent bar */}
           <div className="relative h-[3px] w-full overflow-hidden">
             <div
               className="h-full w-full"
@@ -195,10 +189,8 @@ export default function UserMenu() {
           </div>
         </div>
 
-        {/* Treść */}
         {!showSettings ? (
           <div className="space-y-3 p-3">
-            {/* Karta użytkownika */}
             <div className="relative overflow-hidden rounded-2xl border border-base bg-card">
               <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-sky-400/20 to-violet-400/20" />
               <div className="absolute -right-10 -bottom-10 h-28 w-28 rounded-full bg-gradient-to-br from-emerald-400/20 to-teal-400/20" />
@@ -233,9 +225,7 @@ export default function UserMenu() {
               </div>
             </div>
 
-            {/* Akcje */}
             <nav aria-label="Akcje konta" className="grid gap-2">
-              {/* — Przygotuj opis (istniejące) — */}
               <button
                 onClick={() => {
                   setShowPrep(true);
@@ -256,11 +246,10 @@ export default function UserMenu() {
                 <ChevronRight className="h-4 w-4 opacity-0 transition group-hover:opacity-60" />
               </button>
 
-              {/* — NEW: Jak używać — */}
               <button
                 onClick={() => {
                   setShowGuide(true);
-                  setOpen(false); // domknij drawer dla czystego widoku
+                  setOpen(false); // close the drawer so the guide is unobstructed
                 }}
                 className="group relative flex items-center justify-between rounded-xl border border-base bg-card px-3 py-2 text-sm shadow-sm transition hover:bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
                 aria-haspopup="dialog"
@@ -327,7 +316,7 @@ export default function UserMenu() {
             </nav>
           </div>
         ) : (
-          /* — Ustawienia — */
+          /* Settings view */
           <form onSubmit={saveSettings} className="flex h-[calc(100%-41px)] flex-col gap-3 p-3">
             {err && (
               <div
@@ -425,7 +414,6 @@ export default function UserMenu() {
         )}
       </div>
 
-      {/* Backdrop: bez blur (tylko przyciemnienie) */}
       <div
         onClick={() => {
           setOpen(false);
@@ -437,11 +425,9 @@ export default function UserMenu() {
         aria-hidden="true"
       />
 
-      {/* — Overlays — */}
       <PrepOverlay open={showPrep} onClose={() => setShowPrep(false)} />
       <HowToOverlay open={showGuide} onClose={() => setShowGuide(false)} />
 
-      {/* Keyframes do aurora accent bar (lokalne dla komponentu) */}
       <style jsx>{`
         @keyframes auroraSlide {
           0% { transform: translateX(-100%); }

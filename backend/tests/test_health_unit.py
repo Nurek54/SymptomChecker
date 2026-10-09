@@ -1,4 +1,3 @@
-# tests/test_health_unit.py
 import types
 
 from fastapi import FastAPI

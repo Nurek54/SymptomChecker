@@ -1,17 +1,14 @@
-# backend/services/ensemble_calibration.py
 """
-Kalibracja i ewaluacja całego ensemble (XGB + River).
+Calibration and evaluation of the whole XGB + River ensemble.
 
-Nawet gdy XGB i River są osobno dobrze skalibrowane, ich fuzja w log-przestrzeni
-(średnia geometryczna z wagami) daje rozkład zbyt "płaski" albo zbyt "ostry".
-Dlatego po wytrenowaniu modeli:
-  1) liczymy rozkłady obu modeli na odłożonym zbiorze kalibracyjnym,
-  2) łączymy je DOKŁADNIE tak jak EnsembleTopK (dynamiczne wagi, gating),
-  3) dobieramy temperaturę T_ens (minimum NLL),
-  4) mierzymy XGB, River i ensemble na zbiorze testowym (top1/top3/NLL/ECE/Brier)
-     i zapisujemy wynik w ml/training_report.json.
-Wynik jest cache'owany w ml/ensemble_calibration.json i liczony ponownie tylko
-po zmianie któregokolwiek modelu.
+Even when XGB and River are individually well calibrated, their log-space fusion
+(weighted geometric mean) can be too flat or too sharp. After training we:
+  1) compute both models' distributions on the held-out calibration set,
+  2) fuse them EXACTLY like EnsembleTopK (dynamic weights, gating),
+  3) fit the fusion weight and/or temperature T_ens (minimum NLL),
+  4) evaluate XGB, River and the ensemble on the test set (top1/top3/NLL/ECE/Brier)
+     and write the result to ml/training_report.json.
+The result is cached in ml/ensemble_calibration.json and recomputed only when a model changes.
 """
 from __future__ import annotations
 
@@ -51,7 +48,7 @@ def models_signature() -> str:
     return "|".join(_file_sig(p) for p in (MODEL_PATH, xgb_cal, RIVER_MODEL_PATH, RIVER_CALIB_PATH))
 
 
-# ───────────────────────── fuzja wektorowa (zgodna z EnsembleTopK._fuse) ─────────────────────────
+# Vectorized fusion; must stay in sync with EnsembleTopK._fuse.
 def _conf(P: np.ndarray) -> np.ndarray:
     P = np.clip(P, 0.0, 1.0)
     n_pos = np.maximum((P > 0).sum(1), 2)
@@ -62,7 +59,7 @@ def _conf(P: np.ndarray) -> np.ndarray:
 
 
 def fused_log_scores(Px: np.ndarray, Pr: np.ndarray, ens) -> np.ndarray:
-    """Log-wyniki fuzji (przed temperaturą i normalizacją) dla macierzy rozkładów (N x K)."""
+    """Fused log-scores (before temperature and normalization) for N x K distribution matrices."""
     cx, cr = _conf(Px), _conf(Pr)
     raw_x = ens.wx_base * (0.5 + cx)
     raw_r = ens.wr_base * (0.5 + cr)
@@ -95,12 +92,11 @@ def _best_T(L: np.ndarray, y: np.ndarray) -> Tuple[float, float]:
     return best
 
 
-# ───────────────────────── rozkłady obu modeli dla CSV ─────────────────────────
 def model_distributions_df(state, df: pd.DataFrame, label: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str]]:
     """
-    Skalibrowane rozkłady XGB i River dla wszystkich wierszy ramki (liczone hurtem).
-    Zwraca (Px, Pr, y, classes) w kolejności klas XGB; wiersze z nieznanymi klasami pomijane.
-    Te same transformacje co przy predykcji pojedynczej (predict_topk), tylko szybciej.
+    Calibrated XGB and River distributions for all frame rows, computed in batch.
+    Returns (Px, Pr, y, classes) in XGB class order; rows with unknown classes are dropped.
+    Same transforms as single predictions (predict_topk), just faster.
     """
     xgb_mgr, river = state.xgb, state.river
     df = df.copy()
@@ -123,7 +119,7 @@ def model_distributions_df(state, df: pd.DataFrame, label: str) -> Tuple[np.ndar
         z_base = river._base_scores(r_classes)
     cal = river.calibrator if (river.calibrator and river.calibrator.classes_ == r_classes) else None
     Pr_r = cal.transform(Z, z_base) if cal else _softmax(Z - 0.5 * z_base[None, :])
-    # wyrównanie klas River -> kolejność XGB (brakujące: minimum wiersza, jak w EnsembleTopK)
+    # align River classes to XGB order; missing classes get the row minimum, as in EnsembleTopK
     Pr = np.empty_like(Px, dtype=np.float64)
     Pr[:] = Pr_r.min(1, keepdims=True)
     r_idx = {str(c).lower(): j for j, c in enumerate(r_classes)}
@@ -136,13 +132,13 @@ def model_distributions_df(state, df: pd.DataFrame, label: str) -> Tuple[np.ndar
 
 
 def _model_distributions(state, path: str, label: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Zwraca (Px, Pr, y) dla pliku CSV (kolejność klas XGB)."""
+    """Return (Px, Pr, y) for a CSV file, in XGB class order."""
     Px, Pr, y, _ = model_distributions_df(state, pd.read_csv(path), label)
     return Px, Pr, y
 
 
 def ensemble_distribution(Px: np.ndarray, Pr: np.ndarray, ens, state=None, T: Optional[float] = None) -> np.ndarray:
-    """Rozkład ensemble identyczny z EnsembleTopK._fuse dla trybu zapisanego w state."""
+    """Ensemble distribution identical to EnsembleTopK._fuse for the mode stored in state."""
     mode = str(getattr(state, "ensemble_mode", "heuristic") or "heuristic") if state is not None else "heuristic"
     wx = getattr(state, "ensemble_wx", None) if state is not None else None
     T = float(T if T is not None else (getattr(state, "ensemble_T", 1.0) if state is not None else 1.0) or 1.0)
@@ -160,7 +156,7 @@ def _nll(P: np.ndarray, y: np.ndarray) -> float:
 
 
 def _fit_fusion(Px: np.ndarray, Pr: np.ndarray, y: np.ndarray, ens, mode: str) -> Tuple[Optional[float], float, float]:
-    """Dobiera (waga XGB, temperatura) na zbiorze kalibracyjnym (minimum NLL). Zwraca (wx, T, NLL)."""
+    """Fit (XGB weight, temperature) on the calibration set by minimum NLL. Returns (wx, T, NLL)."""
     if mode == "linear":
         best = (0.5, float("inf"))
         for a in np.linspace(0.0, 1.0, 101):
@@ -182,10 +178,10 @@ def _fit_fusion(Px: np.ndarray, Pr: np.ndarray, y: np.ndarray, ens, mode: str) -
 
 def ensure_ensemble_calibration(state) -> float:
     """
-    Dobiera sposób łączenia XGB + River na zbiorze kalibracyjnym (ENSEMBLE_FUSION: waga XGB
-    i/lub temperatura) i liczy raport na teście. Wynik jest cache'owany w
-    ml/ensemble_calibration.json i liczony ponownie tylko po zmianie któregoś modelu.
-    Ustawia state.ensemble_mode, state.ensemble_wx i state.ensemble_T.
+    Fit the XGB + River fusion (ENSEMBLE_FUSION: XGB weight and/or temperature) on the
+    calibration set and build the test report. Cached in ml/ensemble_calibration.json and
+    recomputed only when a model changes.
+    Sets state.ensemble_mode, state.ensemble_wx and state.ensemble_T.
     """
     from services.ensemble import EnsembleTopK
 

@@ -8,7 +8,7 @@ from .db import Base
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        # unikalność per dostawca OAuth
+        # provider_sub is unique per auth provider
         UniqueConstraint("auth_provider", "provider_sub", name="uq_users_provider_sub_per_provider"),
     )
 

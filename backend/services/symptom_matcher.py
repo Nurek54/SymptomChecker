@@ -1,4 +1,4 @@
-# backend/services/symptom_matcher.py
+"""Rule-based extraction of model symptom features (present and negated) from Polish/English text."""
 from __future__ import annotations
 import os
 import re
@@ -32,21 +32,23 @@ QUESTION_WORDS: Set[str] = {
     "what","which","how","where","when","why","who"
 }
 
+# Stems of questions about the conversation itself (advice, urgency, summary, diagnosis),
+# matched on accent-stripped text; such messages are not symptom reports.
 META_INTENT_PATTERNS: List[re.Pattern] = [
-    re.compile(r"\bzalecen"),                 # zalecenia, zalecenie
-    re.compile(r"\bpilnos"),                  # pilność
+    re.compile(r"\bzalecen"),
+    re.compile(r"\bpilnos"),
     re.compile(r"\bleki\s*(bez\s*recepty|otc)?\b"),
     re.compile(r"\bprofilaktyk"),
-    re.compile(r"\bpodsum"),                  # podsumuj/podsumowanie
-    re.compile(r"\bstres"),                   # streść
+    re.compile(r"\bpodsum"),
+    re.compile(r"\bstres"),
     re.compile(r"\bnajbardziej\s+prawdopodobn"),
     re.compile(r"\bdiagnoz"),
-    re.compile(r"\bocen\b"),                  # oceń
+    re.compile(r"\bocen\b"),
     re.compile(r"\bpowiedz\b"),
     re.compile(r"\bjaka?\s+chorob"),
 ]
 
-# Tokeny nie-medyczne do bramki leksykalnej
+# Non-medical tokens excluded from the lexical gate.
 MED_BLACKLIST_TOKENS = {
     "leki","lek","otc","dawka","dawki","profilaktyka","zalecenia"
 } | GENERIC_SYMPTOM_WORDS | QUESTION_WORDS
@@ -69,7 +71,7 @@ def _canonize(txt: str) -> str:
 def _strip_accents(text: str) -> str:
     if not text:
         return text
-    # "ł" nie rozkłada się w NFD, więc mapujemy go ręcznie (glowa == głowa)
+    # Polish l-with-stroke has no NFD decomposition, so map it manually (so "glowa" matches)
     text = text.replace("ł", "l").replace("Ł", "L")
     return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
 
@@ -82,7 +84,7 @@ _STOP = {
     "mam","mnie","mi","nie","to","jest","są","sa","i","oraz","a","czy","że","ze","w","na","u","z","od","do","się","sie",
     "and","or","the","a","an","of","to","in","on","at","for","with","without","have","has","had"
 } | GENERIC_SYMPTOM_WORDS | QUESTION_WORDS
-MED_WHITELIST = {"bol"}  # 'ból' po kanonizacji
+MED_WHITELIST = {"bol"}  # "pain" after accent stripping; short but always medical
 
 
 def _tokens(txt: str, min_len: int = MIN_TOKEN_LEN) -> List[str]:
@@ -123,10 +125,9 @@ _CONJ_RE = re.compile(r"\s+(?:oraz|albo|lub|i|a także|a takze|plus|and|or)\s+")
 
 def _split_pieces(txt: str) -> List[List[str]]:
     """
-    Dzieli tekst na "kawałki" (granice: , ; . ! ? /) i każdy kawałek na
-    pod-frazy połączone spójnikiem (i, oraz, lub, ...). Informacja, że frazy
-    były połączone spójnikiem, jest potrzebna do przenoszenia negacji:
-    "nie mam gorączki i kaszlu" -> obie frazy zanegowane.
+    Split text into pieces (boundaries: , ; . ! ? /) and each piece into sub-phrases joined
+    by a conjunction (i, oraz, lub, ...). Keeping conjunction-joined phrases together is
+    needed to carry negation: "nie mam goraczki i kaszlu" negates both.
     """
     raw = (txt or "").lower()
     pieces = re.split(r"[,;.!?/\n]+", raw)
@@ -141,7 +142,7 @@ def _split_pieces(txt: str) -> List[List[str]]:
     return out
 
 
-# ───────────── lekki stemmer PL (odmiana: gorączka/gorączki/gorączkę, kaszel/kaszlu/kaszlę) ─────────────
+# Lightweight Polish stemmer for inflection (goraczka/goraczki/goraczke, kaszel/kaszlu).
 _STEM_SUFFIXES = sorted({
     "owalem", "owalam", "owalismy", "owaly", "owala", "owal", "owac",
     "ujesz", "ujemy", "ujac", "uje", "uja", "uj",
@@ -159,7 +160,7 @@ def _stem(tok: str) -> str:
         if t.endswith(suf) and len(t) - len(suf) >= 3:
             t = t[: -len(suf)]
             break
-    # e ruchome: kaszel -> kaszl (kaszlu, kaszlę), dreszcz, ...
+    # Polish mobile "e": kaszel -> kaszl, so it matches kaszlu
     if len(t) >= 5 and t[-2] == "e" and t[-1] not in _VOWELS and t[-3] not in _VOWELS:
         t = t[:-2] + t[-1]
     return t
@@ -169,7 +170,7 @@ def _plain_tokens(txt: str) -> List[str]:
     return _strip_accents(_canonize(txt)).split()
 
 
-# ───────────── negacje ─────────────
+# Negation handling
 _NEG_PRE = {"nie", "bez", "brak", "ani", "zaprzeczam", "nigdy"}
 _NEG_BREAKERS = {"wiem", "pewien", "pewna", "pamietam", "ale", "tylko", "czy", "tez", "rowniez"}
 _NEG_POST_VERBS = {
@@ -185,7 +186,7 @@ _POSITIVE_MARKERS = {
     "mam", "mnie", "mi", "boli", "bola", "czuje", "odczuwam", "ale", "tylko",
     "natomiast", "jest", "sa", "dokucza", "dokuczaja", "pojawil", "pojawila", "pojawilo", "doszedl", "doszla",
 }
-# cały kawałek typu "dziś już nie", "teraz nie mam" -> neguje objawy z poprzedniego kawałka
+# A whole piece like "dzis juz nie" or "teraz nie mam" negates the previous piece's symptoms.
 _RESOLUTION_PIECE = re.compile(
     r"^(?:(?:a|ale|dzis|dzisiaj|teraz|obecnie|juz|to|on|ona|ono)\s+)*nie(?:\s+(?:mam|ma|juz|wystepuje))*$"
 )
@@ -213,9 +214,9 @@ class SymptomMatcher:
     ) -> None:
         self.features: List[str] = [str(f).strip().lower() for f in (features or [])]
         self._feat_set: Set[str] = set(self.features)
-        # Liczba wierszy treningowych na cechę (SymptomStats). Gdy podana:
-        #  - cechy z 0 wierszy są pomijane (model nic o nich nie wie),
-        #  - przy kolizji aliasu ("ból brzucha" -> kilka cech) wygrywa cecha z większą liczbą danych.
+        # Training rows per feature (SymptomStats). When given:
+        #  - features with 0 rows are skipped (the model knows nothing about them),
+        #  - on alias collisions (one alias -> several features) the feature with more data wins.
         self._counts: Optional[Dict[str, int]] = (
             {str(k).strip().lower(): int(v) for k, v in feature_counts.items()} if feature_counts else None
         )
@@ -245,39 +246,38 @@ class SymptomMatcher:
         self.ready = True
 
     def _build_stem_index(self) -> None:
-        """Indeks aliasów po rdzeniach - dopasowanie niezależne od odmiany i szyku."""
+        """Alias index by stems, for matching independent of inflection and word order."""
         self._med_stems: Set[str] = {_stem(t) for t in self._med_tokens} | set(MED_WHITELIST)
         seen: Set[Tuple[str, Tuple[str, ...]]] = set()
         self._stem_index: List[Tuple[str, str, frozenset]] = []
         for alias, feat in self.alias_to_feature.items():
             if _all_generic(alias) or alias in QUESTION_WORDS:
                 continue
-            # przeczenia zostają w aliasie ("nie mam apetytu" != "mam apetyt")
+            # negation words stay in the alias ("nie mam apetytu" != "mam apetyt")
             toks = [t for t in _plain_tokens(alias) if t not in _STOP or t in _NEG_PRE]
             if not toks:
                 continue
             stems = tuple(sorted({_stem(t) for t in toks}))
             if len(stems) == 1 and len(stems[0]) < 4:
-                continue  # zbyt krótki rdzeń ("bol") dawałby fałszywe trafienia
+                continue  # too short a stem ("bol") would cause false hits
             key = (feat, stems)
             if key in seen:
                 continue
             seen.add(key)
             self._stem_index.append((alias, feat, frozenset(stems)))
 
-    # ───────────── cechy "żywe" i kolizje aliasów ─────────────
     def _count(self, f: str) -> int:
         return int(self._counts.get(f, 0)) if self._counts is not None else 0
 
     def is_alive(self, f: str) -> bool:
-        """Czy cecha ma dane treningowe (bez informacji o liczbach: każda znana cecha)."""
+        """True if the feature has training data (every known feature when counts are unavailable)."""
         f = (f or "").strip().lower()
         if f not in self._feat_set:
             return False
         return self._counts is None or self._count(f) > 0
 
     def resolve_labels(self, labels: List[str]) -> Optional[str]:
-        """Z listy etykiet słownika wybiera cechę modelu: żywą, z największą liczbą danych."""
+        """Pick the model feature from dictionary labels: alive, with the most training data."""
         alive = [x for x in labels if self.is_alive(x)]
         if not alive:
             return None
@@ -355,15 +355,15 @@ class SymptomMatcher:
 
             canon = self.resolve_labels(xgb_list)
             if not canon:
-                continue  # wpis wskazuje tylko cechy nieznane modelowi albo bez danych
+                continue  # entry points only to unknown features or features without data
 
             display_pl = pl_label or canon.replace("_", " ")
             self._xgb2pl.setdefault(canon, display_pl)
             self._pl2xgb.setdefault(_canonize(display_pl), canon)
             self._feat_category.setdefault(canon, cat_raw)
 
-            # Ze znanymi liczbami danych aktywujemy tylko wybraną cechę (stare, rzadkie
-            # synonimy z innego źródła danych zaburzałyby wektor). Bez liczb: wszystkie etykiety.
+            # With known counts only the chosen feature is activated (old, rare synonyms from
+            # another data source would distort the vector). Without counts: all labels.
             alts = {canon} if self._counts is not None else ({x for x in xgb_list if self.is_alive(x)} or {canon})
             self._feat2alts.setdefault(canon, set()).update(alts)
 
@@ -393,8 +393,8 @@ class SymptomMatcher:
                     self._alias_keys.append(a_no)
                     self._alias_key_to_feat[a_no] = canon
 
-                # krótkie jednowyrazowe aliasy z polskimi znakami ("lęk"): bez znaków to inne słowo
-                # ("lek" jest na czarnej liście), więc bramkę otwieramy formą z ogonkami
+                # Short one-word aliases with diacritics become another word when stripped
+                # (anxiety vs. "lek" = drug, which is blacklisted), so only the accented form opens the gate
                 if " " not in a and len(a) <= 4 and _has_diacritics(a):
                     self._short_accented.add(a)
 
@@ -405,7 +405,7 @@ class SymptomMatcher:
 
             added += 1
 
-        # klucze fuzzy zgodne z ostatecznym przypisaniem aliasów (po rozstrzygnięciu kolizji)
+        # sync fuzzy keys with the final alias assignment (after collision resolution)
         self._alias_keys = sorted({k for k in self._alias_keys if k in self.alias_to_feature})
         self._alias_key_to_feat = {k: self.alias_to_feature[k] for k in self._alias_keys}
 
@@ -427,18 +427,18 @@ class SymptomMatcher:
 
     def _canon_of(self, xgb_or_alias: str) -> str:
         """
-        Nazwa cechy modelu dla cechy albo aliasu. Najpierw dokładna nazwa cechy: _canonize zamienia "_"
-        na spację, więc np. "symptom_depression" (bez aliasu "symptom depression") przepadał przy budowie
-        wektora i nie trafiał do modelu.
+        Model feature name for a feature or alias. Exact feature names are checked too, because
+        _canonize turns "_" into a space, so e.g. "symptom_depression" (no "symptom depression"
+        alias) would otherwise be dropped from the feature vector.
         """
         raw = str(xgb_or_alias or "").strip().lower()
         k = _canonize(raw)
         canon = self.alias_to_feature.get(k)
         if canon is not None:
-            return canon            # alias wskazuje cechę z danymi (np. abdominal_pain -> sharp_abdominal_pain)
+            return canon            # alias points to a feature with data (e.g. abdominal_pain -> sharp_abdominal_pain)
         return raw if raw in self._feat_set else k
 
-    # cechy bez własnego wpisu w słowniku PL (inaczej w podsumowaniu pojawiał się angielski tekst)
+    # features without a Polish dictionary entry; otherwise English leaks into the summary
     _PL_FALLBACK = {"symptom_anxiety": "lęk", "symptom_indigestion": "niestrawność"}
 
     def to_pl(self, xgb_or_alias: str) -> str:
@@ -491,7 +491,7 @@ class SymptomMatcher:
         if _HAS_RAPIDFUZZ:
             for g, gtoks_set in grams:
                 base_thr = FUZZY_MIN_SCORE_TOKEN if " " not in g else FUZZY_MIN_SCORE_PHRASE
-                # delikatna dynamika progu wg długości
+                # stricter threshold for very short and very long grams
                 lg = len(g)
                 if lg <= 5:
                     base_thr += 8
@@ -501,7 +501,6 @@ class SymptomMatcher:
                 for cand, score_set, _ in rf_process.extract(
                     g, self._alias_keys, scorer=rf_fuzz.token_set_ratio, limit=4
                 ):
-                    # dodatkowe metryki dla stabilizacji
                     score_sort = rf_fuzz.token_sort_ratio(g, cand)
                     score_part = rf_fuzz.partial_ratio(g, cand)
                     score = max(score_set, score_sort)
@@ -509,17 +508,16 @@ class SymptomMatcher:
                     if score < base_thr or score_part < (base_thr - 5):
                         continue
 
-                    # wymagaj wspólnego niegenerycznego tokenu
+                    # require a shared non-generic token
                     ctoks = set(t for t in _tokens(cand) if t not in MED_BLACKLIST_TOKENS)
                     if not (gtoks_set & ctoks):
                         continue
 
-                    # dodatkowy bezpiecznik: prefiks/jaccard
+                    # extra guard: Jaccard for phrases, shared 3-char prefix (accent-stripped) for single words
                     if " " in g:
                         if _jaccard(gtoks_set, ctoks) < 0.34:
                             continue
                     else:
-                        # jednowyrazowe: prefiks ≥3 znaki (po od-akcentowaniu)
                         g0 = _strip_accents(g).split()[0]
                         c0 = _strip_accents(cand).split()[0]
                         if len(g0) < 3 or len(c0) < 3 or not (g0[:3] == c0[:3]):
@@ -568,7 +566,7 @@ class SymptomMatcher:
             return False
         return any(p.search(tx) for p in META_INTENT_PATTERNS)
 
-    # ───────────── dopasowanie jednej frazy: {feature: alias} ─────────────
+    # Match one phrase, returning {feature: alias}; strategies run from strictest to loosest.
     def _match_fragment(self, frag: str) -> Dict[str, str]:
         hits: Dict[str, str] = {}
         frag_toks = [t for t in _tokens(frag) if t not in MED_BLACKLIST_TOKENS]
@@ -579,7 +577,7 @@ class SymptomMatcher:
         fn = _canonize(frag)
         fn_no = _strip_accents(fn)
 
-        # 1) regex aliasów
+        # 1) alias regex
         if self._alias_regex is not None:
             for m in self._alias_regex.finditer(fn + " " + fn_no):
                 alias = m.group(1).lower()
@@ -592,7 +590,7 @@ class SymptomMatcher:
                 if feat and feat not in hits:
                     hits[feat] = alias
 
-        # 2) contains
+        # 2) substring
         if not hits:
             for alias, feat in self.alias_to_feature.items():
                 if _all_generic(alias) or alias in QUESTION_WORDS:
@@ -603,7 +601,7 @@ class SymptomMatcher:
                 elif alias in fn or alias in fn_no:
                     hits.setdefault(feat, alias)
 
-        # 3) rdzenie (odmiana i szyk: "boli mnie głowa", "39 stopni gorączki", "kaszlę")
+        # 3) stems, for inflection and word order ("boli mnie glowa", "39 stopni goraczki")
         frag_stems = {_stem(t) for t in _plain_tokens(frag)}
         stem_hits: List[Tuple[str, str, frozenset]] = [
             (alias, feat, stems) for alias, feat, stems in self._stem_index
@@ -612,7 +610,7 @@ class SymptomMatcher:
         for alias, feat, _stems in sorted(stem_hits, key=lambda x: -len(x[2])):
             hits.setdefault(feat, alias)
 
-        # 4) approx (dla dłuższych aliasów)
+        # 4) approximate substring, longer aliases only
         if not hits:
             for alias, feat in self.alias_to_feature.items():
                 if _all_generic(alias) or alias in QUESTION_WORDS or len(alias) < 6:
@@ -622,13 +620,13 @@ class SymptomMatcher:
                 if _approx_in(alias, fn_no):
                     hits.setdefault(feat, alias)
 
-        # 5) fuzzy (literówki)
+        # 5) fuzzy, for typos
         if not hits:
             for feat_canon in self._fuzzy_on_fragment(fn_no):
                 aliases = sorted(self._feat_to_aliases.get(feat_canon, {feat_canon}), key=len)
                 hits.setdefault(feat_canon, aliases[0] if aliases else feat_canon)
 
-        # bardziej szczegółowy alias wygrywa ("ból w klatce piersiowej" > "ból")
+        # a more specific alias wins ("bol w klatce piersiowej" over "bol")
         if len(hits) > 1:
             stems_of = {f: {_stem(t) for t in _plain_tokens(a) if t not in _STOP} for f, a in hits.items()}
             hits = {
@@ -637,13 +635,13 @@ class SymptomMatcher:
             }
         return hits
 
-    # ───────────── negacja dla trafienia: "pre" / "post" / None ─────────────
+    # Negation state of a hit: "pre", "post" or None.
     @staticmethod
     def _negation_state(frag: str, alias: str) -> Optional[str]:
         toks = _plain_tokens(frag)
         a_toks = _plain_tokens(alias)
         if any(t in _NEG_PRE for t in a_toks):
-            # alias sam zawiera przeczenie ("brak apetytu", "nie mam apetytu") - to część objawu
+            # the alias itself contains a negation ("brak apetytu"): it is part of the symptom
             a_stems = {_stem(t) for t in a_toks}
         else:
             a_stems = {_stem(t) for t in a_toks if t not in _STOP} or {_stem(t) for t in a_toks}
@@ -652,15 +650,15 @@ class SymptomMatcher:
             return "pre" if _has_negation(frag, alias) else None
         start, end = min(idxs), max(idxs)
 
-        # przed objawem: "nie mam gorączki", "bez kaszlu", "nie boli mnie głowa", "ani kaszlu"
+        # before the symptom: "nie mam goraczki", "bez kaszlu", "nie boli mnie glowa"
         for i in range(max(0, start - 3), start):
             if toks[i] in _NEG_PRE:
                 between = toks[i + 1:start]
                 if not any(b in _NEG_BREAKERS for b in between):
                     return "pre"
 
-        # po objawie: "gorączki nie mam", "ból głowy nie występuje", "kaszel? nie",
-        # "gorączka (już) minęła/ustąpiła". Uwaga: "nie ustępuje", "nie daje spać" = objaw trwa.
+        # after the symptom: "goraczki nie mam", "kaszel? nie", "goraczka (juz) minela".
+        # Note: "nie ustepuje" / "nie daje spac" mean the symptom persists.
         post = toks[end + 1:end + 4]
         if post:
             p = [t for t in post if t not in {"juz", "mi", "mnie", "to"}]
@@ -673,7 +671,7 @@ class SymptomMatcher:
         return None
 
     def _extract_detailed(self, raw: str) -> Tuple[List[str], List[str]]:
-        """Zwraca (objawy_potwierdzone, objawy_zaprzeczone)."""
+        """Return (confirmed_symptoms, negated_symptoms)."""
         if not (raw or "").strip():
             return [], []
         if self._looks_like_meta(raw):
@@ -686,7 +684,7 @@ class SymptomMatcher:
         for piece in _split_pieces(raw):
             piece_norm = _strip_accents(" ".join(piece))
             if _RESOLUTION_PIECE.match(piece_norm):
-                # "wczoraj miałem gorączkę, dziś już nie"
+                # "wczoraj mialem goraczke, dzis juz nie"
                 neg |= prev_piece_pos
                 pos -= prev_piece_pos
                 prev_piece_pos = set()
@@ -708,7 +706,7 @@ class SymptomMatcher:
                         neg.add(feat)
                         pre_neg_here = pre_neg_here or state == "pre"
                     elif carry_neg and sub_idx > 0 and not has_positive:
-                        # "nie mam gorączki i kaszlu" -> kaszel też zanegowany
+                        # "nie mam goraczki i kaszlu": cough is negated too
                         neg.add(feat)
                     else:
                         piece_pos.add(feat)

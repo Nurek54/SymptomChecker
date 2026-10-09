@@ -1,17 +1,15 @@
-// src/lib/types.ts
-
 export type Role = "user" | "assistant";
 
 export interface ChatMessage {
   role: Role;
   content: string;
-  createdAt: string; // 👈 Dodane pole, aby komponenty UI (np. MessageBubble, ChatUI) miały dostęp do daty utworzenia wiadomości
+  createdAt: string;
 }
 
 export interface TopDiagnosis {
   diagnosis_en: string;
   probability: number;
-  diagnosis_pl?: string | null; // opcjonalne z backendu
+  diagnosis_pl?: string | null;
 }
 
 export interface ChatApiResponse {
@@ -22,25 +20,25 @@ export interface ChatApiResponse {
   top_diagnoses?: TopDiagnosis[] | null;
 }
 
-/** UI-owy, „twardy” typ do prawego panelu — jeśli potrzebujesz */
+/** Strict variant for the diagnosis side panel. */
 export type TopDiagUI = {
   diagnosis_en: string;
   probability: number;
-  diagnosis_pl: string | null; // zawsze string|null (nie undefined)
+  diagnosis_pl: string | null; // never undefined
 };
 
-/** Słownik symptomów dla pickera (EN + etykieta PL) */
+/** Symptom picker entry: EN model feature plus its PL label. */
 export type SymptomDictItem = {
   en: string;
   pl: string;
   category?: string | null;
-  /** inne etykiety PL tej samej cechy (np. "ból języka" przy "ból jamy ustnej") */
+  /** Other PL labels for the same feature, e.g. "ból języka" for "ból jamy ustnej". */
   aliases?: string[];
 };
 
-/** Odpowiedź po patchu objawów w sesji */
+/** Response to PATCHing the session's symptom list. */
 export type SymptomsPatchResponse = {
-  symptoms: string[];          // EN canonical
+  symptoms: string[];          // canonical EN feature names
   top_diagnoses: TopDiagnosis[];
   diagnosis_en?: string | null;
   diagnosis_pl?: string | null;

@@ -5,29 +5,25 @@ import { ChatApiResponse, SymptomDictItem, SymptomsPatchResponse } from "./types
 
 export { supabase } from "@/lib/supabaseClient";
 
-/** Podstawa URL API (FastAPI) */
 export const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL ??
     process.env.NEXT_PUBLIC_API_BASE ??
     "http://localhost:8000";
 
-/** axios – z cookies + Bearer (Supabase JWT) */
+/** Sends the backend session cookie and the Supabase JWT as Bearer. */
 export const api = axios.create({
     baseURL: API_BASE,
     withCredentials: true,
 });
 
-/* ───────────────────────── helpers: token & retry ───────────────────────── */
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Szybkie pobranie tokenu (bez czekania) */
 async function getTokenRaw(): Promise<string | null> {
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token ?? null;
 }
 
-/** Po nawigacji Supabase może chwilę „nie mieć” sesji → krótki wait z retry */
+/** Right after navigation Supabase may briefly report no session, so poll for a short while. */
 async function getTokenWait(maxWaitMs = 2000, stepMs = 150): Promise<string | null> {
     const deadline = Date.now() + maxWaitMs;
     let tok = await getTokenRaw();
@@ -38,7 +34,6 @@ async function getTokenWait(maxWaitMs = 2000, stepMs = 150): Promise<string | nu
     return tok;
 }
 
-/** Interceptor requestów: Content-Type + Bearer */
 api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
         const headers = AxiosHeaders.from(config.headers || {});
@@ -49,7 +44,7 @@ api.interceptors.request.use(
             headers.set("Content-Type", "application/json");
         }
 
-        const tok = await getTokenRaw(); // szybki — bez czekania
+        const tok = await getTokenRaw();
         if (tok) headers.set("Authorization", `Bearer ${tok}`);
 
         config.headers = headers;
@@ -63,10 +58,10 @@ let exchangePromise: Promise<boolean> | null = null;
 const PREWARM_TTL_MS = 60_000;
 let _lastPrewarmOkAt = 0;
 
-/** Utrzymanie backendowego cookie sesji (export – do pre-warmu) */
+/** Exchanges the Supabase JWT for the backend session cookie; deduplicated and cached for PREWARM_TTL_MS. */
 export async function ensureBackendSession(force = false): Promise<boolean> {
     if (!force && Date.now() - _lastPrewarmOkAt < PREWARM_TTL_MS) {
-        return true; // świeże, nie ma sensu znowu pytać
+        return true;
     }
     if (exchangePromise) return exchangePromise;
     exchangePromise = (async () => {
@@ -93,7 +88,7 @@ export async function ensureBackendSession(force = false): Promise<boolean> {
     }
 }
 
-/** Interceptor odpowiedzi: 401 → /auth/session + retry 1× */
+/** On 401, refresh the backend session and retry once. */
 api.interceptors.response.use(
     (r) => r,
     async (err) => {
@@ -113,7 +108,6 @@ api.interceptors.response.use(
     }
 );
 
-/** Zbuduj nagłówki dla fetch (Headers akceptuje każdy HeadersInit) */
 async function buildHeaders(init?: RequestInit): Promise<Headers> {
     const h = new Headers(init?.headers);
     const method = (init?.method || "GET").toUpperCase();
@@ -129,7 +123,7 @@ async function buildHeaders(init?: RequestInit): Promise<Headers> {
     return h;
 }
 
-const DEFAULT_TIMEOUT_MS = 180_000; // 3 min — wystarczy na długą generację LLM
+const DEFAULT_TIMEOUT_MS = 180_000; // long enough for slow LLM generation
 
 function _isMutating(method?: string): boolean {
     const m = (method || "GET").toUpperCase();
@@ -140,21 +134,21 @@ function _isChatEndpoint(path: string): boolean {
     return path === "/chat" || path.startsWith("/chat?");
 }
 
-/** Ujednolicony wrapper na fetch (Bearer + COOKIES) z timeoutem i selektywnym retry. */
-/** Wyciąga komunikat z dowolnego błędu (catch daje `unknown`). */
-/** Błąd przerwanego żądania (name = "AbortError"), żeby wywołujący mogli go odróżnić i pominąć. */
+/** Named "AbortError" so callers can recognise cancellations and ignore them. */
 function abortError(message: string): Error {
     const err = new Error(message);
     err.name = "AbortError";
     return err;
 }
 
+/** Extracts a message from any caught value. */
 export function errorMessage(e: unknown): string {
     if (e instanceof Error) return e.message;
     if (typeof e === "string") return e;
     return String((e as { message?: unknown } | null)?.message ?? "");
 }
 
+/** fetch wrapper with Bearer + cookies, a timeout and retry on 401 for idempotent methods only. */
 export async function apiFetch<T = unknown>(
     path: string,
     init: RequestInit = {},
@@ -163,17 +157,16 @@ export async function apiFetch<T = unknown>(
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const mutating = _isMutating(init.method);
 
-    // v9: prewarm TYLKO dla /chat (nie dla każdego POST). TTL=60s i tak
-    // sprawi że faktyczny request idzie najwyżej raz na minutę.
+    // Prewarm only for POST /chat; the TTL limits real exchanges to one per minute.
     if (mutating && _isChatEndpoint(path)) {
         try {
             await ensureBackendSession();
         } catch {
-            // ignorujemy — i tak spróbujemy
+            // best effort, send the request anyway
         }
     }
 
-    // Łączymy zewnętrzny signal (jeśli jest) z naszym timeoutem.
+    // Combine the caller's signal (if any) with our timeout.
     const localCtrl = new AbortController();
     const timeoutId = setTimeout(() => localCtrl.abort(), timeoutMs);
 
@@ -203,7 +196,7 @@ export async function apiFetch<T = unknown>(
         try {
             res = await doFetch();
         } catch (e: unknown) {
-            // Rozróżniamy timeout od innych błędów sieciowych
+            // Distinguish our timeout from a caller abort
             if ((e as { name?: string } | null)?.name === "AbortError") {
                 if (localCtrl.signal.aborted && !externalSignal?.aborted) {
                     throw new Error(
@@ -216,8 +209,8 @@ export async function apiFetch<T = unknown>(
             throw e;
         }
 
-        // Retry 401 TYLKO dla idempotentnych metod (GET/HEAD).
-        // Dla POST /chat dwa requesty = dwa wywołania LLM równolegle = deadlock.
+        // Retry 401 only for idempotent methods: a repeated POST /chat would run
+        // two LLM generations in parallel and deadlock the backend.
         if (res.status === 401 && !mutating) {
             const ok = await ensureBackendSession();
             if (ok) res = await doFetch();
@@ -248,25 +241,19 @@ export async function apiFetch<T = unknown>(
     }
 }
 
-/* ─────────── PRE-WARM: publiczne API do „dogrzewania” sesji ─────────── */
-
-/**
- * Publiczny pre-warm (używany przez strażników/klient-bootstrap).
- * v9: `force=true` omija TTL cache (useful po świeżym logowaniu).
- */
+/** Warms the backend session; `force` bypasses the TTL cache (e.g. right after login). */
 export async function prewarmAuth(force = false): Promise<boolean> {
     return ensureBackendSession(force);
 }
 
-/** Jednorazowa instalacja strażników focus/visibility/online */
+/** Re-warms the session on focus/visibility/online; installs only once per window. */
 export function installSessionGuards() {
     if (typeof window === "undefined") return;
-    // uniknij wielokrotnej instalacji
     const w = window as Window & { __scGuardsInstalled?: boolean };
     if (w.__scGuardsInstalled) return;
     w.__scGuardsInstalled = true;
 
-    // v9: bez force — TTL cache zadba, żeby nie spamić.
+    // No force here: the TTL cache prevents spamming /auth/session.
     const warm = () => { void prewarmAuth(false); };
 
     window.addEventListener("focus", warm);
@@ -275,17 +262,12 @@ export function installSessionGuards() {
         if (document.visibilityState === "visible") warm();
     });
 
-    // szybkie dogrzanie po załadowaniu — force=true, bo to pierwszy raz
     void prewarmAuth(true);
 }
 
-/* =======================
-   ======== AUTH =========
-   ======================= */
-
 let _exchangeSessionPromise: Promise<unknown> | null = null;
 
-/** Zwraca UserOut z backendu albo null (brak sesji Supabase). */
+/** Returns the backend UserOut, or null when there is no Supabase session. */
 export async function exchangeSession(): Promise<unknown> {
     if (_exchangeSessionPromise) return _exchangeSessionPromise;
     _exchangeSessionPromise = (async () => {
@@ -298,15 +280,14 @@ export async function exchangeSession(): Promise<unknown> {
             credentials: "include",
         });
         if (!r.ok) throw new Error(await r.text());
-        // v9: świeży exchange = reset TTL, żeby kolejne ensureBackendSession()
-        // nie strzelało następnego /auth/session bez powodu.
+        // A fresh exchange resets the TTL so ensureBackendSession() does not repeat it.
         _lastPrewarmOkAt = Date.now();
-        return await r.json(); // UserOut
+        return await r.json();
     })();
     try {
         return await _exchangeSessionPromise;
     } finally {
-        // krótkie okno deduplikacji (~500ms) na dogonienie pozostałych wywołań
+        // Keep the promise ~500ms so near-simultaneous callers share it
         setTimeout(() => { _exchangeSessionPromise = null; }, 500);
     }
 }
@@ -344,10 +325,8 @@ export async function logout(): Promise<void> {
 }
 
 export async function getMe<T = unknown>(): Promise<T | null> {
-    // v10: po Ctrl+R AuthProvider robi tu pierwsze sprawdzenie kim jest user.
-    // Jeśli to padnie (401, timing race z exchangeSession), AuthProvider
-    // myśli że user nie jest zalogowany — nawigacja idzie na login, wszystko
-    // wygląda jakby "backend odpadł". Retry z prewarm naprawia to.
+    // After a reload this is AuthProvider's first identity check. A 401 from a race with
+    // exchangeSession would look like a logout, so retry with a forced prewarm and backoff.
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
             const { data } = await api.get<T>("/auth/me");
@@ -370,12 +349,9 @@ export async function me<T = unknown>(): Promise<T> {
     return data;
 }
 
-/* =======================
-   ========= CHAT ========
-   ======================= */
 /**
- * `clientSymptoms` = objawy, które pamięta frontend. Backend używa ich tylko wtedy,
- * gdy nie zna sesji (np. po restarcie serwera), żeby rozmowa nie zaczynała się od zera.
+ * `clientSymptoms` are the symptoms the frontend remembers. The backend uses them only when
+ * it does not know the session (e.g. after a server restart) so the chat does not start over.
  */
 export async function sendChat(
     user_input: string,
@@ -398,16 +374,10 @@ export async function sendChat(
     };
 }
 
-/* =======================
-   ======== DICTS ========
-   ======================= */
 export function listSymptomsDict(): Promise<SymptomDictItem[]> {
     return apiFetch<SymptomDictItem[]>("/dicts/symptoms");
 }
 
-/* =======================
-   ===== SESSION OPS =====
-   ======================= */
 export function patchSessionSymptoms(
     sessionId: string,
     payload: { add?: string[]; remove?: string[]; replace?: string[]; lang?: "pl" | "en"; current?: string[] },
@@ -420,9 +390,7 @@ export function patchSessionSymptoms(
     } as RequestInit);
 }
 
-/* =======================
-   ======  TOP3 SPLIT ====
-   ======================= */
+/** Per-model top-k (XGBoost, River, ensemble) for the model comparison view. */
 export function getTop3Split(
     sessionId: string,
     k = 3,
@@ -439,9 +407,6 @@ export function getTop3Split(
     return apiFetch(`/sessions/${encodeURIComponent(sessionId)}/top3-split?k=${k}`, { signal } as RequestInit);
 }
 
-/* =======================
-   ========= HEALTH ======
-   ======================= */
 export async function healthcheck(): Promise<boolean> {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 5_000);
@@ -462,16 +427,11 @@ export async function healthcheck(): Promise<boolean> {
 export type HealthStatus = { xgb_ready?: boolean; matcher_ready?: boolean; llm_ready?: boolean };
 
 export function getHealthDetailed(): Promise<HealthStatus> {
-    // v10: 10s → 30s. Pod load'em (np. w trakcie generacji LLM) Supabase
-    // getTokenRaw() + buildHeaders bywa wolniejsze, a 10s wystarczało żeby
-    // pojedyncze opóźnienie wystrzeliło status "Błąd" w UI, mimo że backend
-    // żyje. Status w UI ma być sygnałem realnego problemu, nie spike'ów.
+    // 30s: under load (e.g. during LLM generation) a single slow response must not
+    // flip the UI status to an error while the backend is alive.
     return apiFetch<HealthStatus>("/health", { cache: "no-store" }, { timeoutMs: 30_000 });
 }
 
-/* =======================
-   ========= HISTORY =====
-   ======================= */
 export type HistorySymptom = {
     text: string;
     canonical?: string | null;
@@ -488,7 +448,7 @@ export type HistoryDiagnosis = {
 export type HistoryItem = {
     id: number;
     title: string;
-    /** może być null dla świeżych rozmów */
+    /** null for a conversation with no messages yet */
     last_message_at: string | null;
     message_count: number;
 };
@@ -502,12 +462,8 @@ export type HistoryDetail = {
 };
 
 export function listHistory(signal?: AbortSignal): Promise<HistoryItem[]> {
-    // v10: history ma być ZAWSZE dostępna — opakowane w retry z backoffem.
-    // Po Ctrl+R apiFetch potrafi trafić moment, gdy Supabase rehydratuje sesję
-    // z localStorage i backend nie ma jeszcze cookie. Domyślny retry-on-401
-    // w apiFetch obsługuje to dla pojedynczego wywołania, ale jeśli sam
-    // ensureBackendSession() potrzebuje 1-2s na refresh tokenu Supabase,
-    // wciąż możemy dostać 401. Retry z backoffem pokrywa ten przypadek.
+    // After a reload Supabase may still be rehydrating and the backend cookie missing.
+    // apiFetch retries once, but a token refresh can take 1-2s, so back off and retry.
     return _withAuthRetry(
         () => apiFetch<HistoryItem[]>("/history", { signal } as RequestInit, { timeoutMs: 15_000 }),
         signal
@@ -538,19 +494,17 @@ async function _withAuthRetry<T>(
         } catch (e: unknown) {
             lastErr = e;
             const msg = errorMessage(e);
-            // Tylko 401 retryujemy z wymuszonym prewarm. 4xx (inne) i 5xx —
-            // przekazujemy wyżej bez retry (powtarzanie i tak nie pomoże).
+            // Only 401 is retried (with a forced prewarm); other errors would not improve.
             const is401 = msg.includes("API 401:");
             if (!is401) throw e;
             if (attempt === maxAttempts - 1) break;
-            // Wymuś świeży exchange sesji — może Supabase już zdążył odświeżyć token
             try {
                 await ensureBackendSession(true);
             } catch {}
-            // Backoff: 400ms, 1200ms, 2800ms
+            // Backoff: 400ms, 1000ms (2.5x per attempt)
             const delay = 400 * Math.pow(2.5, attempt);
             await new Promise(r => setTimeout(r, delay));
         }
     }
     throw lastErr;
-}
+}

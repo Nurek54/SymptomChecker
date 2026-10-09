@@ -20,9 +20,6 @@ from api.deps import get_current_user_id
 router = APIRouter(prefix="/sessions", tags=["SessionOps"])
 
 
-# =========================================================
-# Helper: dostęp do AppState
-# =========================================================
 def get_state(req: Request) -> AppState:
     st = getattr(req.app.state, "app_state", None)
     if st is None:
@@ -30,20 +27,17 @@ def get_state(req: Request) -> AppState:
     return st
 
 
-# =========================================================
-# Schemy Pydantic
-# =========================================================
 class SymptomsPatch(BaseModel):
     add: List[SymptomId] = Field(default_factory=list, max_length=MAX_SYMPTOM_ITEMS)
     remove: List[SymptomId] = Field(default_factory=list, max_length=MAX_SYMPTOM_ITEMS)
     replace: Optional[List[SymptomId]] = Field(default=None, max_length=MAX_SYMPTOM_ITEMS)
     lang: Optional[str] = Field(default="pl", max_length=8)
-    # Objawy, które pamięta frontend - używane tylko, gdy backend nie zna sesji
-    # (np. po restarcie serwera), żeby "dodaj objaw" nie kasowało pozostałych.
+    # Symptoms the frontend remembers; used only when the backend does not know the session
+    # (e.g. after a server restart), so adding one symptom does not wipe the others.
     current: Optional[List[SymptomId]] = Field(default=None, max_length=MAX_SYMPTOM_ITEMS)
 
 
-# taki sam limit jak ChatRequest.session_id i kolumna conversations.session_id (String(64))
+# Same limit as ChatRequest.session_id and the conversations.session_id column (String(64)).
 SessionIdPath = Path(min_length=1, max_length=64)
 
 
@@ -70,9 +64,6 @@ class Top3SplitResponse(BaseModel):
     meta: Dict[str, Any] = Field(default_factory=dict)
 
 
-# =========================================================
-# Helper: wektor cech
-# =========================================================
 def _make_feature_vector(st: AppState, selected_canons: List[str]) -> List[int]:
     if not st or not st.xgb or not st.matcher:
         raise HTTPException(503, "Model lub matcher niegotowy.")
@@ -89,9 +80,6 @@ def _make_feature_vector(st: AppState, selected_canons: List[str]) -> List[int]:
     return [1 if f in expanded else 0 for f in feats]
 
 
-# =========================================================
-# POST /sessions/{session_id}/symptoms
-# =========================================================
 @router.post("/{session_id}/symptoms", response_model=SymptomsPatchResponse)
 def patch_session_symptoms(
     patch: SymptomsPatch,
@@ -136,7 +124,7 @@ def patch_session_symptoms(
         replaced = canon_all(patch.replace or [])
         cur = set(filter_known(replaced))
         if not cur:
-            sessions.reset_flow(session_id)  # "wyczyść wszystko" = nowa ocena od zera
+            sessions.reset_flow(session_id)  # clearing all symptoms starts a fresh assessment
     else:
         for s in filter_known(canon_all(patch.add or [])):
             cur.add(s)
@@ -145,15 +133,15 @@ def patch_session_symptoms(
                 cur.remove(s)
 
     new_symptoms_sorted = sorted(cur)
-    for s in filter_known(canon_all(patch.remove or [])):   # tylko znane cechy, bez dowolnych napisów w pamięci
+    for s in filter_known(canon_all(patch.remove or [])):   # known features only, so arbitrary strings never reach memory
         if s not in cur:
-            sessions.add_negated_symptom(session_id, s)  # usunięty ręcznie = nie pytaj o niego ponownie
+            sessions.add_negated_symptom(session_id, s)  # manually removed = never ask about it again
     sessions.set_symptoms(session_id, new_symptoms_sorted)
 
-    lang = "pl"  # słowniki i nazwy chorób są polskie
+    lang = "pl"  # dictionaries and disease names are Polish
     loc = PromptLocalizer(st.matcher)
 
-    # Za mało objawów → tylko zapis ekstrakcji, brak top-3
+    # Too few symptoms: persist extractions only, no top-3.
     if len(cur) < int(MIN_SYMPTOMS):
         sessions.set_last_top3(session_id, [])
 
@@ -181,7 +169,6 @@ def patch_session_symptoms(
             diagnosis_pl=None,
         )
 
-    # Wystarczająco objawów → top-3
     vec = [_make_feature_vector(st, new_symptoms_sorted)]
 
     ens = EnsembleTopK(st)
@@ -259,9 +246,6 @@ def patch_session_symptoms(
     )
 
 
-# =========================================================
-# GET /sessions/{session_id}/top3-split
-# =========================================================
 @router.get("/{session_id}/top3-split", response_model=Top3SplitResponse)
 def get_top3_split(
     session_id: str = SessionIdPath,
@@ -271,7 +255,7 @@ def get_top3_split(
 ):
     sessions = st.sessions
     if not sessions.exists(session_id):
-        # nieznana sesja = brak objawów; nie tworzymy jej przy zwykłym odczycie
+        # Unknown session = no symptoms; a plain read must not create it.
         return Top3SplitResponse(
             xgb_enabled=bool(getattr(st, "xgb", None) and getattr(st.xgb, "model", None)),
             river_enabled=bool(getattr(st, "river", None) and getattr(st.river, "model", None)),

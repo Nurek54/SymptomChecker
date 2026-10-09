@@ -1,3 +1,4 @@
+"""Builds ChatML prompts (Polish) for the Bielik LLM from symptoms, top-3 diagnoses and chat history."""
 from __future__ import annotations
 from typing import List, Dict, Optional, Union
 
@@ -56,7 +57,6 @@ SYSTEM_PROMPT = (
     "Zawsze kończ pełnym zdaniem zakończonym kropką."
 )
 
-# ========================= LEKI =========================
 DRUG_POLICY = (
     "Gdy mówisz o lekach OTC, podawaj tylko nazwy substancji czynnych (paracetamol, ibuprofen, "
     "dekstrometorfan, loratadyna, cetyryzyna, ksylometazolina, ambroksol, acetylocysteina, "
@@ -66,7 +66,6 @@ DRUG_POLICY = (
     "U dzieci poniżej 12 lat nie sugeruj kwasu acetylosalicylowego."
 )
 
-# ========================= TRIAGE =========================
 TRIAGE_GUIDELINE = (
     "Gdy mówisz o pilności, łącz ją z ramą czasową. Niska pilność oznacza samoobserwację "
     "i ewentualnie wizytę w 48–72 h, średnia kontakt z lekarzem dzisiaj lub w 24 h, "
@@ -74,7 +73,6 @@ TRIAGE_GUIDELINE = (
     "Wpleć to w naturalne zdanie, nie ogłaszaj jak komunikat."
 )
 
-# ========================= TASKI =========================
 TASK_DIAGNOSIS = (
     "Wyjaśnij JEDYNIE jaka diagnoza najlepiej tłumaczy zgłoszone objawy. Powiedz to ludzkim "
     "językiem: nazwij chorobę po polsku, jeśli to możliwe, i krótko uzasadnij, które "
@@ -90,7 +88,7 @@ TASK_DIAGNOSIS_FOLLOWUP = (
     "do niej nie pasuje. NIE opisuj pilności ani leków. 4–6 zdań w jednym akapicie."
 )
 
-# Intencje, w których odpowiedź ma mówić o pilności (dla pozostałych TASK_* zabraniają tego)
+# Intents whose answer should mention urgency (the other TASK_* prompts forbid it).
 TRIAGE_INTENTS = {"triage", "summary", "autosummary"}
 
 TASK_ADVICE = (
@@ -136,14 +134,13 @@ FALLBACK_POLICY = (
     "najprawdopodobniej...) zamiast podawać twarde fakty."
 )
 
-# Kompatybilnosc typow
 Msg = Union[Dict[str, str], tuple]
 
 
 def build_prompt(
     history: List[Dict[str, str]],
     detected_symptoms: List[str],
-    need_more: bool,  # nieuzywane, zachowane dla kompatybilnosci
+    need_more: bool,  # unused, kept for API compatibility
     *,
     diag_summary: Optional[str] = None,
     patient_age: Optional[int] = None,
@@ -329,4 +326,4 @@ __all__ = [
     "_extract_temp_high", "_extract_duration_days",
     "_age_risk_score", "_contains", "_user_text", "TRIAGE_INTENTS",
     "PROMPT_SYMPTOMS_MAX_FOR_LLM",
-]
+]

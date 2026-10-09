@@ -7,9 +7,7 @@ import logging
 log = logging.getLogger("api.errors")
 
 def as_message(err: RequestValidationError) -> str:
-    """
-    Z FastAPI 422 (listy błędów) zrób zwięzły string do pokazania w UI.
-    """
+    """Flatten a FastAPI 422 error list into one short string for the UI."""
     try:
         parts = []
         for e in err.errors():

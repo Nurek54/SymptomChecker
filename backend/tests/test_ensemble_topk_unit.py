@@ -1,4 +1,3 @@
-# tests/test_ensemble_topk_unit.py
 import math
 import pytest
 
@@ -7,20 +6,18 @@ from backend.services.ensemble import EnsembleTopK
 
 
 class DummyModel:
-    """Minimalny model XGB/River z predict_topk()."""
+    """XGB/River stand-in whose predict_topk() returns a fixed list, ignoring vec and k."""
 
     def __init__(self, topk_output):
-        # lista słowników: {"diagnosis_en": ..., "probability": ...}
         self._topk_output = list(topk_output or [])
-        self.model = object()  # żeby health/xgb_ready się nie wywalało
+        self.model = object()  # non-None so readiness checks pass
 
     def predict_topk(self, vec, k: int):
-        # ignorujemy vec/k – dla testu zwracamy ustalone wartości
         return list(self._topk_output)
 
 
 class DummyState:
-    """Minimalny AppState dla EnsembleTopK – bez prawdziwych modeli."""
+    """Minimal AppState for EnsembleTopK without real models."""
 
     def __init__(self, top_x=None, top_r=None):
         self.xgb = DummyModel(top_x or [])
@@ -31,10 +28,7 @@ class DummyState:
 
 
 def _neutralize_ensemble_config():
-    """
-    Wyłączamy wszystkie „dodatki”, żeby zostało czyste
-    log-space + normalizacja.
-    """
+    """Disable boosts, priors, gating and temperatures so only log-space fusion plus normalization remains."""
     ens_mod.ENSEMBLE_AGREE_BOOST = 0.0
     ens_mod.ENSEMBLE_SMOOTH_PRIOR_MAX = 0.0
     ens_mod.ENSEMBLE_TAIL_LIFT = 0.0
@@ -48,18 +42,13 @@ def _make_ens(top_x, top_r, wx: float = 0.5, wr: float = 0.5) -> EnsembleTopK:
     _neutralize_ensemble_config()
     st = DummyState(top_x=top_x, top_r=top_r)
     ens = EnsembleTopK(st)
-    # wymuszamy konkretne wagi
     ens.wx = wx
     ens.wr = wr
     return ens
 
 
 def test_log_space_weighted_mean():
-    """
-    Średnia w log-space z wagami:
-    p_flu_xgb=0.8, p_flu_river=0.6 przy wx=wr=0.5
-    → p_flu ≈ sqrt(0.8 * 0.6) po normalizacji.
-    """
+    """Weighted log-space mean: with wx=wr=0.5, p_flu is proportional to sqrt(0.8 * 0.6) before normalization."""
     top_x = [
         {"diagnosis_en": "flu", "probability": 0.8},
         {"diagnosis_en": "cold", "probability": 0.2},
@@ -76,7 +65,7 @@ def test_log_space_weighted_mean():
     total = sum(fused.values())
     assert total == pytest.approx(1.0, rel=1e-6)
 
-    # oczekiwane log-średnie (przed normalizacją)
+    # Geometric means, i.e. log-space averages before normalization.
     g_flu = math.sqrt(0.8 * 0.6)
     g_cold = math.sqrt(0.2 * 0.4)
     exp_flu = g_flu / (g_flu + g_cold)
@@ -84,10 +73,7 @@ def test_log_space_weighted_mean():
     assert fused["flu"] == pytest.approx(exp_flu, rel=5e-2)
 
 def test_idempotence_same_distributions():
-    """
-    Gdy XGB i River mają ten sam rozkład, ensemble zachowuje ranking
-    i wartości ~oryginalne.
-    """
+    """Identical XGB and River distributions keep the ranking and roughly the original values."""
     top = [
         {"diagnosis_en": "flu", "probability": 0.7},
         {"diagnosis_en": "cold", "probability": 0.3},
@@ -102,9 +88,7 @@ def test_idempotence_same_distributions():
 
 
 def test_monotonicity_increasing_confidence_keeps_rank():
-    """
-    Zwiększenie pewności dla klasy nie może zepchnąć jej niżej w rankingu.
-    """
+    """Raising a class's confidence must never lower its rank."""
     top_r = [
         {"diagnosis_en": "flu", "probability": 0.6},
         {"diagnosis_en": "cold", "probability": 0.4},
@@ -147,9 +131,7 @@ def test_normalization_sum_is_one():
 
 
 def test_no_negative_weights_in_conf_signal():
-    """
-    _conf_signal nie powinien zwracać ujemnych wag / sygnałów.
-    """
+    """_conf_signal must never return a negative signal."""
     m = {"a": 0.9, "b": 0.1}
     s = EnsembleTopK._conf_signal(m)  # type: ignore[arg-type]
     assert s >= 0.0

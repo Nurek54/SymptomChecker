@@ -13,15 +13,13 @@ type SymptomsProps = {
   lang?: "pl" | "en";
 };
 
-/* ───────────────── Aurora akcent ───────────────── */
-const AURORA      = "linear-gradient(120deg, rgba(52,211,153,.35), rgba(56,189,248,.35), rgba(167,139,250,.35))";
+const AURORA     = "linear-gradient(120deg, rgba(52,211,153,.35), rgba(56,189,248,.35), rgba(167,139,250,.35))";
 const AURORA_SOFT = "linear-gradient(120deg, rgba(52,211,153,.22), rgba(56,189,248,.22), rgba(167,139,250,.22))";
 const AURORA_BAR  = "linear-gradient(90deg, rgba(52,211,153,.9), rgba(56,189,248,.9), rgba(167,139,250,.85))";
 
-/* ───────────────── Lista – paginacja ───────────────── */
 const PAGE_SIZE = 60;
 
-/* ───────────────── Globalny cache słownika ───────────────── */
+/* Module-level dictionary cache; concurrent callers share one in-flight request */
 let SYM_CACHE: SymptomDictItem[] | null = null;
 let SYM_CACHE_PROMISE: Promise<SymptomDictItem[]> | null = null;
 
@@ -45,7 +43,6 @@ async function getSymptomsDictCached(): Promise<SymptomDictItem[]> {
   return SYM_CACHE_PROMISE;
 }
 
-/* ───────────────── helpers ───────────────── */
 function pct(n?: number | null) {
   if (typeof n !== "number" || !isFinite(n)) return 0;
   return Math.round(Math.min(1, Math.max(0, n)) * 100);
@@ -55,10 +52,10 @@ function ProbBar({ value }: { value: number }) {
   const w = Math.max(0, Math.min(100, value));
   const gradient =
     w >= 80
-      ? "linear-gradient(90deg, #34d399, #38bdf8)"            // emerald → cyan
+      ? "linear-gradient(90deg, #34d399, #38bdf8)"
       : w >= 40
-      ? "linear-gradient(90deg, #38bdf8, #fbbf24)"            // cyan → amber
-      : "linear-gradient(90deg, rgba(148,163,184,.6), rgba(148,163,184,.85))"; // gray subtle
+      ? "linear-gradient(90deg, #38bdf8, #fbbf24)"
+      : "linear-gradient(90deg, rgba(148,163,184,.6), rgba(148,163,184,.85))";
   return (
     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[rgb(var(--border))]">
       <div
@@ -87,7 +84,6 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-/* ───────────────── Utilities UI ───────────────── */
 function TopShadow({ show }: { show: boolean }) {
   return (
     <div
@@ -113,16 +109,15 @@ function SkeletonRow() {
   );
 }
 
-/* ───────────────── SymptomsCard ───────────────── */
 export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: SymptomsProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [dict, setDict] = useState<SymptomDictItem[] | null>(SYM_CACHE); // ⬅️ start z cache
+  const [dict, setDict] = useState<SymptomDictItem[] | null>(SYM_CACHE);
   const [loadingDict, setLoadingDict] = useState(!SYM_CACHE);
   const [busy, setBusy] = useState(false);
   const [patchError, setPatchError] = useState<string | null>(null);
 
-  // komunikat dla pacjenta zamiast cichego błędu (backend niedostępny, model się ładuje, inna sesja)
+  // Patient-friendly message instead of a silent failure (backend down, model loading, foreign session)
   const friendlyPatchError = (e: unknown): string => {
     const msg = errorMessage(e);
     if (/API 503/.test(msg)) return "Model jeszcze się uruchamia. Spróbuj ponownie za chwilę.";
@@ -134,17 +129,14 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
   const panelRef = useRef<HTMLDivElement | null>(null);
   const toggleBtnRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null); // scrollowalne miejsce z wynikami
+  const listRef = useRef<HTMLDivElement | null>(null); // scrollable results container
   const [activeIdx, setActiveIdx] = useState<number>(-1);
 
-  // Shadows
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(false);
 
-  // Paginacja (infinite scroll)
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
-  // Stabilny preload słownika (z cache)
   useEffect(() => {
     let cancelled = false;
     if (!dict) {
@@ -156,14 +148,13 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     return () => { cancelled = true; };
   }, [dict]);
 
-  // Autofocus search gdy panel się otwiera
   useEffect(() => {
     if (!open) return;
     const t = setTimeout(() => inputRef.current?.focus(), 0);
     return () => clearTimeout(t);
   }, [open]);
 
-  // Zamknięcie po kliknięciu poza / Esc
+  // Close on outside click or Esc
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -196,20 +187,17 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     return () => el.removeEventListener("scroll", onScroll);
   }, [open]);
 
-  // Zestaw zaznaczonych (lowercase)
   const selectedLC = useMemo(
     () => new Set((symptoms ?? []).map((s) => (s || "").toLowerCase())),
     [symptoms]
   );
 
-  // Mapa EN→PL dla chipów
   const en2pl = useMemo(() => {
     const m = new Map<string, string>();
     (dict ?? []).forEach((it) => m.set(it.en.toLowerCase(), it.pl));
     return m;
   }, [dict]);
 
-  // Chips (unikalne)
   const chips = useMemo(() => {
     const arr = (symptoms ?? []).map((en) => {
       const lc = (en || "").toLowerCase();
@@ -220,7 +208,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     return arr.filter(({ en }) => (seen.has(en) ? false : (seen.add(en), true)));
   }, [symptoms, en2pl, lang]);
 
-  // Opcje w pickerze (pełna lista), a poniżej – cięcie do visibleCount
+  // Full filtered option list; `options` below is the paginated slice
   const optionsAll = useMemo(() => {
     const q = query.trim().toLowerCase();
     const base = (dict ?? []).filter((it) => !selectedLC.has(it.en.toLowerCase()));
@@ -228,7 +216,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
     return base.filter((it) => matchSymptom(it, q, lang) !== null);
   }, [dict, selectedLC, query, lang]);
 
-  // Reset paginacji przy każdej zmianie filtra/zbioru
+  // Reset pagination whenever the filter or source list changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
     setActiveIdx(-1);
@@ -236,7 +224,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
 
   const options = useMemo(() => optionsAll.slice(0, visibleCount), [optionsAll, visibleCount]);
 
-  // Infinite scroll – dociąganie przy dojechaniu do dołu
+  // Infinite scroll: load the next page near the bottom
   useEffect(() => {
     if (!open) return;
     const el = listRef.current;
@@ -324,10 +312,8 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
       className="relative rounded-2xl border border-base bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
       aria-busy={busy}
     >
-      {/* gradientowy hairline na górze karty */}
       <span aria-hidden className="absolute inset-x-0 top-0 h-px rounded-t-2xl" style={{ background: AURORA_SOFT }} />
 
-      {/* Header */}
       <div className="flex items-center gap-2 text-sm font-semibold">
         <div className="relative grid h-6 w-6 place-items-center rounded-lg border border-base bg-input">
           <span aria-hidden className="absolute inset-0 rounded-lg opacity-70" style={{ background: AURORA_SOFT }} />
@@ -339,7 +325,6 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
         </span>
       </div>
 
-      {/* cienki hairline pod tytułem */}
       <span aria-hidden className="mt-2 block h-px w-full rounded-full" style={{ background: AURORA_SOFT }} />
 
       {patchError ? (
@@ -348,7 +333,6 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
         </p>
       ) : null}
 
-      {/* Actions */}
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           ref={toggleBtnRef}
@@ -386,7 +370,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
         ) : null}
       </div>
 
-      {/* Chips — auto-szerokość do treści z limitem */}
+      {/* Chips: width fits content, with a max width */}
       <div className="mt-3">
         {chips.length ? (
           <div className="flex flex-wrap items-start gap-1.5">
@@ -487,7 +471,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
             </div>
           </div>
 
-          {/* Options — scrollowalna lista, z paginacją i „Pokaż więcej” */}
+          {/* Options: scrollable, paginated list with a "show more" button */}
           <div
             ref={listRef}
             className="relative flex-1 overflow-y-auto overscroll-contain rounded-b-2xl"
@@ -507,7 +491,7 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
                     const label = labelRaw || it.en;
                     const cat = it.category ? String(it.category) : null;
                     const active = idx === activeIdx;
-                    // znalezione po synonimie (np. "ból języka" -> "ból jamy ustnej"): pokaż go obok
+                    // Matched via a synonym (e.g. "ból języka" -> "ból jamy ustnej"): show it alongside
                     const viaAlias = query.trim() ? matchSymptom(it, query, lang) : "";
                     const allLabels = [label, ...(lang === "pl" ? it.aliases ?? [] : [])].join(", ");
                     return (
@@ -592,7 +576,6 @@ export function SymptomsCard({ sessionId, symptoms, onPatched, lang = "pl" }: Sy
   );
 }
 
-/* ───────────────── TopDiagCard ───────────────── */
 export function TopDiagCard({
   items,
   onInfo,
@@ -602,7 +585,6 @@ export function TopDiagCard({
 }) {
   return (
     <div className="relative rounded-2xl border border-base bg-card p-3 shadow-sm transition-shadow hover:shadow-md">
-      {/* hairline na górze karty */}
       <span aria-hidden className="absolute inset-x-0 top-0 h-px rounded-t-2x" style={{ background: AURORA_SOFT }} />
 
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -612,7 +594,6 @@ export function TopDiagCard({
         </div>
         <span className="mr-auto">Najbardziej prawdopodobne <span className="whitespace-nowrap">(Top-3)</span></span>
 
-        {/* ⓘ ikonka informacji */}
         <button
           onClick={onInfo}
           className="rounded-lg border border-base bg-input p-1.5 text-[11px] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300"
@@ -623,7 +604,6 @@ export function TopDiagCard({
         </button>
       </div>
 
-      {/* hairline pod tytułem */}
       <span aria-hidden className="mb-2 block h-px w-full rounded-full" style={{ background: AURORA_SOFT }} />
 
       {items && items.length ? (

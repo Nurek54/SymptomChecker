@@ -1,4 +1,4 @@
-# services/prompt_localizer.py
+"""Polish localization of symptom/disease labels and follow-up questions."""
 from __future__ import annotations
 import os
 import re
@@ -15,10 +15,10 @@ except Exception:
 
 _NO_INFLECT_EXACT: set[str] = {}
 
-# Ręcznie napisane pytania uzupełniające dla każdej cechy modelu. Automatyczne
-# "Czy masz {nazwa}?" dawało błędy (np. "Czy masz reakcja alergiczna?",
-# "Czy masz symptom anxiety?") albo pytało o inny objaw niż cecha, bo kilka cech
-# dzieli polską etykietę ("foul_smell_of_urine" -> "ciemny mocz").
+# Hand-written follow-up question per model feature. The generic "Czy masz {name}?"
+# produced ungrammatical questions ("Czy masz reakcja alergiczna?") or asked about the
+# wrong symptom, because several features share a Polish label
+# ("foul_smell_of_urine" -> "ciemny mocz").
 FOLLOWUP_QUESTIONS_PATH = os.environ.get(
     "FOLLOWUP_QUESTIONS_PATH",
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "followup_questions_pl.json"),
@@ -160,9 +160,8 @@ class PromptLocalizer:
 
     def format_diag_summary(self, top: List[Dict[str, Any]], lang: str = "pl") -> str:
         """
-        Zwraca jednowierszowe podsumowanie Top-3 w formie:
-        'Diagnoza A (65%), Diagnoza B (20%), Diagnoza C (15%)'.
-        Bez numerowania (1., 2., 3.), żeby nie zachęcać LLM do robienia list.
+        One-line top-3 summary: 'Diagnosis A (65%), Diagnosis B (20%), Diagnosis C (15%)'.
+        Deliberately unnumbered so the LLM is not nudged into producing lists.
         """
         items: List[str] = []
         for d in (top or []):
@@ -174,7 +173,7 @@ class PromptLocalizer:
             if prob_val is not None:
                 try:
                     p = float(prob_val)
-                    # jeśli wygląda na 0–1 → traktuj jako prawdopodobieństwo
+                    # values in [0, 1] are probabilities, otherwise already percent
                     if 0.0 <= p <= 1.0:
                         pct = int(round(p * 100))
                     else:

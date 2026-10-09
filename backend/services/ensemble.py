@@ -7,7 +7,6 @@ import logging
 
 log = logging.getLogger("symptomchecker.ensemble")
 
-# ── konfiguracja ───────────────────────────────────────────────────────────────
 try:
     from config import (
         ENSEMBLE_W_XGB,
@@ -26,30 +25,29 @@ except Exception:
     ENSEMBLE_CONF_GAP = 0.20
 
 _EPS = 1e-12
-# "Wszystkie klasy": managery XGB/River przycinają k do liczby klas.
+# "All classes": the XGB/River managers clip k to the number of classes.
 _ALL_CLASSES = 1_000_000
 
 
 class EnsembleTopK:
     """
-    Ensemble XGB + River.
+    XGB + River ensemble.
 
-      - z każdego modelu bierzemy PEŁNY rozkład po klasach (ENSEMBLE_K_FUSE=0),
-        dzięki czemu klasa nie "znika" tylko dlatego, że w drugim modelu
-        nie weszła do Top-K;
-      - klasa nieznana jednemu z modeli dostaje minimum z jego rozkładu
-        (neutralnie nisko, ale nie 1e-12, które zerowałoby wynik);
-      - pewność modelu = 0.5 * (1 - znormalizowana entropia) + 0.5 * margines top1-top2;
-      - wagi: bazowe ENSEMBLE_W_* skalowane pewnością; jeśli jeden model jest
-        wyraźnie pewniejszy (różnica >= ENSEMBLE_CONF_GAP), dostaje maksymalny
-        dopuszczalny udział (gating). Minimalne udziały: MIN_XGB / MIN_RIVER;
-      - fuzja (ENSEMBLE_FUSION): "linear" p = a*px + (1-a)*pr z wagą a dobraną na zbiorze
-        kalibracyjnym (domyślnie), "log" p ~ px^w * pr^(1-w) z temperaturą, albo "heuristic":
-        dynamiczne wagi jak wyżej i fuzja w log-space.
+      - each model contributes its FULL class distribution (ENSEMBLE_K_FUSE=0), so a class
+        does not vanish just because it missed the other model's top-K;
+      - a class unknown to one model gets that model's minimum probability
+        (neutral-low, not 1e-12, which would zero the result);
+      - model confidence = 0.5 * (1 - normalized entropy) + 0.5 * top1-top2 margin;
+      - weights: base ENSEMBLE_W_* scaled by confidence; if one model is clearly more
+        confident (gap >= ENSEMBLE_CONF_GAP) it gets the maximum allowed share (gating).
+        Minimum shares: MIN_XGB / MIN_RIVER;
+      - fusion (ENSEMBLE_FUSION): "linear" p = a*px + (1-a)*pr with a fitted on the calibration
+        set (default), "log" p ~ px^w * pr^(1-w) with temperature, or "heuristic": dynamic
+        weights as above with log-space fusion.
 
-    Publiczne API:
-      - predict_topk(vec, k)  – główny UI
-      - predict_split(vec, k) – osobno XGB / River / Ensemble + meta (overlay).
+    Public API:
+      - predict_topk(vec, k): main UI
+      - predict_split(vec, k): XGB / River / ensemble separately plus meta (overlay).
     """
 
     def __init__(self, state: Any):
@@ -61,7 +59,6 @@ class EnsembleTopK:
         self.min_wr = float(ENSEMBLE_MIN_RIVER_WEIGHT if ENSEMBLE_MIN_RIVER_WEIGHT is not None else 0.15)
         self.conf_gap = float(ENSEMBLE_CONF_GAP if ENSEMBLE_CONF_GAP is not None else 0.20)
 
-    # ───────────────────────── helpers ─────────────────────────
     @staticmethod
     def _to_map(items: List[Dict[str, Any]]) -> Dict[str, float]:
         out: Dict[str, float] = {}
@@ -153,7 +150,7 @@ class EnsembleTopK:
     def _clamp_weights(self, wx: float) -> Tuple[float, float]:
         lo = self.min_wx
         hi = 1.0 - self.min_wr
-        if lo > hi:  # niespójna konfiguracja: proporcjonalnie do minimów
+        if lo > hi:  # inconsistent config: split proportionally to the minimums
             wx = self.min_wx / ((self.min_wx + self.min_wr) or 1.0)
         else:
             wx = max(lo, min(hi, wx))
@@ -170,10 +167,10 @@ class EnsembleTopK:
         gated_to = "none"
         if (conf_x - conf_r) >= self.conf_gap:
             gated_to = "xgb"
-            wx = 1.0  # po clampie: maksymalny dopuszczalny udział XGB
+            wx = 1.0  # clamped below to the max allowed XGB share
         elif (conf_r - conf_x) >= self.conf_gap:
             gated_to = "river"
-            wx = 0.0  # po clampie: maksymalny dopuszczalny udział River
+            wx = 0.0  # clamped below to the max allowed River share
 
         wx, wr = self._clamp_weights(wx)
         return wx, wr, gated_to
@@ -191,9 +188,8 @@ class EnsembleTopK:
             for n, p in heapq.nlargest(int(max(1, k)), m.items(), key=lambda kv: kv[1])
         ]
 
-    # ───────────────────────── fuzja ─────────────────────────
     def _negatives(self, m: Dict[str, float], negated: Optional[Iterable[str]]) -> Dict[str, float]:
-        """Objawy zaprzeczone przez pacjenta (SymptomStats.apply_negatives); bez statystyk bez zmian."""
+        """Apply patient-denied symptoms (SymptomStats.apply_negatives); no-op without stats."""
         stats = getattr(self.st, "symptom_stats", None)
         if not m or not negated or stats is None or not hasattr(stats, "apply_negatives"):
             return m
@@ -257,7 +253,7 @@ class EnsembleTopK:
             wx_dyn, wr_dyn = self._manual_weights()
             gated_to = "manual"
         elif mode in ("linear", "log") and learned_w is not None:
-            # waga dobrana na zbiorze kalibracyjnym (services/ensemble_calibration.py)
+            # weight fitted on the calibration set (services/ensemble_calibration.py)
             wx_dyn = float(learned_w)
             wr_dyn = 1.0 - wx_dyn
             gated_to = "learned"
@@ -267,10 +263,10 @@ class EnsembleTopK:
 
         T = float(getattr(self.st, "ensemble_T", 1.0) or 1.0)
         if mode == "linear" and gated_to == "learned":
-            # mieszanina liniowa: odporna, gdy jeden z modeli jest pewny, ale się myli
+            # linear mixture: robust when one model is confident but wrong
             combined = self._normalize({n: wx_dyn * mx.get(n, 0.0) + wr_dyn * mr.get(n, 0.0) for n in names})
         else:
-            # fuzja w log-przestrzeni (+ temperatura całego ensemble z kalibracji)
+            # log-space fusion plus the ensemble temperature from calibration
             fx, fr = self._floor(mx), self._floor(mr)
             logs: Dict[str, float] = {}
             for name in names:
@@ -289,9 +285,8 @@ class EnsembleTopK:
         )
         return {"mx": mx, "mr": mr, "combined": combined, "meta": meta}
 
-    # ───────────────────────── API ─────────────────────────
     def predict_distribution(self, vec: List[List[int]], negated: Optional[Iterable[str]] = None) -> Dict[str, float]:
-        """Pełny rozkład po klasach (z poprawką na objawy zaprzeczone, jeśli podane)."""
+        """Full class distribution, adjusted for denied symptoms if given."""
         return dict(self._fuse(vec, k=1, negated=negated)["combined"])
 
     def predict_topk(self, vec: List[List[int]], k: int = 3, negated: Optional[Iterable[str]] = None) -> List[Dict[str, Any]]:

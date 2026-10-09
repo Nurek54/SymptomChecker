@@ -2,7 +2,6 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime, date
 
-# —— AUTH / USER —— #
 class UserOut(BaseModel):
     id: int
     username: str
@@ -29,12 +28,11 @@ class LoginIn(BaseModel):
 
 class UpdateProfileIn(BaseModel):
     username: str | None = Field(default=None, min_length=3, max_length=50)
-    # długości jak w kolumnach users.first_name / last_name (String(80)); dłuższe dawały 500 w Postgresie
+    # match users.first_name / last_name columns (String(80)); longer values made Postgres fail with 500
     first_name: str | None = Field(default=None, max_length=80)
     last_name: str | None = Field(default=None, max_length=80)
     date_of_birth: date | None = None
 
-# —— HISTORIA CZATÓW —— #
 class ConversationItem(BaseModel):
     id: int
     title: str

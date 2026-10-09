@@ -16,7 +16,6 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score, f1_score, log_loss
 from skopt.space import Real, Integer
 
-# ───── config ─────
 from config import (
     MODEL_PATH, LE_PATH, BEST_PARAMS_PATH, DATA_CSV, TEST_CSV, CLASS_WEIGHT_CSV,
     XGB_N_ITER_BAYES, XGB_CV_SPLITS, XGB_RANDOM_STATE,
@@ -25,35 +24,34 @@ from config import (
 )
 from utils import Progress, calibration_metrics, fmt_duration, update_training_report, log_metrics_table
 
-# Dodatkowe flagi inference (bezpieczne defaulty gdy brak w config.py)
+# Optional inference flags, with safe defaults when missing from config.py
 try:
     from config import XGB_GPU_PREDICT
 except Exception:
-    XGB_GPU_PREDICT = False   # GPU w inferencji (tylko gdy to się opłaca)
+    XGB_GPU_PREDICT = False   # GPU inference (only worth it for large batches)
 
 try:
     from config import XGB_PRED_NTHREAD
 except Exception:
-    XGB_PRED_NTHREAD = 1      # 1 wątek zwykle najszybszy dla pojedynczych zapytań
+    XGB_PRED_NTHREAD = 1      # one thread is usually fastest for single-row queries
 
 try:
     from config import XGB_PRED_MAX_ROUNDS
 except Exception:
-    XGB_PRED_MAX_ROUNDS = None  # np. 256 – twardy limit rund w predykcji
+    XGB_PRED_MAX_ROUNDS = None  # e.g. 256: hard cap on boosting rounds at prediction time
 
 try:
     from config import XGB_PRED_ROUND_FRACTION
 except Exception:
-    XGB_PRED_ROUND_FRACTION = None  # np. 0.5 – ułamkowy limit, ignorowane gdy MAX_ROUNDS ustawione
+    XGB_PRED_ROUND_FRACTION = None  # e.g. 0.5: fractional cap, ignored when MAX_ROUNDS is set
 
 try:
     from config import XGB_GPU_PREDICT_BATCH_MIN
 except Exception:
-    XGB_GPU_PREDICT_BATCH_MIN = 128  # od ilu wierszy przestawiać predykcję na GPU
+    XGB_GPU_PREDICT_BATCH_MIN = 128  # row count from which prediction switches to GPU
 
 
-# ───────────────────────── logging ─────────────────────────
-log = logging.getLogger("symptomchecker.xgb")
+log =logging.getLogger("symptomchecker.xgb")
 if not logging.getLogger().handlers:
     logging.basicConfig(
         level=logging.INFO,
@@ -61,14 +59,14 @@ if not logging.getLogger().handlers:
     )
 
 FEATURES_PATH = os.path.join(os.path.dirname(MODEL_PATH), "features.json")
-TRAIN_PARAMS_PATH = os.path.splitext(MODEL_PATH)[0] + ".train_params.json"   # parametry bazowego treningu
-CALIB_PATH = os.path.splitext(MODEL_PATH)[0] + ".calibration.joblib"        # kalibrator temperatury
-META_PATH = os.path.splitext(MODEL_PATH)[0] + ".meta.json"                   # na jakich danych trenowano
+TRAIN_PARAMS_PATH = os.path.splitext(MODEL_PATH)[0] + ".train_params.json"   # base training params
+CALIB_PATH = os.path.splitext(MODEL_PATH)[0] + ".calibration.joblib"        # temperature calibrator
+META_PATH = os.path.splitext(MODEL_PATH)[0] + ".meta.json"                   # which data the model was trained on
 
-# kolumny specjalne, które NIGDY nie mogą być cechami
+# Special columns that must never be used as features
 SPECIAL_COLS = {"diseases", "xgb_label", "weight"}
 
-# opcjonalnie: CuPy (dla treningu/predykcji na GPU)
+# Optional CuPy for GPU training/prediction
 try:
     import cupy as cp  # type: ignore
     _CUPY_AVAILABLE = True
@@ -76,16 +74,13 @@ except Exception:
     _CUPY_AVAILABLE = False
 
 
-# ───────────────────────── GPU helpers ─────────────────────────
 def _gpu_kwargs() -> Dict[str, Any]:
     """
-    Wymusza GPU, jeśli XGB_USE_GPU == True.
-    - XGBoost >= 2.0 (u Ciebie 3.0.5): rekomendacja → tree_method='hist', device='cuda'
+    Force GPU when XGB_USE_GPU is True.
+    - XGBoost >= 2.0: tree_method='hist', device='cuda' ('gpu_hist' is deprecated there)
     - XGBoost <  2.0: tree_method='gpu_hist'
-    Gdy XGB_USE_GPU == False → CPU ('hist').
-    Szanuje XGB_TREE_METHOD (jeśli ustawione sensownie).
+    On CPU uses XGB_TREE_METHOD, or 'hist' if unset.
     """
-    # Rozpoznanie wersji XGBoost
     try:
         ver = tuple(int(p) for p in xgb.__version__.split(".")[:2])
     except Exception:
@@ -94,21 +89,18 @@ def _gpu_kwargs() -> Dict[str, Any]:
     tm = (str(XGB_TREE_METHOD).lower().strip() if XGB_TREE_METHOD is not None else "")
 
     if not bool(XGB_USE_GPU):
-        # CPU
         return {"tree_method": "hist"} if tm == "" else {"tree_method": tm}
 
-    # GPU
     if ver >= (2, 0):
-        # 'gpu_hist' jako alias – mapujemy na (hist + device=cuda)
+        # 'gpu_hist' is a legacy alias, map it to hist + device=cuda
         if tm in ("", "hist", "gpu_hist"):
             return {"tree_method": "hist", "device": "cuda"}
-        # fallback: i tak wymusimy CUDA
+        # any other method: still force CUDA
         return {"tree_method": "hist", "device": "cuda"}
     else:
-        # stare wersje
         if tm in ("", "gpu_hist"):
             return {"tree_method": "gpu_hist"}
-        # jeśli ktoś ustawił 'hist' przy starym XGB, i tak użyjemy 'gpu_hist' by mieć GPU
+        # 'hist' on old XGBoost would run on CPU, so force 'gpu_hist'
         return {"tree_method": "gpu_hist"}
 
 
@@ -120,7 +112,7 @@ def _log_xgb_env():
 
 
 def _free_cuda_memory():
-    """Wyczyść pule pamięci GPU po treningu (CuPy/Torch)."""
+    """Release GPU memory pools (CuPy/Torch) after training."""
     try:
         import cupy as _cp  # type: ignore
         try:
@@ -142,7 +134,6 @@ def _free_cuda_memory():
         pass
 
 
-# ───────────────────────── IO ─────────────────────────
 def _load_train_dataframe() -> pd.DataFrame:
     if not os.path.exists(DATA_CSV):
         raise FileNotFoundError(f"Brak pliku z danymi: {DATA_CSV}")
@@ -151,11 +142,11 @@ def _load_train_dataframe() -> pd.DataFrame:
         raise ValueError("Brak kolumny 'diseases' w pliku TRAIN.")
     df = df.dropna()
 
-    # jeżeli nie ma kolumny 'weight', spróbuj dodać z CLASS_WEIGHT_CSV
+    # No 'weight' column: fall back to per-class weights from CLASS_WEIGHT_CSV
     if "weight" not in df.columns and CLASS_WEIGHT_CSV:
         try:
             if os.path.exists(CLASS_WEIGHT_CSV):
-                cw = pd.read_csv(CLASS_WEIGHT_CSV)  # kolumny: disease, count, class_weight
+                cw = pd.read_csv(CLASS_WEIGHT_CSV)  # columns: disease, count, class_weight
                 cw = cw.rename(columns={"disease": "diseases"})
                 w_map = dict(zip(cw["diseases"], cw["class_weight"]))
                 df["weight"] = df["diseases"].map(w_map).fillna(1.0).astype(float)
@@ -169,7 +160,6 @@ def _load_train_dataframe() -> pd.DataFrame:
     return df
 
 
-# ───────────────────────── DMatrix helpers ─────────────────────────
 def _to_numpy(X: Any, dtype=np.uint8):
     if isinstance(X, pd.DataFrame):
         return X.to_numpy(dtype=dtype, copy=False)
@@ -178,8 +168,8 @@ def _to_numpy(X: Any, dtype=np.uint8):
 
 def _make_dmatrix(X: Any, y: Optional[Any] = None, for_gpu: bool = False, weight: Optional[Any] = None):
     """
-    Tworzy DMatrix (CPU) lub DeviceQuantileDMatrix (GPU) jeśli dostępne.
-    Wspiera 'weight' (wagi próbek). Przy GPU i dostępnej CuPy – pcha dane do VRAM.
+    Build a DMatrix (CPU) or DeviceQuantileDMatrix (GPU) with optional sample weights.
+    On GPU with CuPy available the data is pushed straight to VRAM.
     """
     feature_names = None
     if isinstance(X, pd.DataFrame):
@@ -189,17 +179,17 @@ def _make_dmatrix(X: Any, y: Optional[Any] = None, for_gpu: bool = False, weight
         try:
             if _CUPY_AVAILABLE:
                 X_arr = X.to_numpy(copy=False) if isinstance(X, pd.DataFrame) else X
-                X_arr = cp.asarray(X_arr, dtype=cp.float32)  # float32 stabilniej na GPU
+                X_arr = cp.asarray(X_arr, dtype=cp.float32)  # float32 is more stable on GPU
                 y_arr = None if y is None else cp.asarray(y, dtype=cp.int32)
                 w_arr = None if weight is None else cp.asarray(weight, dtype=cp.float32)
                 return xgb.DeviceQuantileDMatrix(X_arr, label=y_arr, weight=w_arr)
             else:
-                X_arr = _to_numpy(X, dtype=np.float32)  # float32 stabilniej na GPU
+                X_arr = _to_numpy(X, dtype=np.float32)  # float32 is more stable on GPU
                 y_arr = None if y is None else np.asarray(y, dtype=np.int32)
                 w_arr = None if weight is None else np.asarray(weight, dtype=np.float32)
                 return xgb.DeviceQuantileDMatrix(X_arr, label=y_arr, weight=w_arr)
         except Exception:
-            # fallback do zwykłego DMatrix
+            # fall back to a plain DMatrix
             pass
 
     X_arr = _to_numpy(X, dtype=np.uint8)
@@ -208,15 +198,14 @@ def _make_dmatrix(X: Any, y: Optional[Any] = None, for_gpu: bool = False, weight
     return xgb.DMatrix(X_arr, label=y_arr, weight=w_arr, feature_names=feature_names)
 
 
-# ───────────────────────── Dane i subset do strojenia ─────────────────────────
 def _features_from(df: pd.DataFrame) -> List[str]:
     return [c for c in df.columns if c not in SPECIAL_COLS]
 
 
 def _subset_for_tuning(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray, Optional[np.ndarray]]:
     """
-    Podzbiór do CV: klasy z ≥ n_splits rekordami (fallback do ≥2, jeśli inaczej byłoby pusto).
-    Zwraca (X, y_enc, w) – gdzie w może być None.
+    CV subset: classes with >= n_splits rows (falls back to >= 2 if that would be empty).
+    Returns (X, y_enc, w); w may be None.
     """
     n_splits = int(XGB_CV_SPLITS or 3)
     vc = df["diseases"].value_counts()
@@ -231,9 +220,8 @@ def _subset_for_tuning(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray, Opti
     return X, y_enc, w
 
 
-# ───────────────────────── Progres / ETA ─────────────────────────
 class _BoosterProgress(xgb.callback.TrainingCallback):
-    """Progress i ETA co 'step_pct'% rund podczas fitowania Boosterem."""
+    """Log progress and ETA every step_pct% of boosting rounds."""
     def __init__(self, total_rounds: int, label: str = "Train", step_pct: int = 1):
         self.total = max(int(total_rounds), 1)
         self.step = max(int(step_pct), 1)
@@ -248,11 +236,11 @@ class _BoosterProgress(xgb.callback.TrainingCallback):
         return model
 
     def after_iteration(self, model, epoch: int, evals_log):
-        done = epoch + 1  # epoch startuje od 0
+        done = epoch + 1  # epoch is 0-based
         pct = int(done / self.total * 100)
         now = time.time()
         last_round = done >= self.total
-        # co step_pct% rund, ale nie częściej niż co 5 s (poza ostatnią rundą)
+        # every step_pct% of rounds, at most once per 5 s (except the last round)
         if pct // self.step > self.last_logged and (last_round or now - self.last_t >= 5.0):
             self.last_t = now
             elapsed = now - self.start
@@ -261,11 +249,11 @@ class _BoosterProgress(xgb.callback.TrainingCallback):
             log.info("[XGB][%s] %d%% (%d/%d rund) | minęło %s | zostało ~%s",
                      self.label, pct, done, self.total, fmt_duration(elapsed), fmt_duration(eta))
             self.last_logged = pct // self.step
-        return False  # kontynuuj
+        return False  # False = continue training
 
 
 class _CVProgress(xgb.callback.TrainingCallback):
-    """Postęp jednej próby strojenia (xgb.cv): runda, bieżący mlogloss, czas i ETA do limitu rund."""
+    """Progress of one tuning trial (xgb.cv): round, current mlogloss, elapsed time, ETA to the round limit."""
     def __init__(self, label: str, max_rounds: int, every_s: float = 20.0):
         self.label = label
         self.max_rounds = max(int(max_rounds), 1)
@@ -295,13 +283,12 @@ class _CVProgress(xgb.callback.TrainingCallback):
         return False
 
 
-# ───────────────────────── Param helpers ─────────────────────────
 def _strong_fallback_params() -> Dict[str, Any]:
-    # Szybko + stabilnie na ~160–250k próbek x ~800 klas (binarki 0/1)
+    # Fast and stable for ~160-250k samples x ~800 classes (binary 0/1 features)
     return {
         "max_depth": 9,
         "learning_rate": 0.045,
-        "n_estimators": 1400,      # num_boost_round – nadpisze Bayes/ES
+        "n_estimators": 1400,      # num_boost_round, overridden by Bayes tuning/early stopping
         "subsample": 0.90,
         "colsample_bytree": 0.90,
         "colsample_bylevel": 0.90,
@@ -315,15 +302,12 @@ def _strong_fallback_params() -> Dict[str, Any]:
 
 def _to_train_params(params: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, Any], int]:
     """
-    Rozdziela parametry na:
-    - 'train_params' – do xgb.train
-    - 'num_boost_round' – liczba rund boostingowych
-    Mapuje reg_… → ('alpha','lambda'), dodaje objective/metric/num_class oraz GPU flagi.
+    Split params into (train_params for xgb.train, num_boost_round).
+    Maps reg_alpha/reg_lambda to alpha/lambda and adds objective, metric, num_class and GPU flags.
     """
     p = dict(params or {})
     num_boost_round = int(p.pop("n_estimators", 1000))
 
-    # mapowanie regularizacji
     if "reg_alpha" in p and "alpha" not in p:
         p["alpha"] = float(p.pop("reg_alpha"))
     if "reg_lambda" in p and "lambda" not in p:
@@ -340,11 +324,10 @@ def _to_train_params(params: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, 
     return train_params, num_boost_round
 
 
-# ───────────────────────── Zapisywanie/ładowanie parametrów ─────────────────────────
 def _save_train_params(params: Dict[str, Any]) -> None:
     safe = {}
     for k, v in (params or {}).items():
-        if isinstance(v, np.generic):  # skopt zwraca np.int64 / np.float64 (np. max_depth)
+        if isinstance(v, np.generic):  # skopt returns np.int64/np.float64 (e.g. max_depth), not JSON-serializable
             v = v.item()
         if isinstance(v, (int, float, str, bool)) or v is None:
             safe[k] = v
@@ -360,12 +343,11 @@ def _load_train_params() -> Optional[Dict[str, Any]]:
         return json.load(f)
 
 
-# ───────────────────────── Bayes tuning (xgb.cv na CPU) ─────────────────────────
 def _tune_xgb_bayes(df_full: pd.DataFrame) -> Dict[str, Any]:
     """
-    Bayesowskie strojenie przez skopt.Optimizer + xgb.cv (mlogloss).
-    Tuning na podzbiorze (klasy ≥ n_splits). Zwraca best_params (bez objective/num_class),
-    a do 'n_estimators' wpisuje liczbę rund z early stopping z najlepszej próby.
+    Bayesian tuning via skopt.Optimizer + xgb.cv (mlogloss, CPU) on classes with >= n_splits rows.
+    Returns best_params (without objective/num_class); n_estimators is set to the
+    early-stopped round count of the best trial.
     """
     n_splits = int(XGB_CV_SPLITS or 3)
     log.info("[XGB][Bayes] START (n_splits=%d)", n_splits)
@@ -405,7 +387,7 @@ def _tune_xgb_bayes(df_full: pd.DataFrame) -> Dict[str, Any]:
         log.warning("[XGB][Bayes] Brak skopt.Optimizer (%s). Pomiń strojenie lub doinstaluj scikit-optimize.", e)
         return {}
 
-    dtrain_cv = _make_dmatrix(X_tune, y_tune, for_gpu=False, weight=w_tune)  # CPU + wagi
+    dtrain_cv = _make_dmatrix(X_tune, y_tune, for_gpu=False, weight=w_tune)  # CPU, with sample weights
 
     opt = Optimizer(dimensions=dims, base_estimator="GP", acq_func="EI",
                     random_state=XGB_RANDOM_STATE)
@@ -463,25 +445,24 @@ def _tune_xgb_bayes(df_full: pd.DataFrame) -> Dict[str, Any]:
     return best_params or {}
 
 
-# ───────────────────────── Kalibracja (temperature scaling) ─────────────────────────
 def _softmax(z: np.ndarray) -> np.ndarray:
     z = z - np.max(z, axis=1, keepdims=True)
-    ez = np.exp(z.astype(np.float64))  # cast dla stabilności
+    ez = np.exp(z.astype(np.float64))  # float64 for numerical stability
     s = ez / np.sum(ez, axis=1, keepdims=True)
     return s.astype(np.float32, copy=False)
 
 
 class TemperatureCalibrator:
     """
-    Kalibracja marginów XGBoost (pre-softmax):
+    Temperature scaling of XGBoost margins (pre-softmax):
 
         p = softmax((margins - log_w) / T)
 
-    - log_w: korekta priorytetu klas. Trening z wagami klas w_c działa jak trening na
-      danych, w których klasa c jest w_c razy częstsza, więc model zawyża rzadkie klasy.
-      Odjęcie log(w_c) przywraca naturalne proporcje (bez parametrów do uczenia).
-    - T: temperatura dobrana na odłożonym zbiorze kalibracyjnym (minimum NLL).
-    Korektę stosujemy tylko wtedy, gdy na zbiorze kalibracyjnym faktycznie obniża NLL.
+    - log_w: class prior correction. Training with class weights w_c acts like training on
+      data where class c is w_c times more frequent, so the model overrates rare classes.
+      Subtracting log(w_c) restores natural proportions (no learned parameters).
+    - T: temperature fitted on a held-out calibration set (minimum NLL).
+    The correction is used only if it actually lowers NLL on the calibration set.
     """
     def __init__(self, T: float = 1.0, log_w: Optional[np.ndarray] = None):
         self.T: float = float(T)
@@ -560,7 +541,6 @@ def _load_calibrator() -> Optional[TemperatureCalibrator]:
         return None
 
 
-# ───────────────────────── Artefakty ─────────────────────────
 def _save_artifacts(model: xgb.Booster, le: LabelEncoder, features: List[str]) -> None:
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
     try:
@@ -586,7 +566,7 @@ def _recover_features(model) -> List[str]:
         except Exception:
             log.warning("[XGB] Nie udało się odczytać %s", FEATURES_PATH, exc_info=False)
 
-    # 2) z modelu (booster.feature_names)
+    # 2) booster.feature_names
     try:
         booster = model.get_booster() if hasattr(model, "get_booster") else model
         feat_names = getattr(booster, "feature_names", None)
@@ -596,7 +576,7 @@ def _recover_features(model) -> List[str]:
     except Exception:
         pass
 
-    # 3) z danych
+    # 3) training data columns
     try:
         df = _load_train_dataframe()
         features = _features_from(df)
@@ -608,7 +588,7 @@ def _recover_features(model) -> List[str]:
 
 
 def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd.DataFrame, np.ndarray]]:
-    """Wczytuje test, dopasowuje kolumny i label encoder; zwraca (Xte, yte_enc) lub None."""
+    """Load TEST aligned to the model's features and label encoder; returns (Xte, yte_enc) or None."""
     if not TEST_CSV or not os.path.exists(TEST_CSV):
         return None
     df = pd.read_csv(TEST_CSV)
@@ -641,7 +621,7 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
 
 
 def _calibration_csv_available() -> bool:
-    """Zbiór kalibracyjny musi istnieć i być rozłączny z DATA_CSV (inny plik)."""
+    """The calibration set must exist and be disjoint from DATA_CSV (a different file)."""
     if not XGB_CALIBRATION_CSV or not os.path.exists(XGB_CALIBRATION_CSV):
         return False
     try:
@@ -655,7 +635,7 @@ def _calibration_csv_available() -> bool:
 def _load_calibration_frame(
     le: LabelEncoder, features: List[str]
 ) -> Optional[Tuple[pd.DataFrame, np.ndarray, Optional[np.ndarray]]]:
-    """Wczytuje odłożony zbiór kalibracyjny (np. data/calibration.csv) -> (X, y_enc, w)."""
+    """Load the held-out calibration set (e.g. data/calibration.csv) as (X, y_enc, w)."""
     if not _calibration_csv_available():
         return None
     df = pd.read_csv(XGB_CALIBRATION_CSV)
@@ -676,7 +656,7 @@ def _load_calibration_frame(
 
 
 def _class_log_weights(df: pd.DataFrame, le: LabelEncoder) -> Optional[np.ndarray]:
-    """log(waga klasy) w kolejności LabelEncodera; None, gdy dane nie mają wag klas."""
+    """log(class weight) in LabelEncoder order; None when the data has no class weights."""
     if "weight" not in df.columns:
         return None
     w = df.groupby("diseases")["weight"].first().reindex(le.classes_).astype(float)
@@ -714,35 +694,31 @@ def _warn_if_trained_on_other_data(has_calibrator: bool) -> None:
         )
 
 
-# ───────────────────────── Manager ─────────────────────────
 class XGBManager:
     def __init__(self):
         self.model: Optional[xgb.Booster] = None
         self.le: Optional[LabelEncoder] = None
         self.features: List[str] = []
         self.calibrator: Optional[TemperatureCalibrator] = None
-        # helpery do szybkiej produkcji
+        # fast input vector building for inference
         self._vec_template: Optional[np.ndarray] = None
         self._feat_index: Optional[Dict[str, int]] = None
-        # cache predykcji (ostatni wektor+K)
+        # prediction cache (last vector + k)
         self._last_pred_key: Optional[Tuple[Optional[Tuple[float, ...]], int]] = None
         self._last_pred_val: Optional[List[Dict[str, Any]]] = None
-        # cache konfiguracji inferencji + warmup flaga
         self._infer_cfg_cache: Optional[tuple[str, int]] = None  # (device, nthread)
         self._warmed: bool = False
-        # /chat działa w puli wątków: predykcja + cache muszą być atomowe
+        # /chat runs in a thread pool: prediction and cache access must be atomic
         self._lock = threading.Lock()
 
-    # ───────────────────────── helpers ─────────────────────────
     def _final_params(self, best: Dict[str, Any], n_classes: int) -> Tuple[Dict[str, Any], int]:
-        """Zwraca (train_params, num_boost_round) dla xgb.train."""
         fallback = _strong_fallback_params()
         merged = {**fallback, **(best or {})}
         train_params, num_rounds = _to_train_params(merged, n_classes=n_classes)
         return train_params, num_rounds
 
     def _prepare_vector_template(self) -> None:
-        """Przygotuj szablon i mapę indeksów cech do ultraszybkiego konstruowania wektorów."""
+        """Precompute a zero template and a feature index map for fast vector building."""
         if not self.features:
             return
         self._vec_template = np.zeros((1, len(self.features)), dtype=np.float32, order="C")
@@ -750,9 +726,9 @@ class XGBManager:
 
     def _set_inference_device(self) -> None:
         """
-        Konfiguracja inferencji: CPU (domyślnie) lub GPU przez 'device'.
-        NIE ustawiamy 'predictor' (ostrzeżenie w XGB>=2.0).
-        Log pojawi się tylko, gdy konfiguracja naprawdę się zmieni.
+        Configure inference: CPU by default, or GPU via 'device'.
+        'predictor' is deliberately not set (deprecation warning in XGB >= 2.0).
+        Logs only when the configuration actually changes.
         """
         if self.model is None:
             return
@@ -768,7 +744,7 @@ class XGBManager:
             pass
 
     def _limit_iteration_end(self, total_rounds: int) -> int:
-        """Zwraca docelową liczbę rund do użycia w predykcji (hard cap / fraction)."""
+        """Number of rounds to use at prediction time (applies hard cap or fraction)."""
         try:
             total = int(total_rounds)
         except Exception:
@@ -789,20 +765,18 @@ class XGBManager:
             iteration_end: Optional[int] = None,
     ) -> np.ndarray:
         """
-        Zwraca marginesy (pre-softmax) dla 1 lub wielu próbek.
-        Używa inplace_predict(predict_type="margin"), a jeśli dana wersja XGBoost
-        tego nie wspiera → fallback do DMatrix.predict(output_margin=True).
+        Margins (pre-softmax) for one or more rows.
+        Uses inplace_predict(predict_type="margin") and falls back to
+        DMatrix.predict(output_margin=True) on XGBoost versions without it.
         """
         if self.model is None:
             raise RuntimeError("Model niegotowy (brak self.model).")
 
-        # --- upewnij się, że mamy 2D float32 ---
         arr = np.asarray(arr, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
         n_rows = arr.shape[0]
 
-        # --- ustal ile rund boostingowych faktycznie użyć ---
         try:
             if iteration_end is None or int(iteration_end) <= 0:
                 total = int(self.model.num_boosted_rounds())
@@ -812,7 +786,6 @@ class XGBManager:
             total = 0
         it_end = self._limit_iteration_end(total)
 
-        # --- 1. próba: inplace_predict z output_margin=True ---
         try:
             kwargs: Dict[str, Any] = {
                 "validate_features": False,
@@ -821,7 +794,7 @@ class XGBManager:
             if it_end > 0:
                 kwargs["iteration_range"] = (0, it_end)
 
-            # XGBoost >= 1.x: predict_type="margin" (output_margin istnieje tylko w predict())
+            # inplace_predict takes predict_type="margin"; output_margin exists only in predict()
             kwargs["predict_type"] = "margin"
 
             margins = self.model.inplace_predict(arr, **kwargs)
@@ -829,16 +802,15 @@ class XGBManager:
             return margins
 
         except TypeError:
-            # ta wersja XGBoost nie zna predict_type w inplace_predict → przechodzimy na DMatrix
+            # this XGBoost version has no predict_type in inplace_predict
             log.info(
                 "[XGB][Predict] inplace_predict(predict_type=margin) niewspierane - "
                 "fallback do DMatrix.predict(output_margin=True)."
             )
         except Exception:
-            # inne błędy też kierujemy do klasycznego predict
+            # any other error also falls back to classic predict
             pass
 
-        # --- 2. fallback: klasyczne DMatrix.predict(output_margin=True) ---
         dmat = xgb.DMatrix(arr, feature_names=self.features or None)
         if it_end > 0:
             margins = self.model.predict(
@@ -857,8 +829,8 @@ class XGBManager:
 
     def _predict_margins_batch(self, X: np.ndarray, label: str, chunk: int = 4096) -> np.ndarray:
         """
-        Marginy dla wielu wierszy (kalibracja, test): na czas predykcji wsadowej używamy
-        GPU albo wszystkich rdzeni (predykcja czatu działa na 1 wątku), z postępem i ETA.
+        Margins for many rows (calibration, test). Temporarily switches to GPU or all CPU
+        cores (chat inference runs on one thread), with progress and ETA logging.
         """
         if self.model is None:
             raise RuntimeError("Model niegotowy.")
@@ -881,11 +853,11 @@ class XGBManager:
                 prog.update(min(start + chunk, len(X)))
         finally:
             prog.finish()
-            self._set_inference_device()  # z powrotem konfiguracja do pojedynczych zapytań
+            self._set_inference_device()  # restore single-query config
         return np.vstack(parts) if parts else np.zeros((0, 0), dtype=np.float32)
 
     def warmup(self) -> None:
-        """Szybki warm-up, by skrócić czas pierwszej odpowiedzi (wykonaj raz)."""
+        """One-time warm-up to cut first-response latency."""
         if self.model is None or not self.features or self._warmed:
             return
         self._set_inference_device()
@@ -898,7 +870,7 @@ class XGBManager:
         self._warmed = True
 
     def make_vec_from_symptoms(self, active_feats: List[str]) -> np.ndarray:
-        """Z listy nazw objawów buduje 1xD wektor (float32, C-order) na podstawie przygotowanego szablonu."""
+        """Build a 1xD float32 C-order vector from the names of active symptoms."""
         if self._vec_template is None or self._feat_index is None:
             self._prepare_vector_template()
         v = self._vec_template.copy()
@@ -909,20 +881,18 @@ class XGBManager:
                 v[0, idx] = 1.0
         return v
 
-    # ─────────────────────────── API: train ───────────────────────────
     def train(self) -> None:
         """
-        1) Jeśli model/LE istnieją – wczytaj i przygotuj do produkcji (z kalibratorem, jeśli jest).
-        2) Jeśli nie ma modelu – strojenie + pełny trening + zapis artefaktów.
-        3) Warm-up i konfiguracja inferencji.
-        4) [TYLKO PO nowym treningu] Ewaluacja na TEST.
+        1) If model/LE exist, load them for inference (with the calibrator, if present).
+        2) Otherwise tune, train on full data and save artifacts.
+        3) Configure inference and warm up.
+        4) Evaluate on TEST, only after a fresh training run.
         """
         log.info("[XGB] === TRAIN() START ===")
         _log_xgb_env()
 
-        did_train = False  # NEW: śledzenie, czy faktycznie trenowaliśmy w tej sesji
+        did_train = False
 
-        # 1) Spróbuj wczytać istniejące artefakty
         model_ok = os.path.exists(MODEL_PATH) and os.path.exists(LE_PATH)
         if model_ok:
             try:
@@ -930,7 +900,7 @@ class XGBManager:
                 if isinstance(loaded, xgb.Booster):
                     self.model = loaded
                 else:
-                    # opcja alternatywna - ścieżka do JSON
+                    # alternative formats: a path to a JSON model, or the .json saved next to MODEL_PATH
                     if isinstance(loaded, str) and os.path.exists(loaded):
                         booster = xgb.Booster()
                         booster.load_model(loaded)
@@ -952,7 +922,6 @@ class XGBManager:
                 log.warning("[XGB] Nie udało się wczytać modelu: %s. Trenuję od nowa.", e)
                 model_ok = False
 
-        # 2) Jeśli nie ma modelu – pełny trening
         if not model_ok:
             df_full = _load_train_dataframe()
             features = _features_from(df_full)
@@ -965,7 +934,7 @@ class XGBManager:
             n_classes = len(le_full.classes_)
             log.info("[XGB] Dane: N=%d, D=%d, klasy=%d", X_full.shape[0], X_full.shape[1], n_classes)
 
-            # strojenie Bayes (jeśli dostępne)
+            # reuse cached best_params, otherwise run Bayes tuning
             if os.path.exists(BEST_PARAMS_PATH):
                 try:
                     best = joblib.load(BEST_PARAMS_PATH)
@@ -979,9 +948,9 @@ class XGBManager:
             log.info("[XGB] Final train_params: %s | num_boost_round=%d", train_params, num_rounds)
             _save_train_params(train_params)
 
-            # Kalibracja temperatury MUSI odbywać się na danych, których booster nie widział.
-            # 1) preferowany: odłożony plik (XGB_CALIBRATION_CSV, domyślnie data/calibration.csv),
-            # 2) awaryjnie: stratyfikowany hold-out wycięty z TRAIN przed treningiem.
+            # Temperature calibration MUST use data the booster has not seen:
+            # 1) preferred: held-out file (XGB_CALIBRATION_CSV, default data/calibration.csv),
+            # 2) fallback: stratified hold-out cut from TRAIN before training.
             X_tr, y_tr, w_tr = X_full, y_full_enc, w_full
             cal_holdout: Optional[Tuple[Any, np.ndarray, Optional[np.ndarray]]] = None
             cal_source = "none"
@@ -1013,7 +982,6 @@ class XGBManager:
                         log.warning("[XGB][Cal] Nie da się wydzielić hold-outu (%s) - bez kalibracji.", e)
                         cal_holdout = None
 
-            # finalny trening (z wagami, GPU jeśli włączone)
             dtrain = _make_dmatrix(X_tr, y_tr, for_gpu=bool(XGB_USE_GPU), weight=w_tr)
             booster_progress = _BoosterProgress(total_rounds=num_rounds, label="Train", step_pct=1)
             dev = train_params.get("device", "cpu")
@@ -1035,13 +1003,12 @@ class XGBManager:
             except Exception:
                 pass
 
-            # zapis artefaktów + stan
             self.model = booster
             self.le = le_full
             self.features = list(features)
             _save_artifacts(booster, le_full, self.features)
 
-            # kalibracja na danych NIEWIDZIANYCH przy treningu
+            # calibrate on data NOT seen during training
             self.calibrator = None
             if bool(XGB_CALIBRATE) and cal_holdout is not None:
                 try:
@@ -1068,20 +1035,19 @@ class XGBManager:
                 cal_source = "none"
                 try:
                     if os.path.exists(CALIB_PATH):
-                        os.remove(CALIB_PATH)  # stary kalibrator nie pasuje do nowego modelu
+                        os.remove(CALIB_PATH)  # a stale calibrator does not match the new model
                 except Exception:
                     pass
             _save_meta(cal_source)
 
-            did_train = True  # NEW: świeżo trenowaliśmy
+            did_train = True
 
-        # 3) Konfiguracja produkcyjna + warm-up + sprzątanie VRAM
         self._set_inference_device()
         _free_cuda_memory()
         self._prepare_vector_template()
         self.warmup()
 
-        # 4) Ewaluacja na TEST - tylko po nowym treningu
+        # evaluate on TEST only after fresh training, not when the model was just loaded
         if did_train:
             try:
                 rep_ = self.evaluate_test()
@@ -1093,7 +1059,7 @@ class XGBManager:
             log.info("[XGB] Pomijam ewaluację TEST - model został tylko wczytany (brak świeżego treningu).")
 
     def evaluate_test(self) -> Dict[str, Any]:
-        """Trafność i kalibracja na zbiorze testowym: surowy softmax vs po kalibracji."""
+        """Accuracy and calibration on TEST: raw softmax vs calibrated."""
         if self.model is None or self.le is None or not self.features:
             return {}
         te = _maybe_load_test(self.le, self.features)
@@ -1109,7 +1075,6 @@ class XGBManager:
         log_metrics_table(log, "XGB / TEST", out)
         return out
 
-    # ─────────────────────────── API: incremental ───────────────────────────
     def train_incremental(
         self,
         new_csv: str,
@@ -1120,10 +1085,10 @@ class XGBManager:
         recalibrate: bool = True,
     ) -> None:
         """
-        Dogrywa kolejne drzewa do istniejącego modelu na NOWYCH danych (bez mieszania ze starymi).
-        - Uwzględnia 'weight' jako WAGĘ PRÓBKI.
-        - Pozostawia listę klas bez zmian (nowe, nieznane klasy są odrzucane).
-        - Może ponownie dokalibrować temperaturę na walidacji z new_csv (recalibrate=True).
+        Append trees to the existing model using only NEW data (not mixed with the old data).
+        - 'weight' is used as a per-sample weight.
+        - The class list stays fixed; rows with unknown classes are dropped.
+        - With recalibrate=True (and early stopping), refits temperature on a new_csv validation split.
         """
         log.info("[XGB][INC] === INCREMENTAL TRAIN START === new_csv=%s extra_rounds=%d",
                  new_csv, int(extra_rounds))
@@ -1137,7 +1102,6 @@ class XGBManager:
         if "diseases" not in df_new.columns:
             raise ValueError("Nowy CSV musi zawierać kolumnę 'diseases'.")
 
-        # odrzuć nieznane klasy
         known = set(self.le.classes_.tolist())
         before = len(df_new)
         df_new = df_new[df_new["diseases"].isin(known)].copy()
@@ -1146,7 +1110,7 @@ class XGBManager:
         if len(df_new) < before:
             log.info("[XGB][INC] Odrzucono %d wierszy z nieznanymi klasami.", before - len(df_new))
 
-        # dopasuj cechy: brakujące dopełnij zerami; usuń kolumny specjalne
+        # align features: fill missing with zeros, drop other special columns
         for c in self.features:
             if c not in df_new.columns:
                 df_new[c] = 0
@@ -1155,7 +1119,7 @@ class XGBManager:
             df_new["weight"] = 1.0
         df_new = df_new[[c for c in keep_cols if c in df_new.columns]]
 
-        # typy: na GPU stabilniej float32
+        # float32 is more stable on GPU
         X = df_new[self.features].astype(np.float32 if bool(XGB_USE_GPU) else np.uint8)
         y = self.le.transform(df_new["diseases"])
         w = df_new["weight"].astype(float).to_numpy() if "weight" in df_new.columns else None
@@ -1165,7 +1129,7 @@ class XGBManager:
             log.warning("[XGB][INC] Brak zapisanych parametrów treningu – użyję fallback.")
             train_params, _ = _to_train_params(_strong_fallback_params(), n_classes=len(self.le.classes_))
 
-        # dopnij cele/metryki i liczba klas + GPU jeśli dostępne
+        # enforce objective, metric, num_class and current GPU flags
         train_params = {
             **train_params,
             "objective": "multi:softprob",
@@ -1175,7 +1139,7 @@ class XGBManager:
             "seed": int(XGB_RANDOM_STATE or 42),
         }
 
-        # redukcja LR dla dogrywki (stabilniej)
+        # lower learning rate for continued training (more stable)
         if lr_scale is not None and lr_scale > 0:
             base_eta = float(train_params.get("learning_rate", train_params.get("eta", 0.1)))
             eta_new = max(base_eta * float(lr_scale), 1e-4)
@@ -1185,7 +1149,7 @@ class XGBManager:
 
         use_gpu = bool(XGB_USE_GPU)
         if early_stopping_rounds:
-            # zabezpieczenie: liczba foldów ≤ min liczności klasy
+            # number of folds must not exceed the smallest class count
             min_class = int(pd.Series(y).value_counts().min())
             n_folds = max(2, min(int(val_folds), min_class))
             skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=XGB_RANDOM_STATE)
@@ -1215,13 +1179,12 @@ class XGBManager:
             num_boost_round=int(extra_rounds),
             evals=evals,
             early_stopping_rounds=int(early_stopping_rounds) if early_stopping_rounds else None,
-            xgb_model=self.model,  # kontynuacja
+            xgb_model=self.model,  # continue from the existing booster
             callbacks=[booster_progress],
             verbose_eval=False,
         )
         log.info("[XGB][INC] Dograno %d rund w %.1fs.", int(extra_rounds), time.time() - t0)
 
-        # posprzątaj GPU RAM
         try:
             del dtrain
             if early_stopping_rounds:
@@ -1230,14 +1193,13 @@ class XGBManager:
             pass
         _free_cuda_memory()
 
-        # artefakty + inference device + warm-up
         _save_artifacts(self.model, self.le, self.features)
         _save_train_params(train_params)
         self._set_inference_device()
         self._prepare_vector_template()
         self.warmup()
 
-        # ewentualna re-kalibracja na walidacji z new_csv
+        # recalibrate on the new_csv validation split (exists only with early stopping)
         if bool(XGB_CALIBRATE) and recalibrate and early_stopping_rounds:
             try:
                 Xva_arr = X_va.to_numpy(dtype=np.float32, copy=False)  # type: ignore
@@ -1258,18 +1220,12 @@ class XGBManager:
             except Exception as e:
                 log.warning("[XGB][INC] Błąd re-kalibracji: %s", e)
 
-    # ─────────────────────────── API: predict (FAST) ───────────────────────────
     def predict_topk(self, x: Any, k: int = 3) -> List[Dict[str, Any]]:
         """
-        Top-k predykcja dla pojedynczego wektora cech.
+        Top-k prediction for a single feature vector.
 
-        x może być:
-          - np.ndarray (D,) albo (1, D)
-          - lista liczb [0/1,...]
-          - lista list [[0/1,...]] z jednym wierszem
-
-        Zwraca listę słowników:
-        [{"diagnosis_en": str, "probability": float}, ...]
+        x: np.ndarray of shape (D,) or (1, D), a list [0/1, ...], or [[0/1, ...]] with one row.
+        Returns [{"diagnosis_en": str, "probability": float}, ...].
         """
         if self.model is None or self.le is None or not self.features:
             raise RuntimeError("Model/encoder/features niegotowe.")
@@ -1280,20 +1236,18 @@ class XGBManager:
         self._set_inference_device()
         t0 = time.perf_counter()
 
-        # --- normalizacja wejścia do 2D (1, D) ---
         arr = np.asarray(x, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
         if arr.ndim != 2 or arr.shape[0] != 1:
-            # w Twoim /chat używasz tylko jednej próbki naraz – pilnujemy tego
+            # /chat always sends a single sample; the cache below relies on that
             raise ValueError("predict_topk oczekuje pojedynczej próbki (shape (D,) lub (1,D)).")
 
-        # mini-cache: najczęstszy przypadek: ten sam wektor i to samo K
+        # mini-cache for the most common case: same vector and same k
         vt = tuple(float(v) for v in arr[0].tolist())
         if self._last_pred_key == (vt, int(k)) and self._last_pred_val is not None:
             return [dict(d) for d in self._last_pred_val]
 
-        # --- ustalenie liczby rund, jak wcześniej ---
         try:
             best_iter = getattr(self.model, "best_iteration", None)
             if isinstance(best_iter, (int, np.integer)) and best_iter > 0:
@@ -1303,7 +1257,6 @@ class XGBManager:
         except Exception:
             it_end = 0
 
-        # --- marginesy → softmax / kalibrator ---
         margins = self._predict_margins_cpu(arr, iteration_end=it_end)
         proba = self.calibrator.transform(margins) if self.calibrator is not None else _softmax(margins)
 
@@ -1314,7 +1267,7 @@ class XGBManager:
         if k > p.shape[0]:
             k = p.shape[0]
 
-        # Top-K: argpartition + dosortowanie
+        # top-k: argpartition, then sort only the k candidates
         part = np.argpartition(-p, kth=k - 1)[:k]
         idxs = part[np.argsort(-p[part])]
 
@@ -1324,7 +1277,6 @@ class XGBManager:
             for i, lbl in zip(idxs, labels_en)
         ]
 
-        # cache
         self._last_pred_key = (vt, int(k))
         self._last_pred_val = [dict(d) for d in res]
 

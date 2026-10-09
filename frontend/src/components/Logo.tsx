@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function Logo({ className }: { className?: string }) {
   return (
     <Image
-      src="/logo.png"         // plik w /public
+      src="/logo.png"
       alt="Logo aplikacji"
       width={64}
       height={64}

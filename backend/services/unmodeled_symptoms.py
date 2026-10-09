@@ -1,9 +1,7 @@
-# backend/services/unmodeled_symptoms.py
 """
-Objawy rozpoznawane w tekście, których model (XGB/River) nie zna, bo nie ma ich w danych
-treningowych. Nie trafiają do wektora cech, ale:
-  - pacjent dostaje potwierdzenie, że objaw został zauważony (zamiast "nie rozpoznałem"),
-  - trafiają do opisu dla LLM i do oceny pilności (np. światłowstręt + gorączka + ból głowy).
+Symptoms detected in text that the XGB/River models do not know (absent from training data).
+They never enter the feature vector, but the patient gets an acknowledgement instead of
+"not recognized", and they feed the LLM description and urgency assessment.
 """
 from __future__ import annotations
 
@@ -17,12 +15,12 @@ def _fold(text: str) -> str:
     return "".join(ch for ch in t if not unicodedata.combining(ch))
 
 
-# Wzorce na tekście bez polskich znaków. Rodzaje:
-#   "noun"  rzeczownik ("światłowstręt"): zaprzeczony tylko w dopełniaczu po przeczeniu
-#           ("nie mam światłowstrętu", "bez fotofobii"); mianownik po "nie mam gorączki i ..." jest obecny
-#   "verb"  opis czasownikiem ("razi mnie światło"): zaprzeczony, gdy "nie" stoi tuż przed nim
-#   "pos"   zwroty z "nie" w znaczeniu twierdzącym ("nie mogę patrzeć na światło")
-#   "neg"   jawne zaprzeczenie w środku zwrotu ("światło mnie nie razi")
+# Patterns run on diacritic-folded text. Kinds:
+#   "noun"  negated only in genitive after a negation ("nie mam swiatlowstretu", "bez fotofobii");
+#           nominative after "nie mam goraczki i ..." still counts as present
+#   "verb"  verbal description ("razi mnie swiatlo"): negated when "nie" directly precedes it
+#   "pos"   phrases where "nie" is affirmative ("nie moge patrzec na swiatlo")
+#   "neg"   explicit negation inside the phrase ("swiatlo mnie nie razi")
 _UNMODELED: List[Tuple[str, List[Tuple[str, Pattern[str]]]]] = [
     (
         "światłowstręt",
@@ -43,7 +41,7 @@ _UNMODELED: List[Tuple[str, List[Tuple[str, Pattern[str]]]]] = [
 
 _CLAUSE_SPLIT = re.compile(r"[.;!?,\n]|\bale\b|\bnatomiast\b|\bza\s+to\b")
 _NEG_WORD = re.compile(r"\b(?:nie|bez|brak\w*|zadnego|zadnej|ani)\b")
-# odmiana rzeczowników w dopełniaczu (forma po przeczeniu): światłowstrętu, fotofobii
+# Genitive noun forms (used after a negation).
 _GENITIVE = re.compile(r"(?:swiatlowstretu|fotofobii)\b")
 
 
@@ -51,13 +49,13 @@ def _negated(kind: str, clause: str, m: "re.Match[str]") -> bool:
     before = clause[: m.start()]
     if kind == "noun":
         return bool(_GENITIVE.match(clause, m.start())) and bool(_NEG_WORD.search(before))
-    # "verb": przeczenie najwyżej dwa słowa przed zwrotem ("nie razi mnie światło", "nie jestem wrażliwy")
+    # "verb": negation at most two words before the phrase ("nie jestem wrazliwy")
     words = before.split()[-3:]
     return any(w in ("nie", "bez", "ani") for w in words)
 
 
 def extract_unmodeled(text: str) -> Tuple[List[str], List[str]]:
-    """Zwraca (obecne, zaprzeczone) etykiety PL objawów spoza modelu."""
+    """Return (present, negated) Polish labels of unmodeled symptoms."""
     present: List[str] = []
     negated: List[str] = []
     for clause in _CLAUSE_SPLIT.split(_fold(text)):
@@ -75,6 +73,6 @@ def extract_unmodeled(text: str) -> Tuple[List[str], List[str]]:
                 target = negated if is_neg else present
                 if label not in target:
                     target.append(label)
-                break   # pierwszy pasujący wzorzec rozstrzyga dla tego fragmentu
+                break   # first matching pattern decides for this clause
     negated = [n for n in negated if n not in present]
     return present, negated

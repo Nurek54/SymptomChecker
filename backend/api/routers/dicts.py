@@ -21,7 +21,8 @@ _dict_cache: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
 def _load_dict_cached(path: Path) -> List[Dict[str, Any]]:
-    # szczegóły (ścieżki, treść wyjątku) tylko w logu serwera, klient dostaje ogólny komunikat
+    # Details (paths, exception text) go only to the server log; the client gets a generic message.
+    # Cache is keyed by path and invalidated when the file mtime changes.
     if not path.exists():
         log.error("Brak pliku słownika: %s", path)
         raise HTTPException(500, "Słownik objawów jest niedostępny.")
@@ -38,7 +39,7 @@ def _load_dict_cached(path: Path) -> List[Dict[str, Any]]:
         if cached and cached[0] == mtime:
             return cached[1]
 
-    # poza lockiem czytamy z dysku, żeby nie blokować innych ścieżek
+    # read from disk outside the lock so other paths are not blocked
     try:
         data = json.loads(path.read_text(encoding="utf-8")) or []
     except Exception:
@@ -63,13 +64,12 @@ def _project_to_xgb_features(
     count: Optional[Callable[[str], int]] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Wpisy słownika -> cechy modelu. `resolve` (SymptomMatcher.resolve_labels) wybiera
-    cechę z danymi treningowymi, więc w panelu nie ma objawów, o których model nic nie wie.
+    Map dictionary entries to model features. `resolve` (SymptomMatcher.resolve_labels) picks
+    a feature that has training data, so the panel never shows symptoms the model knows nothing about.
 
-    Wynik ma dokładnie jeden wiersz na cechę ("en" jest unikalne). Gdy kilka wpisów
-    słownika trafia w tę samą cechę ("ból jamy ustnej", "ból języka" -> mouth_pain),
-    główną etykietą zostaje wpis o nazwie cechy, a pozostałe trafiają do "aliases"
-    (panel szuka też po nich).
+    Output has exactly one row per feature ("en" is unique). When several entries map to the
+    same feature ("ból jamy ustnej", "ból języka" -> mouth_pain), the entry named like the
+    feature becomes the main label and the rest go to "aliases" (the panel searches them too).
     """
     by_feat: Dict[str, Dict[str, Any]] = {}
     for row in raw:
@@ -93,7 +93,7 @@ def _project_to_xgb_features(
             continue
 
         label = pl or canon.replace("_", " ")
-        # wpis nazwany jak cecha ("Mouth pain" -> mouth_pain) jest najlepszą etykietą główną
+        # an entry named like the feature ("Mouth pain" -> mouth_pain) is the best main label
         exact = _canon(row.get("en") or "").replace(" ", "_") == canon
         g = by_feat.get(canon)
         if g is None:
@@ -105,7 +105,7 @@ def _project_to_xgb_features(
         else:
             g["aliases"].append(label)
 
-    # ta sama etykieta PL przy kilku cechach (np. "wzdęcie brzucha"): zostaje cecha z większą liczbą danych
+    # same PL label on several features (e.g. "wzdęcie brzucha"): keep the feature with more data
     by_label: Dict[str, Dict[str, Any]] = {}
     for g in by_feat.values():
         key = g["pl"].lower()

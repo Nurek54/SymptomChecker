@@ -1,4 +1,4 @@
-# services/chat_service.py
+"""Chat flow: symptom extraction, follow-up questions, ensemble diagnosis and LLM answer post-processing."""
 from __future__ import annotations
 import logging
 import re
@@ -61,8 +61,8 @@ from utils import (
 
 log = logging.getLogger("symptomchecker.chat_service")
 
-# Wszystkie teksty dla pacjenta, słowniki objawów/chorób i model językowy (Bielik)
-# są polskie, więc odpowiadamy zawsze po polsku.
+# Patient-facing texts, symptom/disease dictionaries and the LLM (Bielik) are all Polish,
+# so replies are always in Polish.
 LANG = "pl"
 
 def _normalize_topk(top: Any) -> List[Dict[str, Any]]:
@@ -131,19 +131,19 @@ def _filter_history_for_prompt(history: List[Dict[str, str]], keep: int, strip_s
 
 
 
-# słowa, które mogą poprzedzać "tak"/"nie" bez zmiany sensu: "niestety tak", "no tak", "raczej nie"
+# Words that may precede "tak"/"nie" without changing the meaning: "niestety tak", "raczej nie"
 _ANSWER_LEAD = r"(?:(?:no|niestety|zdecydowanie|raczej|chyba|oczywi[sś]cie|ale[zż]|w[lł]a[sś]nie|na\s+pewno|szczerze\s+m[oó]wi[aą]c)[\s,]+)?"
 _YES_RE = re.compile(
     r"^\s*" + _ANSWER_LEAD +
     r"(?:tak|ta|yes|yep|yeah|jasne|oczywi[sś]cie|owszem|pewnie|zgadza\s+si[eę]|jak\s+najbardziej|potwierdzam|dok[lł]adnie)\b"
-    # po polsku "no" na początku zwykle znaczy "tak": "no tak", "no, mam", "no boli"
+    # in Polish a leading "no" usually means yes: "no tak", "no, mam", "no boli"
     r"|^\s*no[\s,]+(?:mam|boli|bol[aą]|jest|czuj[eę]|wyst[eę]puje)\b",
     re.IGNORECASE,
 )
-# "no" samo w sobie = "nie" (np. po angielsku), ale "no tak" = "tak"; "oczywiście nie" = "nie"
+# A bare "no" means no (English), but "no tak" means yes; "oczywiscie nie" means no.
 _NO_RE = re.compile(r"^\s*" + _ANSWER_LEAD + r"(?:nie|nope)\b|^\s*no\s*[.!]*\s*$", re.IGNORECASE)
-# krótkie odpowiedzi twierdzące bez "tak" na pytania typu "Czy boli Cię gardło?" / "Czy masz kaszel?".
-# Tylko jako cała wiadomość: "mam gorączkę i kaszel" to opis objawów, nie odpowiedź "tak".
+# Short affirmative answers without "tak" to questions like "Czy masz kaszel?".
+# Whole message only: "mam goraczke i kaszel" is a symptom description, not a yes.
 _YES_SHORT_RE = re.compile(
     r"^\s*(?:mam|boli|bolą|czuję|odczuwam|występuje|zdarza\s+si[eę]|bywa|czasem|czasami|"
     r"trochę|troszkę|lekko|niestety|mhm)\s*[.!]*\s*$",
@@ -157,8 +157,8 @@ _UNKNOWN_RE = re.compile(
 
 def _parse_yes_no(text: str) -> Optional[str]:
     """
-    Odpowiedź na pytanie "Czy masz X?": "yes" / "no" / "unknown" albo None,
-    jeśli wiadomość nie jest odpowiedzią tak/nie (to zwykły opis objawów).
+    Answer to a "Czy masz X?" question: "yes" / "no" / "unknown", or None if the
+    message is not a yes/no answer (i.e. a regular symptom description).
     """
     t = (text or "").strip()
     if not t:
@@ -172,8 +172,8 @@ def _parse_yes_no(text: str) -> Optional[str]:
     return None
 
 
-# Polityka leków: bez dawek. Zdania z dawkowaniem usuwamy w całości
-# (wycinanie samych liczb zostawiało urwane zdania).
+# Drug policy forbids doses. Sentences with dosing are dropped whole
+# (cutting out only the numbers left broken sentences).
 _DOSE_SENTENCE_PAT = re.compile(
     r"\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|ml|j\.?\s?m\.?|iu|tabletk\w*|tabl\.?|kapsu\w*|kaps\.?|kropl\w*|saszet\w*)\b"
     r"|\bco\s*\d+\s*(?:h|godz\w*)\b"
@@ -281,7 +281,7 @@ def _llm_claims_other_top1(text: str, leader_pl: str, top3_names_pl: List[str]) 
                 return f"odpowiedź wskazała '{m.group(1).strip()}' jako najbardziej prawdopodobną zamiast '{leader_pl}'"
 
     if "jednakże" in text_low or "jednak " in text_low:
-        # split na "jednak" i sprawdź drugą część
+        # "however" followed by another disease called most likely inverts the ranking
         for sep in ("jednakże", "jednak "):
             if sep in text_low:
                 tail = text_low.split(sep, 1)[1]
@@ -308,10 +308,10 @@ _PREPOSITIONS = {"w", "we", "z", "ze", "do", "od", "na", "po", "przed", "przez",
 
 def _looks_truncated(text: str) -> bool:
     """
-    Odpowiedź urwana w połowie zdania: brak znaku końca zdania albo zdanie
-    kończy się przyimkiem/spójnikiem ("...w ciągu.", "...oraz.") lub
-    zawieszonym określeniem po przyimku ("...w ciągu najbliższych.").
-    Krótkie, poprawne zdania ("Zdrowia życzę!", "Nie.") NIE są urwane.
+    True if the answer was cut mid-sentence: no sentence terminator, or the last sentence
+    ends with a preposition/conjunction ("...w ciagu.", "...oraz.") or a dangling modifier
+    after a preposition ("...w ciagu najblizszych.").
+    Short valid sentences ("Nie.") are NOT truncated.
     """
     s = (text or "").strip()
     if not s:
@@ -335,8 +335,8 @@ def _looks_truncated(text: str) -> bool:
 _LIST_OPENER_PATTERNS = [
     re.compile(r"\b(?:proponuj[eę]|zalecam|sugeruj[eę])\s+(?:nast[eę]puj[aą]ce|poni[zż]sze|kilka)\s+krok", re.I),
     re.compile(r"\boto\s+(?:co|kilka|nast[eę]puj[aą]ce)\b", re.I),
-    re.compile(r":\s*\n?\s*(?:1\.|-|\u2022|\*)\s", re.I),  # ":\n1." lub ":\n-"
-    re.compile(r"(?:^|[.!?]\s+)(?:1\.|2\.|3\.)\s", re.I),  # numeracja zaczynająca zdanie
+    re.compile(r":\s*\n?\s*(?:1\.|-|\u2022|\*)\s", re.I),  # ":\n1." or ":\n-"
+    re.compile(r"(?:^|[.!?]\s+)(?:1\.|2\.|3\.)\s", re.I),  # numbering at sentence start
 ]
 
 def _has_list_opener(text: str) -> bool:
@@ -371,11 +371,10 @@ def _lists_to_prose(text: str) -> str:
 
     def _num_to_prose(m: re.Match) -> str:
         num = int(m.group(1))
-        title = m.group(2)  # nazwa punktu (np. "Odpoczynek")
+        title = m.group(2)  # item title, e.g. "Odpoczynek"
         sep = m.group(3)    # ":" / "." / "\n"
         connector = connectors.get(num, "Następnie")
         title_lower = title[0].lower() + title[1:] if len(title) > 1 else title.lower()
-        # ":" → ": ", "." / "\n" → ". "
         if sep == ":":
             return f"{connector}, {title_lower}: "
         else:
@@ -397,14 +396,14 @@ def _lists_to_prose(text: str) -> str:
     out = re.sub(r"\s{2,}", " ", out)
     out = re.sub(r"\s+\.", ".", out)
     out = re.sub(r"\s+,", ",", out)
-    out = re.sub(r"\.\s*\.", ".", out)  # podwójne kropki
+    out = re.sub(r"\.\s*\.", ".", out)
 
     return out.strip()
 
 
 
 def _trim_truncated_tail(text: str, max_drop: int = 2) -> str:
-    """Usuwa TYLKO urwane zdania z końca odpowiedzi (najwyżej `max_drop`)."""
+    """Drop ONLY truncated sentences from the end of the answer (at most `max_drop`)."""
     if not text:
         return text
     parts = [p for p in re.split(r"(?<=[.!?…])\s+", text.strip()) if p.strip()]
@@ -423,7 +422,7 @@ def _trim_truncated_tail(text: str, max_drop: int = 2) -> str:
 
 
 def _objaw_locative(n: int) -> str:
-    """"na 1 objawie", "na 2 objawach"."""
+    """Polish locative of "objaw" for a count: "na 1 objawie", "na 2 objawach"."""
     return "objawie" if n == 1 else "objawach"
 
 
@@ -434,7 +433,6 @@ class ChatService:
         self.loc = PromptLocalizer(state.matcher)
         self.ens = EnsembleTopK(state)
 
-    # ───────────────────────── helpers ─────────────────────────
     def _guard_leader_consistency(self, text: str, leader_pl: Optional[str], *, enforce: bool) -> str:
         if not enforce or not text or not leader_pl:
             return text
@@ -479,10 +477,10 @@ class ChatService:
         return tuple(s for s in raw if s not in blacklist)
 
     def _predict_top(self, sess_id: str, symptoms: List[str], k: int) -> List[Dict[str, Any]]:
-        """Top-k z ensemble; wynik cache'owany w sesji i liczony ponownie tylko po zmianie wektora."""
+        """Ensemble top-k, cached in the session and recomputed only when the input changes."""
         vec = self._build_feature_vector(sorted(symptoms))
         negated = sorted(self.st.sessions.get_negated(sess_id))
-        # klucz cache: wektor objawów + objawy zaprzeczone (one też zmieniają Top-3)
+        # cache key includes negated symptoms, since they also change the top-3
         vt = tuple(vec) + (-1,) + tuple(negated)
         cached = self.st.sessions.get_last_pred(sess_id)
         if PREDICT_ONLY_ON_NEW and cached and cached[0] == vt and cached[1] == int(k):
@@ -499,11 +497,10 @@ class ChatService:
 
     def _next_question(self, sess_id: str, symptoms: List[str]) -> Optional[str]:
         """
-        Objaw, o który warto zapytać: największy oczekiwany przyrost informacji względem
-        rozkładu chorób. Rozkład liczymy z P(objaw | choroba) dla objawów obecnych i zaprzeczonych
-        (naiwny Bayes), bo model traktuje "nie wiadomo" jak "nie ma", więc po odpowiedzi "nie"
-        jego rozkład się nie zmienia i kolejne pytania byłyby wybierane po omacku.
-        Symulacja na zbiorze testowym (2 objawy na start, 3 pytania): trafność Top-1 0.45 -> 0.56.
+        Symptom to ask about next: highest expected information gain over the disease distribution.
+        The distribution comes from P(symptom | disease) for present and denied symptoms (naive Bayes),
+        because the model treats "unknown" as "absent", so a "no" answer would not move its distribution.
+        Test-set simulation (2 starting symptoms, 3 questions): top-1 accuracy 0.45 -> 0.56.
         """
         posterior: Optional[Dict[str, float]] = None
         negated = self.st.sessions.get_negated(sess_id)
@@ -565,7 +562,7 @@ class ChatService:
                 others.append(f"{self.loc.localize_disease(d.get('diagnosis_en') or '', LANG)} ({pct}%)")
             s3 = "Inne możliwe przyczyny to " + self._join_pl(others) + "."
 
-        # pilność wynika z objawów, wieku i czasu trwania, a NIE z pewności modelu
+        # urgency depends on symptoms, age and duration, NOT on model confidence
         tri_level, tri_window = _triage_hint(sym_for_display, patient_age, history_text=history_text)
         s4 = f"Pilność: {tri_level}; zalecane: {tri_window}."
         return ensure_summary_only(" ".join(p for p in (s1, s2, s3, s4) if p))
@@ -577,7 +574,6 @@ class ChatService:
             log.exception("Błąd LLM: %s", e)
             return ""
 
-    # ───────────────────────── diagnoza + odpowiedź LLM ─────────────────────────
     def _diagnose(
         self,
         req: ChatRequest,
@@ -602,7 +598,7 @@ class ChatService:
         sessions.set_last_top3(sid, [d.get("diagnosis_en", "") for d in top])
 
         sym_sorted = sorted(sess_symptoms)
-        # objawy spoza modelu (np. światłowstręt) nie zmieniają Top-3, ale idą do opisu i oceny pilności
+        # unmodeled symptoms do not affect the top-3 but go into the description and urgency
         sym_for_display = self.loc.localize_symptoms(sym_sorted, LANG) + sessions.get_extra(sid)
         diag_summary_display = self.loc.format_diag_summary(top, LANG)
         history_for_prompt = _filter_history_for_prompt(
@@ -642,7 +638,7 @@ class ChatService:
             t_gen = time.perf_counter()
             llm_resp = self._generate(llm, prompt, **gen_kwargs)
             if not llm_resp.strip():
-                # pusta odpowiedź: jedna próba bez sekwencji stopu
+                # empty answer: retry once without stop sequences
                 llm_resp = self._generate(llm, prompt, **{**gen_kwargs, "stop_sequences": tuple()})
                 log.info("LLM retry: no-stops fallback used")
             log.info("TIMING llm_generate=%.3fs (max_tokens=%d)", time.perf_counter() - t_gen, max_tokens)
@@ -690,7 +686,6 @@ class ChatService:
                 else:
                     log.info("LLM regen rejected - keeping original")
 
-            # post-processing
             llm_resp = sanitize_llm_output(llm_resp)
             llm_resp = ensure_summary_only(llm_resp)
             llm_resp = _lists_to_prose(llm_resp)
@@ -709,7 +704,7 @@ class ChatService:
                 sym_for_display, top, patient_age=patient_age, history_text=user_history_text,
             )
 
-        # zastrzeżenie raz (przy pierwszej ocenie orientacyjnej), a nie w każdej kolejnej odpowiedzi
+        # show the low-confidence caveat once, not in every following answer
         caveat_given = any(
             (m.get("role") == "assistant") and "Uwaga: ocena opiera się" in (m.get("content") or "")
             for m in history
@@ -732,7 +727,7 @@ class ChatService:
         if note:
             llm_resp = f"{note} {llm_resp}".strip()
         sessions.append_assistant(sid, llm_resp)
-        # ocena podana: kolejne wiadomości (np. nowy objaw) ją aktualizują, bez ponownego dopytywania
+        # assessment given: later messages (e.g. a new symptom) update it without more follow-ups
         sessions.set_stopped(sid, True)
         log.info("TIMING total=%.3fs", time.perf_counter() - t_req)
         return ChatResponse(
@@ -743,9 +738,6 @@ class ChatService:
             top_diagnoses=top_with_pl,
         )
 
-    # ───────────────────────────────────────────────────────────────
-    #          G Ł Ó W N A   P Ę T L A
-    # ───────────────────────────────────────────────────────────────
     def handle_chat(self, req: ChatRequest, patient_age: int | None = None) -> ChatResponse:
         t_req = time.perf_counter()
 
@@ -764,8 +756,8 @@ class ChatService:
 
         if not sessions.exists(sid):
             sessions.init_session(sid)
-        # backend mógł zostać zrestartowany - odtwarzamy objawy, które pamięta frontend.
-        # Sprawdzamy "pusta sesja", a nie "brak sesji": router (claim_owner) tworzy ją wcześniej.
+        # The backend may have restarted: restore the symptoms the frontend remembers.
+        # Checks for an empty session, not a missing one, because the router (claim_owner) creates it earlier.
         if not sessions.get_history(sid) and not sessions.get_symptoms(sid):
             restored = self._known_features(getattr(req, "client_symptoms", None))
             if restored:
@@ -778,7 +770,7 @@ class ChatService:
             sessions.get_recent_history(sid, max_messages=int(PROMPT_HISTORY_FETCH))
         )
 
-        # 1) odpowiedź na pytanie "Czy masz X?"
+        # 1) answer to a pending "Czy masz X?" question
         pending = sessions.get_pending_symptom(sid)
         answer = _parse_yes_no(user_text) if pending else None
         if pending and answer is not None:
@@ -788,8 +780,8 @@ class ChatService:
                 sessions.add_negated_symptom(sid, pending)
             sessions.clear_pending_symptom(sid)
 
-        # 2) ekstrakcja objawów z całej wiadomości (z kontekstem przeczeń:
-        #    "nie mam gorączki, ale mam kaszel" -> gorączka zaprzeczona, kaszel dodany)
+        # 2) extract symptoms from the whole message with negation context:
+        #    "nie mam goraczki, ale mam kaszel" -> fever negated, cough added
         t_ext = time.perf_counter()
         new_syms: List[str] = []
         neg_syms: List[str] = []
@@ -808,7 +800,7 @@ class ChatService:
                 sessions.add_symptoms(sid, new_syms)
             if pending and pending in (set(new_syms) | set(neg_syms)):
                 sessions.clear_pending_symptom(sid)
-        # objawy, których model nie zna (np. "światłowstręt"): potwierdzamy, że je widzimy
+        # symptoms unknown to the model: acknowledge that we noticed them
         extra_new: List[str] = []
         extra_neg: List[str] = []
         if not noise:
@@ -829,8 +821,8 @@ class ChatService:
         user_stop = contains_stop_phrase(user_text)
         recognized = bool(new_syms or neg_syms or answer is not None or extra_new or extra_neg)
 
-        # 2b) było pytanie, a odpowiedź nie jest ani "tak/nie", ani opisem objawów: pytamy jeszcze raz
-        #     o to samo (wcześniej pytanie przepadało, a pacjent dostawał kolejne)
+        # 2b) a question is pending and the reply is neither yes/no nor a symptom description:
+        #     repeat the same question instead of silently moving on to the next one
         if pending and sessions.get_pending_symptom(sid) == pending and not recognized and not user_stop:
             question = self.loc.followup_question(pending, LANG)
             msg = (f"Nie jestem pewien, jak zrozumieć tę odpowiedź. {question} "
@@ -841,20 +833,20 @@ class ChatService:
 
         asked_n = sessions.get_followup_count(sid)
 
-        # 3a) ocena była już podana albo pacjent zakończył zbieranie objawów: aktualizujemy ocenę
+        # 3a) assessment already given or symptom collection finished: update the assessment
         if count > 0 and sessions.is_stopped(sid):
             return self._diagnose(req, sess_symptoms, history, patient_age,
                                   low_confidence=count < int(MIN_SYMPTOMS), use_llm=use_llm, t_req=t_req, note=note)
 
-        # 3a') pacjent napisał już raz "to wszystko" i dostał zapowiedź jednego pytania: po odpowiedzi
-        #      podajemy ocenę zamiast kolejnych pytań
+        # 3a') patient already said "that's all" and was told one more question follows:
+        #      after the answer, give the assessment instead of asking more
         if count > 0 and sessions.is_stop_warned(sid):
             sessions.set_stopped(sid, True)
             return self._diagnose(req, sess_symptoms, history, patient_age,
                                   low_confidence=count < int(MIN_SYMPTOMS), use_llm=use_llm, t_req=t_req, note=note)
 
-        # 3b) dość objawów: oceniamy od razu, jeśli model jest pewny; inaczej dopytujemy o objaw,
-        #     który najlepiej rozróżnia prawdopodobne choroby (najwyżej STOP_FOLLOWUPS_AT pytań)
+        # 3b) enough symptoms: assess now if the model is confident; otherwise ask about the symptom
+        #     that best separates the likely diseases (at most STOP_FOLLOWUPS_AT questions)
         if count >= int(MIN_SYMPTOMS):
             if user_stop or asked_n >= int(STOP_FOLLOWUPS_AT):
                 return self._diagnose(req, sess_symptoms, history, patient_age,
@@ -876,7 +868,7 @@ class ChatService:
                 prefix = "" if recognized else "Nie rozpoznałem w tej wiadomości nowych objawów."
             return self._ask(sid, next_sym, sess_symptoms, prefix=f"{note} {prefix}".strip())
 
-        # 4) brak jakichkolwiek objawów (rozpoznanych przez model)
+        # 4) no symptoms recognized by the model
         if count == 0:
             if extra_new:
                 msg = "Opisz proszę, co jeszcze Ci dolega, np. ból głowy, gorączka, nudności."
@@ -890,7 +882,7 @@ class ChatService:
                        "np. „od wczoraj mam gorączkę i boli mnie gardło”.")
             return self._say(sid, f"{note} {msg}".strip(), sess_symptoms)
 
-        # 5) 0 < objawów < MIN_SYMPTOMS
+        # 5) 0 < symptoms < MIN_SYMPTOMS
         if user_stop:
             if sessions.is_stop_warned(sid) or asked_n >= int(STOP_FOLLOWUPS_AT):
                 sessions.set_stopped(sid, True)
@@ -909,7 +901,7 @@ class ChatService:
             return self._ask(sid, next_sym, sess_symptoms, prefix=f"{note} {prefix}".strip(), suffix=suffix)
 
         if asked_n >= int(STOP_FOLLOWUPS_AT):
-            # dość dopytywania - podajemy ocenę orientacyjną zamiast pytać w nieskończoność
+            # follow-up limit reached: give a tentative assessment instead of asking forever
             sessions.set_stopped(sid, True)
             return self._diagnose(req, sess_symptoms, history, patient_age,
                                   low_confidence=True, use_llm=use_llm, t_req=t_req, note=note)

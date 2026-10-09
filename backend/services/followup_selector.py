@@ -1,4 +1,4 @@
-# backend/services/followup_selector.py
+"""Chooses the next follow-up symptom question to ask the patient."""
 from __future__ import annotations
 from typing import Dict, List, Optional, Set
 import os
@@ -12,7 +12,7 @@ except Exception:
 
 log = logging.getLogger("symptomchecker.followup")
 
-# Ranking ważności cech liczymy raz na model (get_score przechodzi po wszystkich drzewach).
+# Feature importance ranking is cached per model (get_score walks every tree).
 _RANK_CACHE: Dict[int, List[str]] = {}
 _RANK_LOCK = threading.Lock()
 
@@ -24,9 +24,9 @@ def _normalize(s: str) -> str:
 
 def _importance_ranking(xgb_mgr) -> List[str]:
     """
-    Cechy posortowane wg ważności XGBoost (total_gain). Booster nie ma atrybutu
-    `feature_importances_` (to API sklearn), więc używamy get_score().
-    Gdy się nie da - kolejność z listy cech.
+    Features sorted by XGBoost importance (total_gain). A raw Booster has no
+    `feature_importances_` (sklearn API), so get_score() is used.
+    Falls back to the feature list order.
     """
     feats = [str(f).strip().lower() for f in (getattr(xgb_mgr, "features", None) or [])]
     model = getattr(xgb_mgr, "model", None)
@@ -43,7 +43,7 @@ def _importance_ranking(xgb_mgr) -> List[str]:
             score = {f: float(v) for f, v in zip(feats, list(model.feature_importances_))}
         if score:
             def _val(i: int, f: str) -> float:
-                # booster trenowany na numpy ma nazwy f0..fN, na DataFrame - nazwy kolumn
+                # boosters trained on numpy use f0..fN names, on a DataFrame the column names
                 return float(score.get(f, score.get(f"f{i}", 0.0)))
             ranked = [f for _, f in sorted(((-_val(i, f), f) for i, f in enumerate(feats)))]
     except Exception as e:
@@ -93,9 +93,9 @@ class FollowupSelector:
         out = [
             f for f in feats
             if f and f not in have and f not in neg and f not in asked and not self._blocked(f)
-            and (alive is None or alive(f))  # nie pytamy o objawy, o których model nic nie wie
+            and (alive is None or alive(f))  # skip symptoms the model has no data on
         ]
-        # pytamy tylko o objawy z sensownym polskim tłumaczeniem
+        # prefer symptoms with a meaningful Polish translation
         with_pl = [c for c in out if self._good_pl(c)]
         return with_pl or out
 
@@ -117,7 +117,7 @@ class FollowupSelector:
         except Exception:
             reference = sorted(have)
 
-        # 1) najlepiej: pytanie, które najbardziej rozróżnia aktualnie prawdopodobne choroby
+        # 1) preferred: the question that best separates the currently likely diseases
         stats = getattr(self.st, "symptom_stats", None)
         if stats is not None and posterior:
             try:
@@ -127,7 +127,7 @@ class FollowupSelector:
             except Exception as e:
                 log.warning("[Followup] best_question błąd: %s", e)
 
-        # 2) awaryjnie: najważniejsza cecha modelu, preferując kategorię już zgłoszonych objawów
+        # 2) fallback: most important model feature, preferring categories already reported
         matcher = self.st.matcher
         get_cat = getattr(matcher, "get_category", None)
         if callable(get_cat) and have:

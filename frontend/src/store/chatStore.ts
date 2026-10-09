@@ -22,29 +22,20 @@ type ChatState = {
     bySession: Record<string, ChatMessageUI[]>;
     summary: Record<string, Summary>;
 
-    // ── akcje ──
     addMessage: (sessionId: string, msg: ChatMessageUI) => void;
     setSummary: (sessionId: string, part: Partial<Summary>) => void;
     clearSession: (sessionId: string) => void;
     clearSummary: (sessionId: string) => void;
 
-    // FIX #16: AuthProvider wołał te metody — wcześniej ich nie było, więc
-    // wszystkie wywołania po cichu robiły fallback. Teraz są na stałe.
+    // Called by AuthProvider on auth changes
     resetActive: () => void;
     clearAll: () => void;
 };
 
 /**
- * FIX #15: ujednolicenie storage'a.
- *
- * Wcześniej chatStore używał `sessionStorage` (czat znikał po zamknięciu zakładki),
- * a inne miejsca w aplikacji trzymały stan w `localStorage` (sc_session_id, sc_guest).
- * Konsekwencja: sesja istniała, ale wiadomości znikały — bardzo psuje UX.
- *
- * Decyzja: przechodzimy na `localStorage` dla całości, żeby było spójne.
- * Jeżeli kiedykolwiek będziesz chciał trzymać czat tylko w obrębie zakładki,
- * przełącz `useChatStore` z powrotem na sessionStorage — ale wtedy wyrzuć też
- * `sc_session_id` z localStorage, bo inaczej znów się rozjedzie.
+ * Persisted in localStorage, like sc_session_id and sc_guest, so the session id and its
+ * messages always survive together. Switching this to sessionStorage requires moving
+ * sc_session_id too, or the session would outlive its messages.
  */
 export const useChatStore = create<ChatState>()(
     persist(
@@ -81,9 +72,7 @@ export const useChatStore = create<ChatState>()(
                 }),
 
             resetActive: () => {
-                // bezpieczny no-op: nie znamy aktywnej sesji w storze, ale
-                // AuthProvider używa tej metody jako sygnału "zacznij od zera"
-                // — czyścimy całość, taniej i pewniej.
+                // The store does not track the active session, so "start over" clears everything
                 set({ bySession: {}, summary: {} });
             },
 
@@ -93,17 +82,14 @@ export const useChatStore = create<ChatState>()(
         }),
         {
             name: "sc-chat",
-            // FIX #15: localStorage zamiast sessionStorage
             storage: createJSONStorage(() =>
-                // przy SSR nie ma localStorage; persist działa tylko w przeglądarce
+                // No localStorage during SSR; persist only runs in the browser
                 typeof window !== "undefined" ? window.localStorage : (undefined as unknown as Storage)
             ),
             partialize: (s) => ({ bySession: s.bySession, summary: s.summary }),
             version: 2,
             migrate: (persisted: unknown, fromVersion: number) => {
-                // Przy migracji ze starego sessionStorage → nowego localStorage
-                // nie mamy dostępu do starych danych w obrębie tego storage'a.
-                // Zostawiamy puste — użytkownik dostanie pusty stan jednorazowo.
+                // v1 data lived in sessionStorage and is unreachable here, so start empty once
                 if (fromVersion < 2 || !persisted) {
                     return { bySession: {}, summary: {} };
                 }

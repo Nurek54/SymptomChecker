@@ -1,11 +1,9 @@
-# backend/services/symptom_stats.py
 """
-Statystyki P(objaw | choroba) liczone raz z danych treningowych.
+P(symptom | disease) statistics computed once from the training data.
 
-Służą do wyboru pytań uzupełniających: pytamy o objaw, którego odpowiedź
-(tak/nie) najbardziej zmniejszy niepewność co do aktualnie prawdopodobnych
-chorób (expected information gain). Wynik jest cache'owany w pliku .npz,
-więc CSV czytamy tylko przy pierwszym starcie albo po zmianie danych/cech.
+Used to pick follow-up questions: ask about the symptom whose yes/no answer most
+reduces uncertainty over the currently likely diseases (expected information gain).
+Cached in an .npz file, so the CSV is read only on first start or after data/feature changes.
 """
 from __future__ import annotations
 
@@ -39,12 +37,11 @@ class SymptomStats:
         self.class_index: Dict[str, int] = {c: i for i, c in enumerate(self.classes)}
         norms = np.linalg.norm(self.q, axis=0)
         norms[norms == 0] = 1.0
-        self.q_unit = (self.q / norms).astype(np.float32)       # profile objawów do wykrywania duplikatów
-        # ile wierszy treningowych ma dany objaw; 0 = cecha "martwa" (model nic o niej nie wie)
+        self.q_unit = (self.q / norms).astype(np.float32)       # unit symptom profiles for near-duplicate detection
+        # training rows containing each symptom; 0 = "dead" feature the model knows nothing about
         fc = np.zeros(len(self.features)) if feature_counts is None else np.asarray(feature_counts, dtype=np.float64)
         self.feature_counts: Dict[str, int] = {f: int(c) for f, c in zip(self.features, fc)}
 
-    # ───────────────────────── budowa / cache ─────────────────────────
     @staticmethod
     def _source_signature(csv_path: str) -> str:
         st = os.stat(csv_path)
@@ -64,7 +61,6 @@ class SymptomStats:
             except OSError:
                 sig = None
 
-        # 1) cache
         if os.path.exists(cache_path):
             try:
                 z = np.load(cache_path, allow_pickle=False)
@@ -77,7 +73,6 @@ class SymptomStats:
             except Exception as e:
                 log.warning("[Stats] Nie udało się wczytać cache %s: %s", cache_path, e)
 
-        # 2) budowa z CSV
         if sig is None:
             log.warning("[Stats] Brak pliku z danymi (%s) - wybór pytań użyje rankingu ważności cech.", csv_path)
             return None
@@ -97,14 +92,14 @@ class SymptomStats:
             df = df.dropna(subset=["diseases"])
             df["diseases"] = df["diseases"].map(_norm)
 
-            for f in feats:  # cechy nieobecne w CSV = 0
+            for f in feats:  # features missing from the CSV count as 0
                 if f not in df.columns:
                     df[f] = np.uint8(0)
 
             grp = df.groupby("diseases", sort=True)
             counts = grp.size().to_numpy(dtype=np.float64)
             sums = grp[feats].sum().to_numpy(dtype=np.float64)
-            # wygładzanie Laplace'a: brak zer i jedynek
+            # additive smoothing keeps q strictly inside (0, 1)
             q = (sums + 0.5) / (counts[:, None] + 1.0)
             classes = grp.size().index.tolist()
 
@@ -125,7 +120,6 @@ class SymptomStats:
             log.warning("[Stats] Nie udało się policzyć statystyk: %s", e)
             return None
 
-    # ───────────────────────── odpowiedzi "nie" ─────────────────────────
     def _neg_log_factor(self, negated: Iterable[str]) -> Optional[np.ndarray]:
         idx = sorted({self.feat_index[s] for s in (negated or []) if s in self.feat_index})
         if not idx:
@@ -134,11 +128,11 @@ class SymptomStats:
 
     def apply_negatives(self, dist: Dict[str, float], negated: Iterable[str]) -> Dict[str, float]:
         """
-        Uwzględnia objawy, którym pacjent zaprzeczył: p(d) * prod(1 - P(objaw | d)), potem normalizacja.
+        Account for denied symptoms: p(d) * prod(1 - P(symptom | d)), then renormalize.
 
-        Model (XGB/River) widzi tylko objawy obecne; "nie mam X" i "nic nie wiadomo o X" to dla
-        niego to samo zero. Bez tej poprawki odpowiedź "nie" na pytanie uzupełniające nie zmienia
-        Top-3, choć wyklucza choroby, przy których ten objaw występuje prawie zawsze.
+        XGB/River only see present symptoms; "I don't have X" and "nothing known about X" are the
+        same zero to them. Without this, a "no" answer to a follow-up would not change the top-3,
+        even though it rules out diseases where that symptom is nearly always present.
         """
         lf = self._neg_log_factor(negated)
         if lf is None or not dist:
@@ -151,9 +145,9 @@ class SymptomStats:
 
     def nb_posterior(self, present: Iterable[str], negated: Iterable[str]) -> Dict[str, float]:
         """
-        Rozkład chorób z samych statystyk (naiwny Bayes, równy prior): objawy obecne i zaprzeczone,
-        a o pozostałych nic nie zakładamy. Do wyboru kolejnego pytania sprawdza się lepiej niż
-        rozkład modelu, który brak informacji traktuje jak brak objawu.
+        Disease distribution from the stats alone (naive Bayes, uniform prior) using present and
+        denied symptoms, assuming nothing about the rest. Better for choosing the next question
+        than the model distribution, which treats missing information as an absent symptom.
         """
         logp = np.zeros(len(self.classes), dtype=np.float64)
         pos = sorted({self.feat_index[s] for s in (present or []) if s in self.feat_index})
@@ -166,7 +160,6 @@ class SymptomStats:
         p /= p.sum()
         return {c: float(v) for c, v in zip(self.classes, p)}
 
-    # ───────────────────────── wybór pytania ─────────────────────────
     def best_question(
         self,
         posterior: Dict[str, float],
@@ -176,10 +169,9 @@ class SymptomStats:
         dup_threshold: float = 0.95,
     ) -> Optional[str]:
         """
-        Zwraca objaw z `candidates` o największym oczekiwanym przyroście informacji
-        względem rozkładu `posterior`. Pomija objawy niemal identyczne (profil po
-        chorobach) z objawami już znanymi/zadanymi (`reference`), np. "krwioplucie"
-        po pytaniu o "krew w plwocinie".
+        Return the candidate with the highest expected information gain under `posterior`.
+        Skips candidates whose disease profile nearly duplicates an already known/asked symptom
+        in `reference` (e.g. "krwioplucie" after asking about "krew w plwocinie").
         """
         cand = [c for c in candidates if c in self.feat_index]
         if not cand:
@@ -213,7 +205,7 @@ class SymptomStats:
             return -(m * np.log(m)).sum(axis=0)
 
         h_prior = float(_h(p[:, None])[0])
-        p1 = p @ Q                                                    # P(tak) dla każdego kandydata
+        p1 = p @ Q                                                    # P(yes) per candidate
         post1 = (p[:, None] * Q) / np.clip(p1, 1e-12, None)
         post0 = (p[:, None] * (1.0 - Q)) / np.clip(1.0 - p1, 1e-12, None)
         ig = h_prior - (p1 * _h(post1) + (1.0 - p1) * _h(post0))

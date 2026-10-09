@@ -1,4 +1,3 @@
-// vitest.config.ts
 import { defineConfig } from "vitest/config";
 import path from "path";
 
@@ -12,7 +11,7 @@ export default defineConfig({
         environment: "jsdom",
         globals: true,
         setupFiles: ["./src/tests/setupTests.ts"],
-        // Bierzemy TYLKO testy jednostkowe, e2e ignorujemy
+        // Unit tests only; e2e specs run under Playwright
         include: ["src/tests/unit/**/*.test.{ts,tsx}"],
         exclude: [
             "src/tests/e2e/**",

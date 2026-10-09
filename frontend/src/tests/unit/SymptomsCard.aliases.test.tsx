@@ -1,4 +1,4 @@
-// Osobny plik: SidePanel trzyma słownik w cache modułu, więc każdy słownik testowy dostaje świeży moduł.
+// Separate file: SidePanel caches the dictionary at module level, so each test dictionary needs a fresh module.
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";

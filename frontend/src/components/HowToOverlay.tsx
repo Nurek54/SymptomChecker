@@ -49,7 +49,7 @@ function SectionItem({
         <span className="text-sm font-medium">{title}</span>
       </button>
 
-      {/* Collapsible body with smooth animation */}
+      {/* Height animates via grid-rows 0fr/1fr, which works without a fixed height */}
       <div
         id={id}
         role="region"
@@ -67,7 +67,6 @@ function SectionItem({
 }
 
 export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
-  // ESC zamyka
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -254,7 +253,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
     },
   ];
 
-  // Zarządzanie otwartymi sekcjami
   const [openKeys, setOpenKeys] = React.useState<Set<string>>(() => new Set(["start"]));
   const isOpen = (key: string) => openKeys.has(key);
   const toggle = (key: string) =>
@@ -271,10 +269,8 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} aria-hidden="true" />
 
-      {/* Modal */}
       <section
         role="dialog"
         aria-modal="true"
@@ -285,7 +281,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
         }}
       >
         <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-base bg-card/95 backdrop-blur-md shadow-2xl">
-          {/* Header */}
           <header className="flex items-center gap-2 border-b border-base bg-card/80 px-4 py-2">
             <span className="grid h-8 w-8 place-items-center rounded-full border border-base bg-input">
               <BookOpenText className="h-4 w-4 opacity-80" />
@@ -317,7 +312,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
             </div>
           </header>
 
-          {/* Aurora accent bar */}
           <div className="relative h-[3px] w-full overflow-hidden">
             <div
               className="h-full w-full"
@@ -333,7 +327,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
             />
           </div>
 
-          {/* Body */}
           <div className="max-h-[78vh] overflow-y-auto p-4 text-sm leading-6 space-y-2">
             {sections.map((s) => (
               <SectionItem
@@ -348,7 +341,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
             ))}
           </div>
 
-          {/* Footer */}
           <footer className="flex items-center justify-end gap-2 border-t border-base bg-card/80 px-4 py-2">
             <button
               onClick={onClose}
@@ -366,7 +358,6 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
         </div>
       </section>
 
-      {/* lokalne keyframes */}
       <style jsx>{`
         @keyframes auroraSlide {
           0% { transform: translateX(-100%); }

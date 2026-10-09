@@ -1,4 +1,4 @@
-// Poprawki po przeglądzie: komunikat błędu w panelu objawów, zamykanie okna XGBoost / River tłem.
+// Review regressions: symptom panel shows a save error; the XGBoost/River overlay closes on backdrop click.
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
@@ -24,7 +24,7 @@ describe("poprawki po przeglądzie", () => {
         vi.spyOn(api, "getTop3Split").mockResolvedValue({ xgb_enabled: true, river_enabled: true, symptoms: [] } as never);
         const onClose = vi.fn();
         let container!: HTMLElement;
-        // render w act + odczekanie na zakończenie pobierania danych (bez ostrzeżenia "not wrapped in act")
+        // Render inside act and let the fetch settle to avoid the "not wrapped in act" warning
         await act(async () => {
             ({ container } = render(<ModelSplitOverlay open onClose={onClose} sessionId="s1" />));
         });

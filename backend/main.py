@@ -2,10 +2,9 @@ import os
 import sys
 from pathlib import Path
 
-# Backend używa krótkich importów (config, core, services, ...) oraz pakietu
-# "database" z katalogu głównego projektu. Ustawiamy oba katalogi na sys.path
-# i w PYTHONPATH (proces reloadera uvicorna dziedziczy środowisko), dzięki czemu
-# "python main.py" działa niezależnie od katalogu startowego i IDE.
+# The backend uses short imports (config, core, services, ...) plus the top-level
+# "database" package. Both dirs go on sys.path and into PYTHONPATH (the uvicorn reloader
+# subprocess inherits the env), so "python main.py" works from any cwd or IDE.
 BACKEND_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BACKEND_DIR.parent
 for _p in (str(PROJECT_ROOT), str(BACKEND_DIR)):
@@ -44,7 +43,7 @@ def _should_reload() -> bool:
 
 
 def _resolve_uvicorn_target() -> str:
-    # Jeden, spójny moduł aplikacji (krótkie importy, katalog backend/ na sys.path).
+    # Single app module path; relies on backend/ being on sys.path (short imports).
     return "app:create_app"
 
 
@@ -53,9 +52,9 @@ def _collect_reload_dirs() -> list[str]:
     project_root = PROJECT_ROOT
 
     candidates = [
-        backend_dir,                         # backend/
-        project_root / "database",           # <root>/database
-        backend_dir / "database",            # backend/database
+        backend_dir,
+        project_root / "database",
+        backend_dir / "database",
     ]
 
     seen, out = set(), []

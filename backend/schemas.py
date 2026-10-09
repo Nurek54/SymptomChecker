@@ -4,13 +4,12 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-# Limity wejścia: krótkie identyfikatory objawów, rozsądna liczba elementów (bez nich jedno żądanie
-# mogło wysłać setki tysięcy pozycji i zająć pamięć serwera).
+# Input limits: short symptom ids and a bounded item count, so one request cannot send
+# hundreds of thousands of items and exhaust server memory.
 SymptomId = Annotated[str, Field(max_length=100)]
 MAX_SYMPTOM_ITEMS = 200
 
-# Schematy czatu. Schematy użytkownika i historii są w database/schemas.py
-# (jedno źródło prawdy, wcześniej były zduplikowane tutaj).
+# Chat schemas only; user and history schemas live in database/schemas.py.
 
 
 class TopDiagnosisItem(BaseModel):
@@ -23,8 +22,8 @@ class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=64)
     user_input: str = Field(max_length=4000)
     lang: str = Field(default="pl", max_length=8)
-    # Objawy, które pamięta frontend. Używane tylko wtedy, gdy backend nie zna
-    # sesji (np. po restarcie serwera), żeby nie zaczynać rozmowy od zera.
+    # Symptoms the frontend remembers; used only when the backend does not know the
+    # session (e.g. after a server restart), so the chat does not start from scratch.
     client_symptoms: list[SymptomId] | None = Field(default=None, max_length=MAX_SYMPTOM_ITEMS)
 
 

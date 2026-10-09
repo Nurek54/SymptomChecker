@@ -9,10 +9,10 @@ export default function ClientWarmup() {
 
     useEffect(() => {
         installSessionGuards();      // focus/visibility/online
-        void prewarmAuth(true);      // pierwszy mocniejszy warm
+        void prewarmAuth(true);      // stronger initial warm-up
     }, []);
 
-    // dogrzej przy każdej zmianie trasy / query
+    // Re-warm on every route or query change
     const searchKey = search?.toString() ?? "";
     useEffect(() => {
         void prewarmAuth();

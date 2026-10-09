@@ -9,38 +9,26 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from fastapi.middleware.cors import CORSMiddleware
 
-# =====================================================
-# PYTHONPATH + ALIASY – działa z:
-#   SymptomChecker/backend
-#   SymptomChecker/database
-# =====================================================
+CURRENT = os.path.dirname(os.path.abspath(__file__))
+BACKEND = os.path.dirname(CURRENT)
+PROJECT = os.path.dirname(BACKEND)
 
-CURRENT = os.path.dirname(os.path.abspath(__file__))     # .../backend/tests
-BACKEND = os.path.dirname(CURRENT)                       # .../backend
-PROJECT = os.path.dirname(BACKEND)                       # .../SymptomChecker
-
-# Dodaj backend i projekt do sys.path
 sys.path.insert(0, BACKEND)
 sys.path.insert(0, PROJECT)
 
-# Aliasujemy pakiety używane w backendzie przez krótkie nazwy
 import backend.services as backend_services
 import backend.models as backend_models
 import backend.schemas as backend_schemas
-import database as project_database  # zewnętrzny katalog "database"
+import database as project_database  # top-level "database" package, outside backend/
 
-# backend/core/state.py używa "models" / "services"
-# api/routers/chat.py używa "schemas"
-# database/* używa "database"
+# Backend modules import "models", "services", "schemas" and "database" by short
+# name, so alias them to the same module objects to avoid duplicate imports.
 sys.modules.setdefault("services", backend_services)
 sys.modules.setdefault("models", backend_models)
 sys.modules.setdefault("schemas", backend_schemas)
 sys.modules.setdefault("database", project_database)
 
-# =====================================================
-# Importy backendu (po ustawieniu aliasów)
-# =====================================================
-
+# Backend imports must come after the aliases above.
 from backend.core.state import AppState
 from backend.services.session_store import SessionStore
 from backend.services.symptom_matcher import SymptomMatcher
@@ -54,10 +42,6 @@ from backend.api.routers import history as history_router
 from backend.api.routers import auth as auth_router
 from backend.api.routers import health as health_router
 
-
-# =====================================================
-# FAKE MODELS
-# =====================================================
 
 class FakeXGB:
     def __init__(self):
@@ -100,14 +84,11 @@ class FakeDBSession:
         return _
 
 
-# =====================================================
-# FIXTURE: app()
-# =====================================================
 @pytest.fixture(scope="session")
 def app() -> FastAPI:
     app = FastAPI()
 
-    # CORS – żeby test_cors_allows_frontend_origin nie walił 405
+    # Without CORS middleware the preflight in test_cors_allows_frontend_origin returns 405.
     origin = FRONTEND_ORIGIN or "http://localhost:3000"
     app.add_middleware(
         CORSMiddleware,
@@ -131,7 +112,7 @@ def app() -> FastAPI:
     llm = FakeLLM()
 
     state = AppState(
-        device="cpu",   # typ torch.device nas tu nie obchodzi
+        device="cpu",   # a real torch.device is not needed here
         xgb=xgb,
         llm=llm,
         matcher=matcher,
@@ -140,7 +121,6 @@ def app() -> FastAPI:
     state.river = river
     app.state.app_state = state
 
-    # Override DB z zewnętrznego katalogu "database"
     from database.db import get_db
 
     def _fake_get_db():
@@ -148,7 +128,7 @@ def app() -> FastAPI:
 
     app.dependency_overrides[get_db] = _fake_get_db
 
-    # Fake ChatService – żeby nie odpalać realnego LLM/XGB
+    # Stub ChatService so tests never run the real LLM/XGB pipeline.
     class FakeChatService:
         def __init__(self, st: AppState):
             self.st = st
@@ -177,9 +157,6 @@ def app() -> FastAPI:
     return app
 
 
-# =====================================================
-# FIXTURE: client()
-# =====================================================
 @pytest.fixture(scope="session")
 def client(app: FastAPI) -> TestClient:
     return TestClient(app)

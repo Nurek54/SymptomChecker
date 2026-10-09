@@ -5,7 +5,7 @@ import React, { useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import { Copy, Stethoscope } from "lucide-react";
 
-// ——— Prosta normalizacja nagłówków (np. „Zalecenia:”, „Podsumowanie:”) ———
+// Strip trailing spaces before newlines so header lines (e.g. "Zalecenia:") match exactly
 function normalize(text: string) {
   return text.replace(/[ \t]+\n/g, "\n").trim();
 }
@@ -47,7 +47,6 @@ export default function MessageBubble({
 
   return (
     <div className={`group flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
-      {/* ─── AVATAR asystenta (po lewej) ─── */}
       {!isUser && (
         <div className="mr-2 mt-0.5 hidden shrink-0 sm:block">
           <span
@@ -59,7 +58,6 @@ export default function MessageBubble({
             aria-hidden
           >
             <Stethoscope className="h-4 w-4 text-emerald-500 dark:text-emerald-300" />
-            {/* subtelny halo */}
             <span
               aria-hidden
               className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[3px]"
@@ -77,16 +75,15 @@ export default function MessageBubble({
           className={[
             "relative prose whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm shadow-sm transition",
             isUser
-              ? // USER: gradient emerald → cyan, mniejszy max-width, prawy róż
+              ? // user: right-aligned, narrower, flat bottom-right corner
                 "ml-auto max-w-[60ch] rounded-br-md border border-emerald-500/30 " +
                 "bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 " +
                 "text-basecolor hover:shadow-md hover:from-emerald-500/25 hover:to-cyan-500/20"
-              : // ASSISTANT: ciemny, lewy róż
+              : // assistant: card style, flat bottom-left corner
                 "rounded-bl-md bg-card text-basecolor border border-base " +
                 "hover:shadow-md hover:ring-1 hover:ring-[rgb(var(--border))]",
           ].join(" ")}
         >
-          {/* Akcje na dymku asystenta */}
           {!isUser && (
             <div className="absolute -top-3 right-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
               <button
@@ -132,7 +129,6 @@ export default function MessageBubble({
           </Markdown>
         </div>
 
-        {/* ─── TIMESTAMP — on-hover, pod bąblem ─── */}
         {time && (
           <span
             className={[

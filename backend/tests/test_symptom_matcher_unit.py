@@ -1,18 +1,14 @@
-# tests/test_symptom_matcher_unit.py
 from backend.services.symptom_matcher import SymptomMatcher
 
 
 def _make_matcher() -> SymptomMatcher:
-    # bierzemy minimalny zestaw cech – takie same jak w FakeXGB
+    # Same minimal feature set as FakeXGB in conftest.
     feats = ["fever", "cough", "sore_throat"]
     return SymptomMatcher(features=feats, device="cpu")
 
 
 def test_pl_to_en_mapping_basic():
-    """
-    PL → EN: 'gorączka, kaszel, ból gardła' → ['fever','cough','sore_throat'].
-    Wymaga, żeby te frazy były w Twoim słowniku (SYMPTOMS_DICT_PATH).
-    """
+    """Polish phrases map to English feature keys; relies on the dictionary at SYMPTOMS_DICT_PATH."""
     m = _make_matcher()
     text = "Od wczoraj mam gorączkę, kaszel i ból gardła."
     out = m.extract(text)
@@ -24,9 +20,7 @@ def test_pl_to_en_mapping_basic():
 
 
 def test_duplicates_are_removed():
-    """
-    Duplicate w tekście nie tworzy wielu kopii w wynikach.
-    """
+    """A symptom repeated in the text appears only once in the output."""
     m = _make_matcher()
     text = "Mam kaszel, kaszel i jeszcze raz kaszel."
     out = m.extract(text)
@@ -37,10 +31,7 @@ def test_duplicates_are_removed():
 
 
 def test_small_typos_tolerated():
-    """
-    Małe literówki / brak polskich znaków nadal dopasowują się fuzzym.
-    W szczególności 'goraczke' powinno dać 'fever'.
-    """
+    """Fuzzy matching tolerates small typos and missing Polish diacritics ("goraczke" -> fever)."""
     m = _make_matcher()
     text = "Mam goraczke i kaszle od rana."
     out = m.extract(text)
@@ -48,9 +39,7 @@ def test_small_typos_tolerated():
     assert "fever" in out_set
 
 def test_no_empty_labels_in_output():
-    """
-    W wynikach nie ma pustych stringów / whitespace'u.
-    """
+    """Vague or empty input never yields empty or whitespace-only labels."""
     m = _make_matcher()
 
     for text in [

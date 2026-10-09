@@ -1,4 +1,4 @@
-# database/db.py — TYLKO Supabase/Postgres (bez fallbacków)
+# Supabase Postgres only, no fallback database.
 from __future__ import annotations
 import os
 from pathlib import Path
@@ -9,8 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 
-# wczytaj .env (z root projektu)
-# override=False: zmienne ustawione w systemie/CI mają pierwszeństwo przed .env (tak samo jak w config.py)
+# Root .env with override=False: system/CI env vars win over .env (same as config.py).
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=False)
 
 DB_URL = os.getenv("DATABASE_URL", "").strip()
@@ -20,8 +19,8 @@ if not DB_URL:
         "postgresql+psycopg://postgres.<ref>:<haslo>@aws-1-<region>.pooler.supabase.com:5432/postgres?sslmode=require"
     )
 
-# Wymuś driver psycopg i sslmode=require
-# Akceptujemy tylko postgresql:// lub postgresql+psycopg:// i host z supabase
+# Accept only postgresql:// or postgresql+psycopg:// on a Supabase host; force the psycopg
+# driver and default sslmode=require.
 u = urlparse(DB_URL)
 
 if u.scheme not in ("postgresql", "postgresql+psycopg"):

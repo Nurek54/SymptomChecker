@@ -1,8 +1,7 @@
-# tests/test_regressions.py
 """
-Testy regresji dla poprawek logiki: ensemble, matcher (odmiana i przeczenia),
-triage, przebieg czatu (pętla pytań, "to wszystko", odtwarzanie sesji),
-wybór pytań, router River i start aplikacji.
+Regression tests: ensemble, matcher (inflection and negation), triage, chat flow
+(follow-up loop, stop phrase, session restore), question selection, River router,
+app startup, calibration, auth and input limits.
 """
 from __future__ import annotations
 
@@ -23,7 +22,7 @@ from backend.services.prompt_helpers import _extract_temp_high, _suggest_triage,
 from backend.utils import contains_stop_phrase
 
 
-# ───────────────────────── ensemble ─────────────────────────
+# Ensemble
 class _Model:
     def __init__(self, items):
         self.items = items
@@ -45,7 +44,7 @@ def _ens(x_items, r_items):
 
 
 def test_ensemble_confident_xgb_not_overturned_by_missing_class_in_river():
-    # XGB jest pewny "a"; River prawie płaski i "a" nie ma w jego liście.
+    # XGB is confident in "a"; River is nearly flat and does not list "a" at all.
     x = [{"diagnosis_en": "a", "probability": 0.6}, {"diagnosis_en": "b", "probability": 0.05}] + [
         {"diagnosis_en": f"x{i}", "probability": 0.01} for i in range(7)
     ]
@@ -55,7 +54,7 @@ def test_ensemble_confident_xgb_not_overturned_by_missing_class_in_river():
     split = _ens(x, r).predict_split([[1, 0]], k=3)
     assert split["ensemble_top"][0]["diagnosis_en"] == "a"
     assert split["meta"]["gated_to"] == "xgb"
-    # gating faktycznie zmienia wagi (maksymalny udział XGB)
+    # Gating actually shifts the weights (maximum XGB share).
     assert split["meta"]["wx_dyn"] == pytest.approx(1.0 - 0.15)
 
 
@@ -66,7 +65,7 @@ def test_ensemble_weights_respect_minimums():
     assert wx + wr == pytest.approx(1.0)
 
 
-# ───────────────────────── matcher ─────────────────────────
+# Matcher
 @pytest.fixture(scope="module")
 def matcher():
     feats = ["fever", "cough", "sore_throat", "headache", "runny_nose", "loss_of_appetite"]
@@ -102,7 +101,7 @@ def test_matcher_no_false_positives(matcher):
         assert matcher.extract_detailed(t) == ([], []), t
 
 
-# ───────────────────────── triage / stop ─────────────────────────
+# Triage and stop phrases
 @pytest.mark.parametrize("text,expected", [
     ("mam 39 stopni", True),
     ("gorączka 40", True),
@@ -129,7 +128,7 @@ def test_stop_phrase_whole_words_only():
     assert not contains_stop_phrase("mam 39 stopni gorączki")
 
 
-# ───────────────────────── wybór pytań ─────────────────────────
+# Question selection
 def test_best_question_prefers_discriminative_and_skips_duplicates():
     feats = ["cough", "fever", "blood_in_sputum", "hemoptysis", "rash"]
     classes = ["flu", "tb", "measles"]
@@ -143,12 +142,12 @@ def test_best_question_prefers_discriminative_and_skips_duplicates():
     post = {"flu": 0.5, "tb": 0.5, "measles": 0.0}
     best = stats.best_question(post, ["blood_in_sputum", "rash"], reference=["cough"])
     assert best == "blood_in_sputum"
-    # po zapytaniu o "krew w plwocinie" nie pytamy o niemal identyczne "krwioplucie"
+    # After asking about blood_in_sputum, skip the near-duplicate hemoptysis.
     best2 = stats.best_question(post, ["hemoptysis", "rash"], reference=["cough", "blood_in_sputum"])
     assert best2 != "hemoptysis"
 
 
-# ───────────────────────── przebieg czatu ─────────────────────────
+# Chat flow
 class _FakeLLM:
     backend = "ctransformers"
     model = object()
@@ -211,7 +210,7 @@ def test_no_symptoms_message(chat_state):
 def test_session_restored_from_client_after_restart(chat_state):
     r = _say(chat_state, "s4", "mam też katar", client_symptoms=["fever", "cough", "unknown_x"])
     assert set(r.symptoms) == {"fever", "cough", "runny_nose"}
-    # model atrapa jest mało pewny (Top-1 60%), więc najpierw pytanie, a po "to wszystko" ocena
+    # The fake model is unsure (top-1 60%), so it asks first and assesses after "to wszystko".
     if not r.top_diagnoses:
         r = _say(chat_state, "s4", "to wszystko")
     assert r.top_diagnoses
@@ -223,21 +222,21 @@ def test_negation_in_answer_is_respected(chat_state):
     assert "fever" not in r.symptoms and "runny_nose" in r.symptoms
 
 
-# ───────────────────────── router River ─────────────────────────
+# River router
 def test_river_admin_endpoints_disabled_without_token():
     from backend.api.routers import river_router
 
     app = FastAPI()
     app.include_router(river_router.router)
     client = TestClient(app)
-    # stan aplikacji bez modelu River -> 503 dla odczytu, 403 dla admina
+    # No River model: reads return 503, admin endpoints return 403 without a token.
     app.state.app_state = type("S", (), {"river": None})()
     assert client.get("/river/status").status_code == 503
     r = client.post("/river/train_one", json={"label": "flu", "active_features": ["fever"]})
     assert r.status_code == 403
 
 
-# ───────────────────────── start aplikacji ─────────────────────────
+# App startup
 def test_create_app_builds_routes():
     app_mod = importlib.import_module("app")
     app = app_mod.create_app()
@@ -246,7 +245,7 @@ def test_create_app_builds_routes():
         assert p in paths
 
 
-# ───────────────────────── słownik vs dane (cechy bez danych) ─────────────────────────
+# Dictionary vs training data (features without data)
 def test_matcher_skips_dead_features_and_prefers_feature_with_data():
     feats = ["sharp_abdominal_pain", "abdominal_pain", "belly_pain", "fever"]
     counts = {"sharp_abdominal_pain": 14000, "abdominal_pain": 30, "belly_pain": 0, "fever": 10000}
@@ -254,7 +253,7 @@ def test_matcher_skips_dead_features_and_prefers_feature_with_data():
     assert not m.is_alive("belly_pain")
     pos, _ = m.extract_detailed("boli mnie brzuch")
     assert pos == ["sharp_abdominal_pain"]
-    # aktywujemy tylko wybraną cechę, nie rzadkie synonimy
+    # Only the chosen feature is activated, not its rare synonyms.
     assert m.expand_to_xgb("sharp_abdominal_pain") == {"sharp_abdominal_pain"}
 
 
@@ -274,7 +273,7 @@ def test_dicts_panel_hides_dead_features_and_dedupes_labels():
 
 
 def test_dicts_panel_one_row_per_feature_with_aliases():
-    """Kilka wpisów słownika -> ta sama cecha: jeden wiersz (unikalny klucz w UI), reszta jako aliasy."""
+    """Several dictionary entries for one feature yield one row (unique UI key); the rest become aliases."""
     from backend.api.routers.dicts import _project_to_xgb_features
 
     feats = ["mouth_pain", "pain_in_eye"]
@@ -304,7 +303,7 @@ def test_dicts_real_dictionary_has_unique_features():
     assert len(ens) == len(set(ens))
 
 
-# ───────────────────────── kalibracja modeli ─────────────────────────
+# Model calibration
 def _softmax_np(z):
     z = z - z.max(1, keepdims=True)
     e = np.exp(z)
@@ -319,12 +318,12 @@ def test_xgb_calibrator_prior_correction_used_only_when_it_helps():
     true_logits = rng.normal(0, 2, size=(N, K))
     y = np.array([rng.choice(K, p=p) for p in _softmax_np(true_logits)])
     log_w = np.log(np.array([0.5, 1.0, 3.0, 5.0]))
-    # model trenowany z wagami klas "zawyża" klasy o dużych wagach o log(w_c)
+    # Training with class weights inflates each class logit by log(w_c).
     biased = true_logits + log_w[None, :]
     cal = TemperatureCalibrator()
     cal.fit(biased, y, log_w=log_w)
     assert cal.log_w is not None and cal.T == pytest.approx(1.0, abs=0.1)
-    # gdy model NIE jest przesunięty, korekta pogarsza NLL -> kalibrator jej nie używa
+    # For an unbiased model the correction worsens NLL, so the calibrator must not use it.
     cal2 = TemperatureCalibrator()
     cal2.fit(true_logits, y, log_w=log_w)
     assert cal2.log_w is None
@@ -338,7 +337,7 @@ def test_river_calibrator_transform_matches_fit():
     z_base = rng.normal(-3, 1, size=K)
     true_logits = rng.normal(0, 1.5, size=(N, K))
     y = np.array([rng.choice(K, p=p) for p in _softmax_np(true_logits)])
-    Z = 2.0 * (true_logits + z_base[None, :])  # zbyt ostre i przesunięte o intercept
+    Z = 2.0 * (true_logits + z_base[None, :])  # too sharp and shifted by the intercept
     cal = RiverTemperatureCalibrator(classes=[str(i) for i in range(K)])
     lam, T = cal.fit_scores(Z, 2.0 * z_base, y)
     assert lam == pytest.approx(1.0) and T == pytest.approx(2.0, rel=0.1)
@@ -429,7 +428,7 @@ def test_river_batch_warm_start_is_accurate_and_keeps_online_learning():
         for _, row in df.sample(150, random_state=1).iterrows()
     ])
     assert acc > 0.85
-    # dalsze uczenie online (SGD) działa na wagach z treningu paczkami
+    # Online SGD learning continues from the batch-trained weights.
     clf = r.model.classifiers["flu"]
     before = clf._raw_dot_one({"f0": 1})
     for _ in range(20):
@@ -446,7 +445,7 @@ def test_requirements_have_rapidfuzz_and_no_unused_hf_deps():
     assert not pkgs & {"transformers", "accelerate", "sentence-transformers"}
 
 
-# ───────────────────────── pytania uzupełniające ─────────────────────────
+# Follow-up questions
 class _ConfidentModel(_FakeModel):
     def predict_topk(self, vec, k=3):
         items = [{"diagnosis_en": "flu", "probability": 0.85},
@@ -486,12 +485,12 @@ def test_short_yes_answers_without_tak():
     assert _parse_yes_no("Mam.") == "yes"
     assert _parse_yes_no("trochę") == "yes"
     assert _parse_yes_no("nie boli") == "no"
-    assert _parse_yes_no("mam gorączkę i kaszel") is None  # opis objawów, nie odpowiedź
+    assert _parse_yes_no("mam gorączkę i kaszel") is None  # a symptom description, not an answer
 
 
 def _toy_stats():
     from backend.services.symptom_stats import SymptomStats
-    # choroba A: objaw "rash" prawie zawsze, B: rzadko
+    # Disease "a" almost always has "rash", disease "b" rarely does.
     q = np.array([[0.95, 0.5], [0.05, 0.5]], dtype=np.float32)
     return SymptomStats(["rash", "fever"], ["a", "b"], q, np.array([10, 10]))
 
@@ -529,7 +528,7 @@ def test_every_model_feature_has_a_curated_followup_question():
     feats = feats if isinstance(feats, list) else feats.get("features", [])
     qs = json.load(open(FOLLOWUP_QUESTIONS_PATH, encoding="utf-8"))
     alive_missing = [f for f in feats if f.strip().lower() not in qs]
-    assert len(alive_missing) <= 30  # cechy bez danych treningowych nie są zadawane
+    assert len(alive_missing) <= 30  # features without training data are never asked
     for f, q in qs.items():
         assert q.startswith("Czy ") and q.endswith("?"), f
         assert "symptom " not in q and "\u2014" not in q, f
@@ -537,7 +536,7 @@ def test_every_model_feature_has_a_curated_followup_question():
     assert loc.followup_question("foul_smell_of_urine") == qs["foul_smell_of_urine"]
 
 
-# ───────────────────────── objawy spoza modelu ─────────────────────────
+# Symptoms outside the model
 def test_photophobia_is_recognized_with_negation():
     from backend.services.unmodeled_symptoms import extract_unmodeled
     assert extract_unmodeled("boli mnie głowa, mam nudności i światłowstręt") == (["światłowstręt"], [])
@@ -553,7 +552,7 @@ def test_photophobia_is_acknowledged_in_chat_instead_of_not_recognized(chat_stat
     assert "Zanotowałem: światłowstręt" in r.response
     assert "Nie rozpoznałem" not in r.response
     r = _say(chat_state, "u1", "boli mnie głowa i mam gorączkę")
-    assert "Zanotowałem" not in r.response  # potwierdzamy raz
+    assert "Zanotowałem" not in r.response  # acknowledged only once
     assert chat_state.sessions.get_extra("u1") == ["światłowstręt"]
 
 
@@ -562,7 +561,7 @@ def test_photophobia_with_fever_and_headache_raises_urgency():
     assert _suggest_triage(["ból głowy", "gorączka", "światłowstręt"], 30)[0] == "wysoka"
 
 
-# ───────────────────────── poprawki po przeglądzie ─────────────────────────
+# Auth, parsing and flow edge cases
 def _sb_token(secret, **claims):
     import time
     from jose import jwt
@@ -600,10 +599,10 @@ def test_email_from_user_metadata_cannot_take_over_account(monkeypatch):
     monkeypatch.setattr(auth.crud, "create_user", _create)
     db = types.SimpleNamespace(commit=lambda: None, add=lambda x: None)
 
-    # email tylko w metadanych (ustawianych przez użytkownika) -> nowe konto, nie konto ofiary
+    # E-mail only in user-editable metadata: create a new account, never link the victim's.
     u = auth._ensure_local_profile(db, {"sub": "attacker", "email": "", "user_metadata": {"email": "victim@example.com"}})
     assert u.id == 8 and created["email"] != "victim@example.com"
-    # ten sam email w tokenie, ale konto powiązane z innym sub -> 409, bez przejęcia
+    # Same e-mail in the token but the account is bound to another sub: 409, no takeover.
     with pytest.raises(HTTPException) as e:
         auth._ensure_local_profile(db, {"sub": "attacker", "email": "victim@example.com"})
     assert e.value.status_code == 409
@@ -615,11 +614,11 @@ def test_symptom_prefixed_features_reach_the_model():
                        feature_counts={"symptom_depression": 50, "insomnia": 50, "sharp_abdominal_pain": 100, "abdominal_pain": 4})
     assert m.expand_to_xgb("symptom_depression") == {"symptom_depression"}
     assert m.to_pl("symptom_depression") != "symptom depression"
-    assert m.expand_to_xgb("abdominal_pain") == {"sharp_abdominal_pain"}  # alias nadal wskazuje cechę z danymi
+    assert m.expand_to_xgb("abdominal_pain") == {"sharp_abdominal_pain"}  # alias still resolves to the feature with data
 
 
 def test_symptoms_restored_after_restart_even_if_router_created_session(chat_state):
-    chat_state.sessions.claim_owner("r1", None)          # tak robi router /chat przed handle_chat
+    chat_state.sessions.claim_owner("r1", None)          # the /chat router does this before handle_chat
     r = _say(chat_state, "r1", "mam też katar", client_symptoms=["fever", "cough"])
     assert set(r.symptoms) == {"fever", "cough", "runny_nose"}
 
@@ -660,7 +659,7 @@ def test_photophobia_negations_and_triage():
     assert extract_unmodeled("nie mam gorączki i światło mnie razi") == (["światłowstręt"], [])
     assert extract_unmodeled("nie razi mnie światło") == ([], ["światłowstręt"])
     assert extract_unmodeled("nie mam gorączki ani światłowstrętu") == ([], ["światłowstręt"])
-    # zaprzeczony ból głowy w historii nie podnosi pilności
+    # A negated headache in the history must not raise urgency.
     assert _suggest_triage(["gorączka", "światłowstręt"], 30, history_text="nie mam bólu głowy")[0] != "wysoka"
 
 
@@ -668,7 +667,7 @@ def test_short_accented_alias_and_stiff_neck_are_recognized():
     matcher = SymptomMatcher(features=["anxiety_and_nervousness", "insomnia", "symptom_depression", "neck_stiffness_or_tightness"], device="cpu")
     pos, _ = matcher.extract_detailed("mam depresję, bezsenność i lęk")
     assert "anxiety_and_nervousness" in pos and "symptom_depression" in pos
-    assert matcher.extract_detailed("biorę lek na nadciśnienie")[0] == []   # "lek" (medykament) to nie "lęk"
+    assert matcher.extract_detailed("biorę lek na nadciśnienie")[0] == []   # "lek" (medication) must not match the anxiety alias
     assert "neck_stiffness_or_tightness" in matcher.extract_detailed("mam sztywny kark")[0]
 
 
@@ -683,7 +682,7 @@ def test_no_em_dashes_in_llm_instructions_and_output():
     assert dash not in sanitize_llm_output(f"{dash} Odpocznij.\n{dash} Pij dużo.")
 
 
-# ───────────────────────── limity wejścia i komunikaty błędów ─────────────────────────
+# Input limits and error messages
 def test_input_limits_reject_oversized_requests(client):
     r = client.post("/sessions/" + "x" * 65 + "/symptoms", json={"add": ["fever"]})
     assert r.status_code == 422

@@ -17,12 +17,7 @@ PESEL_RE = re.compile(r"\b\d{11}\b")
 
 
 def mask_sensitive(msg: str) -> str:
-    """
-    Zastępuje w tekście:
-      - adresy e-mail → ***
-      - 11-cyfrowe numery (np. PESEL) → ***.
-    Używane w testach R3 i do logów.
-    """
+    """Mask e-mail addresses and 11-digit numbers (e.g. PESEL) with ***. Used for logs and R3 tests."""
     masked = EMAIL_RE.sub("***", msg or "")
     masked = PESEL_RE.sub("***", masked)
     return masked
@@ -30,8 +25,8 @@ def mask_sensitive(msg: str) -> str:
 
 def contains_stop_phrase(text: str) -> bool:
     """
-    Czy pacjent kończy wymienianie objawów ("to wszystko", "koniec", ...).
-    Dopasowanie całych słów: "stop" nie może łapać "39 stopni", a "end" słowa "trend".
+    Whether the patient is done listing symptoms ("to wszystko", "koniec", ...).
+    Whole-word match: "stop" must not match "39 stopni", nor "end" match "trend".
     """
     t = (text or "").strip().lower()
     for p in (STOP_PHRASES or []):
@@ -57,7 +52,7 @@ def sanitize_llm_output(text: str) -> str:
         if not any(re.search(p, (ln or "").lower()) for p in _BAD_INTROS)
     ).strip()
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
-    # bez długich myślników w tekście dla pacjenta (styl aplikacji): "—" -> przecinek
+    # app style: no long dashes in patient-facing text, replace U+2014 with a comma
     t = re.sub(r"^[ \t]*—[ \t]*", "", t, flags=re.MULTILINE)
     t = re.sub(r"[ \t]*—[ \t]*", ", ", t)
     t = re.sub(r",\s*([,.;:!?])", r"\1", t)
@@ -99,10 +94,7 @@ def validate_llm_summary(
     return True
 
 def _is_pl(lang: str | None) -> bool:
-    """
-    Zwraca True, gdy `lang` reprezentuje język polski.
-    Akceptuje warianty: 'pl', 'PL', 'pl-PL', 'pl_PL', None/'' → False.
-    """
+    """True for Polish language codes: 'pl', 'PL', 'pl-PL', 'pl_PL'; None/'' -> False."""
     if not lang:
         return False
     code = str(lang).strip().lower().replace("_", "-")
@@ -127,7 +119,7 @@ def seed_everywhere(seed: int = 42) -> None:
     random.seed(seed)
 
 
-# ───────────────────────── postęp długich operacji (trening, kalibracja) ─────────────────────────
+# Progress logging for long operations (training, calibration)
 def fmt_duration(seconds: float) -> str:
     """12.3 -> '12s', 125 -> '2m05s', 3725 -> '1h02m05s'."""
     if seconds is None or seconds != seconds or seconds == float("inf"):
@@ -144,11 +136,11 @@ def fmt_duration(seconds: float) -> str:
 
 class Progress:
     """
-    Loguje postęp długiej pętli: procent, liczba kroków, tempo, czas od startu
-    i szacowany czas do końca (ETA). Loguje co `every_pct` procent, ale nie
-    częściej niż co `min_interval` sekund (wyjątek: koniec).
+    Log progress of a long loop: percent, steps, rate, elapsed time and ETA.
+    Logs every `every_pct` percent but at most once per `min_interval` seconds
+    (the final step is always logged).
 
-        p = Progress("River/trening", total=len(df), log=log, unit="wierszy")
+        p = Progress("River/train", total=len(df), log=log, unit="rows")
         for i, row in enumerate(...):
             ...
             p.update(i + 1)
@@ -193,9 +185,9 @@ class Progress:
 
 def calibration_metrics(P, y) -> Dict[str, float]:
     """
-    Jakość prawdopodobieństw dla rozkładów P (N x K) i prawdziwych klas y (indeksy).
-    top1/top3: trafność; nll: log-loss; ece: Expected Calibration Error (15 przedziałów,
-    pewność klasy top-1); brier: wieloklasowy Brier score; mean_conf: średnia pewność top-1.
+    Probability quality for distributions P (N x K) and true class indices y.
+    top1/top3: accuracy; nll: log-loss; ece: Expected Calibration Error (15 bins over
+    top-1 confidence); brier: multiclass Brier score; mean_conf: mean top-1 confidence.
     """
     import numpy as np
     P = np.clip(np.asarray(P, dtype=np.float64), 1e-12, 1.0)
@@ -233,7 +225,7 @@ def _training_report_path() -> str:
 
 
 def update_training_report(section: str, data: Dict[str, Any]) -> None:
-    """Dopisuje sekcję (xgb / river / ensemble) do ml/training_report.json."""
+    """Write or replace one section (xgb / river / ensemble) in ml/training_report.json."""
     import json, os, datetime
     path = _training_report_path()
     report: Dict[str, Any] = {}
@@ -253,7 +245,7 @@ def update_training_report(section: str, data: Dict[str, Any]) -> None:
 
 
 def log_metrics_table(log, title: str, results: Dict[str, Any]) -> None:
-    """Czytelna tabelka metryk w logu: wiersz na wariant (np. surowe vs po kalibracji)."""
+    """Log a metrics table, one row per variant (e.g. raw vs calibrated)."""
     rows = [(k, v) for k, v in results.items() if isinstance(v, dict) and "top1" in v]
     if not rows:
         return

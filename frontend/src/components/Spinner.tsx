@@ -3,9 +3,9 @@
 import * as React from "react";
 
 type Props = {
-  /** Średnica w px (domyślnie 16 = h-4 w-4) */
+  /** Diameter in px (default 16 = h-4 w-4) */
   size?: number;
-  /** Grubość pierścienia w px (domyślnie ~1/6 średnicy) */
+  /** Ring thickness in px (default ~1/6 of the diameter) */
   thickness?: number;
   className?: string;
 };
@@ -18,10 +18,10 @@ export default function Spinner({ size = 16, thickness, className }: Props) {
   const style: React.CSSProperties = {
     width: s,
     height: s,
-    // gradient zgodny z Logo
+    // Gradient matches the logo
     background:
       "conic-gradient(from 90deg, #34d399, #38bdf8 55%, #a78bfa 100%)",
-    // „dziura” w środku, żeby powstał pierścień
+    // Mask out the center to turn the disc into a ring
     WebkitMask: mask,
     mask,
   };

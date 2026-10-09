@@ -38,9 +38,9 @@ def _age(dob: date | None) -> int | None:
     return max(0, today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)))
 
 
-# Zwykłe "def" (nie async): generowanie odpowiedzi LLM trwa sekundy, a w "async def"
-# blokowałoby pętlę zdarzeń i cały serwer (/health, historia, panel objawów).
-# FastAPI uruchamia "def" w puli wątków; LLMManager ma własną blokadę generowania.
+# Plain "def" on purpose: LLM generation takes seconds and in "async def" would block the
+# event loop and the whole server (/health, history, symptom panel). FastAPI runs "def"
+# in a thread pool; LLMManager has its own generation lock.
 @router.post("/chat", response_model=ChatResponse)
 def chat(
     req_body: ChatRequest,
@@ -64,7 +64,7 @@ def chat(
 
         resp: ChatResponse = ChatService(st).handle_chat(req_body, patient_age=patient_age)
 
-        # zapis rozmowy (wiadomość użytkownika + odpowiedź razem, po udanej odpowiedzi)
+        # Persist user message and reply together, only after a successful reply.
         if uid:
             rd = _resp_to_dict(resp)
             title_hint = (req_body.user_input or "").strip()[:80] or "Rozmowa"
@@ -85,7 +85,7 @@ def chat(
                 for en, pl in zip(symptoms_sorted, pl_labels)
             ])
 
-            # stan zawsze odzwierciedla bieżącą odpowiedź (pusta lista = brak oceny)
+            # Triage always mirrors the current reply (empty list = no assessment yet).
             top: List[Dict[str, Any]] = rd.get("top_diagnoses") or []
             crud.replace_triage(db, conv.id, [
                 {

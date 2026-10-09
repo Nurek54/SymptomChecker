@@ -16,15 +16,14 @@ from models.river_manager import RiverManager, RiverIncrementalTrainer
 log = logging.getLogger("symptomchecker.router.river")
 router = APIRouter(prefix="/river", tags=["River"])
 
-# Pliki CSV wolno wskazywać wyłącznie z katalogu backend/data
+# CSV files may only be read from backend/data (path traversal guard).
 _DATA_DIR = (Path(__file__).resolve().parents[2] / "data").resolve()
 
 
-# ───────────────────────── helpers ─────────────────────────
 def _get_mgr(request: Request) -> RiverManager:
     """
-    Zwraca TEN SAM RiverManager, którego używa ensemble w czacie
-    (app.state.app_state.river). Nie trenujemy niczego w trakcie requestu.
+    Return the SAME RiverManager the chat ensemble uses (app.state.app_state.river).
+    Nothing is trained lazily during a request.
     """
     st = getattr(request.app.state, "app_state", None)
     mgr = getattr(st, "river", None) if st is not None else None
@@ -34,7 +33,7 @@ def _get_mgr(request: Request) -> RiverManager:
 
 
 def _require_admin(token: Optional[str]) -> None:
-    """Operacje zmieniające model lub czytające pliki wymagają ADMIN_API_TOKEN."""
+    """Operations that modify the model or read files require ADMIN_API_TOKEN (constant-time compare)."""
     if not ADMIN_API_TOKEN:
         raise HTTPException(403, "Endpoint wyłączony: ustaw ADMIN_API_TOKEN w .env, aby go używać.")
     if not token or not hmac.compare_digest(str(token), str(ADMIN_API_TOKEN)):
@@ -42,13 +41,13 @@ def _require_admin(token: Optional[str]) -> None:
 
 
 def _safe_csv_path(csv_path: Optional[str], default: Optional[str]) -> str:
-    """Pozwala tylko na pliki .csv wewnątrz backend/data (bez wychodzenia poza katalog)."""
+    """Allow only .csv files inside backend/data; anything resolving outside it is rejected."""
     raw = csv_path or default
     if not raw:
         raise HTTPException(400, "Nie podano pliku CSV.")
     p = Path(raw)
     if not p.is_absolute():
-        # ścieżki z configu są względne względem backend/, nazwy z requestu względem backend/data
+        # config paths are relative to backend/, request names relative to backend/data
         cand_backend = (_DATA_DIR.parent / p).resolve()
         cand_data = (_DATA_DIR / p).resolve()
         p = cand_backend if cand_backend.is_relative_to(_DATA_DIR) and cand_backend.exists() else cand_data
@@ -78,13 +77,13 @@ def _recall_at_k(y_true: List[str], y_pred_topk: List[List[str]], k: int = 3) ->
     return float(hit) / float(len(y_true))
 
 
-# ───────────────────────── endpoints (odczyt) ─────────────────────────
+# Read-only endpoints
 @router.get("/status")
 def status(request: Request):
     mgr = _get_mgr(request)
     return {
         "ready": True,
-        "model_file": os.path.basename(RIVER_MODEL_PATH),   # bez pełnej ścieżki na serwerze
+        "model_file": os.path.basename(RIVER_MODEL_PATH),   # do not leak the full server path
         "has_file": os.path.exists(RIVER_MODEL_PATH),
         "n_features": len(mgr.features),
         "sample_features": mgr.features[:20],
@@ -129,7 +128,7 @@ def predict_topk(
     return {"topk": topk}
 
 
-# ───────────────────────── endpoints (admin) ─────────────────────────
+# Admin endpoints (X-Admin-Token)
 @router.post("/fit_from_csv")
 def fit_from_csv(
     request: Request,
@@ -158,7 +157,7 @@ def incremental_batch(
     limit: Optional[int] = Body(None),
     x_admin_token: Optional[str] = Header(None),
 ):
-    """Przyrostowe douczenie z pliku CSV (tylko backend/data)."""
+    """Incrementally train River from a CSV file (backend/data only)."""
     _require_admin(x_admin_token)
     mgr = _get_mgr(request)
     path = _safe_csv_path(csv_path, None)
@@ -182,10 +181,7 @@ def train_one(
     }]),
     x_admin_token: Optional[str] = Header(None),
 ):
-    """
-    Pojedynczy krok uczenia na modelu używanym przez ensemble.
-    Nie dodaje nowych cech; zapisuje artefakty modelu.
-    """
+    """Run a single training step on the live ensemble model (no new features; saves model artifacts)."""
     _require_admin(x_admin_token)
     mgr = _get_mgr(request)
 
@@ -235,7 +231,7 @@ def evaluate(
     limit: Optional[int] = Query(None),
     x_admin_token: Optional[str] = Header(None),
 ):
-    """Szybka ewaluacja: ACC / macro-F1 / recall@k na wskazanym CSV (domyślnie TEST_CSV)."""
+    """Quick evaluation: accuracy, macro-F1 and recall@k on a CSV (default TEST_CSV)."""
     _require_admin(x_admin_token)
     mgr = _get_mgr(request)
     path = _safe_csv_path(csv_path, TEST_CSV or DATA_CSV)
