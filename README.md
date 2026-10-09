@@ -224,7 +224,42 @@ Predictions come from a **calibrated ensemble** of XGBoost (Bayesian-tuned on GP
 
 </details>
 
-<sub>Screenshots and the demo come from the real frontend; the backend responses in them are scripted so the example is reproducible.</sub>
+## Features in motion
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/symptoms.gif" alt="Adding and removing symptoms in the side panel" />
+      <p align="center"><b>Symptom panel</b><br /><sub>Search by name or synonym, add symptoms by hand and watch the Top-3 update.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/history.gif" alt="Browsing and searching the conversation history" />
+      <p align="center"><b>Conversation history</b><br /><sub>Search saved chats and reopen one with its symptoms, diagnoses and messages.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/prep.gif" alt="Preparing a description for a doctor visit" />
+      <p align="center"><b>Visit preparation</b><br /><sub>Pick symptoms, severity and duration; the app writes a summary to copy for the doctor.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/theme.gif" alt="Switching to the dark theme and opening the guide" />
+      <p align="center"><b>Dark theme and guide</b><br /><sub>Switch the theme with one click and open the built-in guide.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/login.gif" alt="Logging in" />
+      <p align="center"><b>Login and registration</b><br /><sub>Supabase sign-in, or create an account in the same panel.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/account.gif" alt="Editing the profile, logging out and continuing as a guest" />
+      <p align="center"><b>Account and guest mode</b><br /><sub>Edit the profile, log out and continue as a guest.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<sub>Screenshots and animations come from the real frontend; the backend responses in them are scripted so the examples are reproducible.</sub>
 
 ## How it works
 
@@ -394,7 +429,7 @@ SymptomChecker/
 │   ├── ml_validation_runner.py
 │   └── requirements.txt
 ├── database/                 # SQLAlchemy: models, CRUD, security, db init
-├── docs/                     # README images: animated SVGs, demo.gif, screenshots/, icons/
+├── docs/                     # README images: animated SVGs, demo.gif, gifs/, screenshots/, icons/
 ├── frontend/
 │   ├── .env.example          # frontend environment (copy to .env.local)
 │   ├── public/               # logo

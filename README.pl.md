@@ -224,7 +224,42 @@ Predykcje pochodzą ze **skalibrowanego zespołu modeli** (ensemble): XGBoost (h
 
 </details>
 
-<sub>Zrzuty ekranu i demo pochodzą z prawdziwego frontendu; odpowiedzi backendu są w nich zaskryptowane, żeby przykład dało się powtórzyć.</sub>
+## Funkcje w akcji
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/symptoms.gif" alt="Dodawanie i usuwanie objawów w panelu bocznym" />
+      <p align="center"><b>Panel objawów</b><br /><sub>Szukanie po nazwie lub synonimie, ręczne dodawanie objawów i Top-3 aktualizowane na bieżąco.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/history.gif" alt="Przeglądanie i wyszukiwanie historii rozmów" />
+      <p align="center"><b>Historia rozmów</b><br /><sub>Wyszukiwanie zapisanych rozmów i podgląd objawów, diagnoz oraz wiadomości.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/prep.gif" alt="Przygotowanie opisu przed wizytą u lekarza" />
+      <p align="center"><b>Przygotowanie do wizyty</b><br /><sub>Objawy, nasilenie i czas trwania; aplikacja pisze opis do skopiowania dla lekarza.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/theme.gif" alt="Przełączenie na ciemny motyw i otwarcie przewodnika" />
+      <p align="center"><b>Ciemny motyw i przewodnik</b><br /><sub>Zmiana motywu jednym kliknięciem i wbudowany przewodnik.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/login.gif" alt="Logowanie" />
+      <p align="center"><b>Logowanie i rejestracja</b><br /><sub>Logowanie przez Supabase albo zakładanie konta w tym samym panelu.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/gifs/account.gif" alt="Edycja profilu, wylogowanie i tryb gościa" />
+      <p align="center"><b>Konto i tryb gościa</b><br /><sub>Edycja profilu, wylogowanie i dalsza rozmowa jako gość.</sub></p>
+    </td>
+  </tr>
+</table>
+
+<sub>Zrzuty ekranu i animacje pochodzą z prawdziwego frontendu; odpowiedzi backendu są w nich zaskryptowane, żeby przykłady dało się powtórzyć.</sub>
 
 ## Jak to działa
 
@@ -394,7 +429,7 @@ SymptomChecker/
 │   ├── ml_validation_runner.py
 │   └── requirements.txt
 ├── database/                 # SQLAlchemy: modele, CRUD, bezpieczeństwo, inicjalizacja bazy
-├── docs/                     # grafiki do README: animowane SVG, demo.gif, screenshots/, icons/
+├── docs/                     # grafiki do README: animowane SVG, demo.gif, gifs/, screenshots/, icons/
 ├── frontend/
 │   ├── .env.example          # zmienne środowiskowe frontendu (skopiuj do .env.local)
 │   ├── public/               # logo
