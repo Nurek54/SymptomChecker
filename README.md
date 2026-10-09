@@ -1,3 +1,5 @@
+<p align="right"><b>English</b> · <a href="README.pl.md">Polski</a></p>
+
 <a href="#see-it-in-action">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.svg" />
@@ -403,8 +405,10 @@ SymptomChecker/
 ├── logs/
 ├── .env.example              # backend environment (copy to .env)
 ├── .gitignore
+├── FUTURE_PLANS.md           # planned extensions (English version)
 ├── LICENSE
-└── README.md
+├── README.md
+└── README.pl.md              # Polish README
 ```
 
 ## Getting Started
