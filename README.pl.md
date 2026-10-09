@@ -1,4 +1,7 @@
-<p align="right"><a href="README.md">English</a> · <b>Polski</b></p>
+<p align="right">
+  <a href="README.md"><img src="docs/lang/en.svg" alt="English" height="32" /></a>
+  <a href="README.pl.md"><img src="docs/lang/pl-active.svg" alt="Polski (aktualny)" height="32" /></a>
+</p>
 
 <a href="#zobacz-w-akcji">
   <picture>
