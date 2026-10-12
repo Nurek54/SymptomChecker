@@ -10,8 +10,9 @@ async function loginAsTestUser(page: Page) {
     const emailInput = dialog.getByPlaceholder(/przyklad\.pl/i);
     const passwordInput = dialog.getByPlaceholder(/min\. 8 znaków/i);
 
-    const email = process.env.E2E_EMAIL ?? "test@example.com";
-    const password = process.env.E2E_PASSWORD ?? "***REMOVED***";
+    // Credentials of a test account, never hardcoded in the repo
+    const email = process.env.E2E_EMAIL ?? "";
+    const password = process.env.E2E_PASSWORD ?? "";
 
     await emailInput.fill(email);
     await passwordInput.fill(password);
@@ -22,6 +23,8 @@ async function loginAsTestUser(page: Page) {
     const textbox = page.getByRole("textbox").last();
     await textbox.waitFor();
 }
+
+test.skip(!process.env.E2E_EMAIL || !process.env.E2E_PASSWORD, "Ustaw E2E_EMAIL i E2E_PASSWORD, aby uruchomić ten test.");
 
 test("E2E_01: pełny przepływ zalogowany użytkownik", async ({ page }) => {
     await loginAsTestUser(page);
