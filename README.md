@@ -493,7 +493,7 @@ Other quantizations (Q4_K_M, Q5_K_M) work too - update `LLM_SLOTS["bielik"]["FIL
 
 #### Training datasets
 
-The training datasets used for this project are **not redistributed in this repository** for size and licensing reasons. If you would like to obtain them for academic review, evaluation, or reproducing the results of the thesis, please contact the author (see [Contact](#contact)) - datasets will be shared on request.
+The large training files are **not stored in this repository** because of their size. Both source datasets are public (see [Data sources](#data-sources)), so you can download them and rebuild the splits yourself. If you need the exact splits used in the thesis for academic review or reproducing the results, contact the author (see [Contact](#contact)).
 
 The application expects the following files at the paths defined in `backend/config.py`:
 
@@ -836,6 +836,17 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 
 </details>
 
+## Data sources
+
+| Dataset | Author and license | Used for | In this repository |
+|---|---|---|---|
+| [Disease and symptoms dataset 2023](https://data.mendeley.com/datasets/2cxccsxydc/1) | Stark, Bran (2025), Mendeley Data, V1, doi:10.17632/2cxccsxydc.1. **CC BY 4.0** | Main source of training, calibration and test data | `backend/data/Final_Testset_for_Eval.csv` and files derived from it |
+| [Disease Prediction Based on Symptoms](https://www.kaggle.com/datasets/noeyislearning/disease-prediction-based-on-symptoms) | Francis (Kaggle user noeyislearning). **CC0: Public Domain** | Additional diseases merged into the main dataset | `backend/data/Dataset_2/` |
+
+Changes made to the data: rows were cleaned, duplicate disease labels from the two sources were merged, rare diseases were removed and the data was re-split without overlap (`backend/data/build_datasets.py`, see [Training datasets](#training-datasets)). The Polish symptom and disease names in `backend/data/*_pl_en.json` are the author's own work.
+
+The Mendeley dataset is described by its author as artificially generated (symptom severity and disease occurrence probabilities preserved). The results in this README are measured on that data and do not describe clinical accuracy on real patients.
+
 ## License
 
 **Copyright © 2026 Grzegorz Sienkiewicz. All Rights Reserved.**
@@ -844,7 +855,7 @@ This software was developed as part of an engineering thesis (*praca inżyniersk
 
 If you would like to use any part of this project - for academic citation, research, evaluation, or any other purpose - please contact the author (see [Contact](#contact) below). Permissions will be considered on a case-by-case basis.
 
-Third-party open-source dependencies remain governed by their own licenses (see `backend/requirements.txt` and `frontend/package.json`).
+Third-party open-source dependencies remain governed by their own licenses (see `backend/requirements.txt` and `frontend/package.json`). The datasets keep their original licenses (see [Data sources](#data-sources)).
 
 See the [LICENSE](LICENSE) file for full terms.
 

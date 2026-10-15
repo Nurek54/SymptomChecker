@@ -493,7 +493,7 @@ Inne kwantyzacje (Q4_K_M, Q5_K_M) też działają, wystarczy zmienić `LLM_SLOTS
 
 #### Zbiory treningowe
 
-Zbiory treningowe użyte w projekcie **nie są udostępniane w tym repozytorium** ze względu na rozmiar i licencje. Jeśli potrzebujesz ich do recenzji akademickiej, oceny albo odtworzenia wyników pracy, skontaktuj się z autorem (zobacz [Kontakt](#kontakt)); zbiory udostępniam na prośbę.
+Duże pliki treningowe **nie są przechowywane w tym repozytorium** ze względu na rozmiar. Oba zbiory źródłowe są publiczne (zobacz [Źródła danych](#źródła-danych)), więc możesz je pobrać i samodzielnie odtworzyć podziały. Jeśli potrzebujesz dokładnie tych podziałów, których użyto w pracy (do recenzji akademickiej albo odtworzenia wyników), skontaktuj się z autorem (zobacz [Kontakt](#kontakt)).
 
 Aplikacja oczekuje następujących plików w ścieżkach zdefiniowanych w `backend/config.py`:
 
@@ -836,6 +836,17 @@ Wszystkie ustawienia ML / LLM / logowania są w **`backend/config.py`**. Nadpisa
 
 </details>
 
+## Źródła danych
+
+| Zbiór | Autor i licencja | Zastosowanie | W repozytorium |
+|---|---|---|---|
+| [Disease and symptoms dataset 2023](https://data.mendeley.com/datasets/2cxccsxydc/1) | Stark, Bran (2025), Mendeley Data, V1, doi:10.17632/2cxccsxydc.1. **CC BY 4.0** | Główne źródło danych treningowych, kalibracyjnych i testowych | `backend/data/Final_Testset_for_Eval.csv` i pliki z niego wyprowadzone |
+| [Disease Prediction Based on Symptoms](https://www.kaggle.com/datasets/noeyislearning/disease-prediction-based-on-symptoms) | Francis (użytkownik Kaggle noeyislearning). **CC0: Public Domain** | Dodatkowe choroby dołączone do głównego zbioru | `backend/data/Dataset_2/` |
+
+Zmiany w danych: wiersze zostały oczyszczone, zduplikowane etykiety chorób z obu źródeł scalone, rzadkie choroby usunięte, a dane podzielone na nowo bez nakładania się zbiorów (`backend/data/build_datasets.py`, zobacz [Zbiory treningowe](#zbiory-treningowe)). Polskie nazwy objawów i chorób w `backend/data/*_pl_en.json` są pracą własną autora.
+
+Autor zbioru Mendeley opisuje go jako wygenerowany sztucznie (z zachowaniem nasilenia objawów i prawdopodobieństwa występowania chorób). Wyniki w tym README są zmierzone na tych danych i nie opisują trafności klinicznej na prawdziwych pacjentach.
+
 ## Licencja
 
 **Copyright © 2026 Grzegorz Sienkiewicz. Wszelkie prawa zastrzeżone.**
@@ -844,7 +855,7 @@ Oprogramowanie powstało w ramach pracy inżynierskiej. Jest opublikowane na Git
 
 Jeśli chcesz użyć dowolnej części projektu (do cytowania w pracy naukowej, badań, oceny lub w innym celu), skontaktuj się z autorem (zobacz [Kontakt](#kontakt) poniżej). Każda prośba jest rozpatrywana indywidualnie.
 
-Zależności open source innych firm podlegają własnym licencjom (zobacz `backend/requirements.txt` i `frontend/package.json`).
+Zależności open source innych firm podlegają własnym licencjom (zobacz `backend/requirements.txt` i `frontend/package.json`). Zbiory danych zachowują swoje oryginalne licencje (zobacz [Źródła danych](#źródła-danych)).
 
 Pełne warunki są w pliku [LICENSE](LICENSE) (po angielsku).
 
