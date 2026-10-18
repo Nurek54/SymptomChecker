@@ -25,6 +25,8 @@ const MAX_NOTES = 300;
 
 function toXgbSlug(free: string): string {
   const basic = free
+    .replace(/ł/g, "l")
+    .replace(/Ł/g, "L")
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
@@ -159,7 +161,8 @@ export default function PrepOverlay({ open, onClose }: Props) {
 
   function humanFor(xgb: string): string {
     const it = byXgb.get(xgb);
-    return it?.pl || it?.en || xgb;
+    // Free-text symptoms are stored as slugs: show them as words, not identifiers
+    return it?.pl || it?.en || xgb.replace(/_/g, " ");
   }
 
   const filtered = useMemo(() => {
@@ -189,6 +192,8 @@ export default function PrepOverlay({ open, onClose }: Props) {
       dict.find((it) => (it.aliases ?? []).some((a) => a.toLowerCase() === v.toLowerCase())) ??
       dict.find((it) => (it.en ?? "").toLowerCase() === v.toLowerCase());
     if (hit) return addByItem(hit);
+    // A partial name (e.g. "powiększone węzły") picks the first match shown in the list
+    if (query.trim().toLowerCase() === v.toLowerCase() && filtered.length) return addByItem(filtered[0]);
     setSelected((prev) => {
       if (prev.length >= MAX_SYMPTOMS) { toast(`Maksymalnie ${MAX_SYMPTOMS} objawów`); return prev; }
       const x = toXgbSlug(v);
@@ -348,7 +353,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-muted">Brak – dodaj powyżej.</span>
+                  <span className="text-sm text-muted">Brak, dodaj powyżej.</span>
                 )}
               </div>
             </div>
@@ -356,7 +361,7 @@ export default function PrepOverlay({ open, onClose }: Props) {
             <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
                 <div className="mb-1 flex items-center gap-1 text-[11px] text-muted">
-                  <Flame className="h-3.5 w-3.5 opacity-70" /> Nasilenie (0–10)
+                  <Flame className="h-3.5 w-3.5 opacity-70" /> Nasilenie (0-10)
                 </div>
                 <div className="flex items-center gap-3 rounded-xl border border-base bg-input p-2">
                   <input type="range" min={0} max={10} value={severity} onChange={(e) => setSeverity(+e.target.value)} className="flex-1" />

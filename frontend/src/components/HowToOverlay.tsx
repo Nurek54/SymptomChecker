@@ -182,7 +182,7 @@ export default function HowToOverlay({ open, onClose }: HowToOverlayProps) {
             </div>
             <ul className="mt-1 list-disc space-y-1 pl-6">
               <li><strong>#1</strong>: diagnoza najbardziej zgodna z obecnymi objawami.</li>
-              <li><strong>#2–#3</strong>: sensowne alternatywy; rozważ je, jeśli pojawią się nowe symptomy.</li>
+              <li><strong>#2 i #3</strong>: sensowne alternatywy; rozważ je, jeśli pojawią się nowe symptomy.</li>
               <li>
                 Udziały procentowe mają charakter probabilistyczny z kalibracją. To nie jest pewnik, tylko wskazówka kliniczna.
               </li>

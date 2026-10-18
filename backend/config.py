@@ -133,6 +133,7 @@ LLM_SLOTS = {
 
 # 999 = offload all layers to GPU (reduced automatically if VRAM runs out).
 LLM_GPU_LAYERS = _env_int("LLM_GPU_LAYERS", 999)
+# Per session, try offloading more GPU layers than the saved cap (the cap itself only goes down).
 LLM_AUTBOOST_ENABLE = _env_bool("LLM_AUTBOOST_ENABLE", True)
 
 # 0 = auto (cpu_count - 1).

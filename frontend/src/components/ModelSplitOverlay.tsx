@@ -298,14 +298,14 @@ export default function ModelSplitOverlay({
                         </span>
                     </p>
 
-                    <ul className="mt-1.5 space-y-1.5">
+                    <ul className="mt-1.5 list-disc space-y-1.5 pl-4">
                         <li>
-                            – Każdy z modeli osobno układa listę kilku chorób, które
+                            Każdy z modeli osobno układa listę kilku chorób, które
                             najlepiej pasują do podanych objawów.
                         </li>
                         {data?.meta?.gated_to === "learned" ? (
                             <li>
-                                – Serwer łączy oba rozkłady stałymi wagami:{" "}
+                                Serwer łączy oba rozkłady stałymi wagami:{" "}
                                 <b>{Math.round((data.meta.wx_dyn ?? 0) * 100)}% XGBoost</b> i{" "}
                                 <b>{Math.round((data.meta.wr_dyn ?? 0) * 100)}% River</b>. Wagi
                                 dobrano na osobnym zbiorze danych tak, żeby podawane
@@ -313,13 +313,13 @@ export default function ModelSplitOverlay({
                             </li>
                         ) : (
                             <li>
-                                – Serwer sprawdza, który model w danej chwili wydaje się
+                                Serwer sprawdza, który model w danej chwili wydaje się
                                 pewniejszy i miesza ich propozycje, dając trochę większy
                                 wpływ temu bardziej pewnemu, ale wciąż uwzględnia oba.
                             </li>
                         )}
                         <li>
-                            – Kolumna „Ensemble” pokazuje wynik po takim połączeniu:
+                            Kolumna „Ensemble” pokazuje wynik po takim połączeniu:
                             choroby, co do których modele się zgadzają, lądują wyżej.
                             Jeśli jeden model nic nie zwróci, brany jest po prostu
                             wynik drugiego.

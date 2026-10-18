@@ -593,7 +593,7 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
         return None
     df = pd.read_csv(TEST_CSV)
     if "diseases" not in df.columns:
-        log.warning("[XGB] TEST bez 'diseases' – pomijam ewaluację.")
+        log.warning("[XGB] TEST bez 'diseases', pomijam ewaluację.")
         return None
 
     te = df.copy()
@@ -606,7 +606,7 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
     known = set(le.classes_.tolist())
     te = te[te["diseases"].isin(known)]
     if te.empty:
-        log.warning("[XGB] TEST po filtrze pusty – pomijam ewaluację.")
+        log.warning("[XGB] TEST po filtrze pusty, pomijam ewaluację.")
         return None
 
     Xte = te[features].astype(np.uint8)
@@ -614,7 +614,7 @@ def _maybe_load_test(le: LabelEncoder, features: List[str]) -> Optional[Tuple[pd
     try:
         yte_enc = le.transform(yte)
     except Exception:
-        log.warning("[XGB] TEST zawiera nieznane klasy – pomijam ewaluację.")
+        log.warning("[XGB] TEST zawiera nieznane klasy, pomijam ewaluację.")
     else:
         return Xte, yte_enc
     return None
@@ -1126,7 +1126,7 @@ class XGBManager:
 
         train_params = _load_train_params()
         if not train_params:
-            log.warning("[XGB][INC] Brak zapisanych parametrów treningu – użyję fallback.")
+            log.warning("[XGB][INC] Brak zapisanych parametrów treningu, użyję fallback.")
             train_params, _ = _to_train_params(_strong_fallback_params(), n_classes=len(self.le.classes_))
 
         # enforce objective, metric, num_class and current GPU flags

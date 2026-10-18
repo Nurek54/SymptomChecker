@@ -725,3 +725,13 @@ def test_dict_errors_do_not_leak_server_paths(tmp_path):
         _load_dict_cached(bad)
     assert str(tmp_path) not in str(e.value.detail) and "Expecting" not in str(e.value.detail)
 
+
+def test_llm_autoboost_setting_comes_from_config():
+    """LLM_AUTBOOST_ENABLE in .env used to be ignored (llm_manager hardcoded True)."""
+    import os, subprocess, sys
+    backend = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    code = "import sys; sys.path[:0] = ['..', '.']; from models import llm_manager; print(llm_manager.LLM_AUTBOOST_ENABLE)"
+    env = {**os.environ, "LLM_AUTBOOST_ENABLE": "0"}
+    out = subprocess.run([sys.executable, "-c", code], cwd=backend, env=env, capture_output=True, text=True, timeout=120)
+    assert out.returncode == 0, out.stderr[-500:]
+    assert out.stdout.strip().splitlines()[-1] == "False"

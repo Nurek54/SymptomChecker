@@ -197,7 +197,7 @@ def _suggest_triage(
         return "wysoka", "pilna ocena teraz: SOR/112 lub natychmiastowy kontakt z lekarzem"
     if score >= 1.5:
         return "średnia", "pilny kontakt z lekarzem dzisiaj lub w ciągu 24 h"
-    return "niska", "samoobserwacja i konsultacja planowa w 48–72 h"
+    return "niska", "samoobserwacja i konsultacja planowa w 48-72 h"
 
 def _contains(words: List[str], text: str) -> bool:
     return any(w in text for w in words)

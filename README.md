@@ -565,7 +565,7 @@ If any of the XGB artifacts are missing, the full pipeline runs:
 
 > To retrain from scratch, delete `backend/ml/xgb_model.joblib`, `label_encoder.joblib`, `xgb_best_params.joblib`, `xgb_model.calibration.joblib`, `river_ovr_ftrl.joblib`, `river_ovr_ftrl.calibration.joblib` and `ensemble_calibration.json`. Models trained by older versions are still loaded, but the backend logs a warning.
 
-After that, every subsequent startup just **loads the saved models** (~5–10 s).
+After that, every subsequent startup just **loads the saved models** (~5-10 s).
 
 ### Progress and remaining time
 
@@ -591,8 +591,8 @@ Bielik 11B Q6_K is **not trained** - only loaded into memory:
 
 | Setup | Load time |
 |-------|-----------|
-| GPU + NVMe SSD | ~30–90 s |
-| CPU + NVMe | ~1–2 min |
+| GPU + NVMe SSD | ~30-90 s |
+| CPU + NVMe | ~1-2 min |
 | HDD | painfully slow - move the GGUF to an SSD |
 
 Once loaded, generation is fast (a few seconds per Top-3 summary on GPU).
@@ -657,7 +657,7 @@ Pneumonia,950,1.95
 
 ### 3. Calibration CSV - `calibration.csv`
 
-Same schema as the main training CSV. A held-out portion (typically 5–10% of training data, stratified by disease) used by the River temperature calibrator. The `weight` column is optional here.
+Same schema as the main training CSV. A held-out portion (typically 5-10% of training data, stratified by disease) used by the River temperature calibrator. The `weight` column is optional here.
 
 ### 4. Test set CSV - `Final_Testset_for_Eval.csv`
 
@@ -785,7 +785,7 @@ All ML / LLM / auth knobs live in **`backend/config.py`**. Runtime overrides com
 
 | Setting | Default | Effect |
 |---------|---------|--------|
-| `XGB_N_ITER_BAYES` | `32` | Bayes search iterations. **Lower = faster first run, slightly less optimal model.** Try `8–16` for dev |
+| `XGB_N_ITER_BAYES` | `32` | Bayes search iterations. **Lower = faster first run, slightly less optimal model.** Try `8-16` for dev |
 | `XGB_CV_SPLITS` | `3` | CV folds |
 | `XGB_USE_GPU` | `True` | Use CUDA |
 | `XGB_TREE_METHOD` | `"hist"` | Fastest tree algorithm |

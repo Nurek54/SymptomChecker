@@ -34,7 +34,7 @@ SYSTEM_PROMPT = (
     "Wykorzystuj tylko informacje z sekcji Kontekst; niczego nie zmyślaj i nie dopisuj objawów. "
     "Możesz parafrazować nazwy objawów i diagnoz tak, żeby zdanie brzmiało po polsku naturalnie "
     "(np. zapalenie gardła zamiast pharyngitis); zachowaj jednak ich sens. "
-    "Pisz wyłącznie ciągłą prozą w 1–3 akapitach. "
+    "Pisz wyłącznie ciągłą prozą w 1-3 akapitach. "
     "Nie używaj długich myślników (pauz); zamiast nich postaw przecinek, dwukropek albo kropkę. "
     "ABSOLUTNIE ZAKAZANE są listy w jakiejkolwiek formie: "
     "nie zaczynaj zdania od liczby z kropką (1., 2., 3.) ani od myślnika czy kropki, "
@@ -53,7 +53,7 @@ SYSTEM_PROMPT = (
     "porad o lekach OTC, NIE opisuj zaleceń domowych, NIE mów o pilności (chyba że pacjent "
     "wprost o nią pyta). Każdy z tych tematów jest osobnym pytaniem, na które pacjent może "
     "Cię zapytać oddzielnie. "
-    "Naturalna długość odpowiedzi to 3–6 zdań, w 1–2 akapitach. "
+    "Naturalna długość odpowiedzi to 3-6 zdań, w 1-2 akapitach. "
     "Zawsze kończ pełnym zdaniem zakończonym kropką."
 )
 
@@ -68,7 +68,7 @@ DRUG_POLICY = (
 
 TRIAGE_GUIDELINE = (
     "Gdy mówisz o pilności, łącz ją z ramą czasową. Niska pilność oznacza samoobserwację "
-    "i ewentualnie wizytę w 48–72 h, średnia kontakt z lekarzem dzisiaj lub w 24 h, "
+    "i ewentualnie wizytę w 48-72 h, średnia kontakt z lekarzem dzisiaj lub w 24 h, "
     "a wysoka pilną ocenę teraz (SOR/112), zwłaszcza przy czerwonych flagach. "
     "Wpleć to w naturalne zdanie, nie ogłaszaj jak komunikat."
 )
@@ -79,13 +79,13 @@ TASK_DIAGNOSIS = (
     "objawy ją wskazują. Możesz pokrótce wspomnieć inne pozycje z Top-3 jako alternatywy. "
     "NIE wymieniaj leków, NIE podawaj zaleceń domowych (odpoczynek, nawodnienie itp.), "
     "NIE opisuj pilności; to są osobne pytania, na które pacjent może zapytać oddzielnie. "
-    "3–5 zdań w jednym akapicie."
+    "3-5 zdań w jednym akapicie."
 )
 
 TASK_DIAGNOSIS_FOLLOWUP = (
     "Pacjent dopytuje o tę samą diagnozę, którą wcześniej wymieniłeś. Skup się na "
     "wyjaśnieniu, dlaczego pasuje, jakie objawy ją potwierdzają, a co ewentualnie "
-    "do niej nie pasuje. NIE opisuj pilności ani leków. 4–6 zdań w jednym akapicie."
+    "do niej nie pasuje. NIE opisuj pilności ani leków. 4-6 zdań w jednym akapicie."
 )
 
 # Intents whose answer should mention urgency (the other TASK_* prompts forbid it).
@@ -96,23 +96,23 @@ TASK_ADVICE = (
     "(odpoczynek, nawodnienie, pozycja, środowisko) opisz pełnymi zdaniami, bez list. "
     "NIE wymieniaj leków (od tego jest osobne pytanie), NIE powtarzaj diagnozy, "
     "NIE opisuj pilności. Skup się na praktycznych krokach pacjenta w domu. "
-    "4–6 zdań w 1–2 akapitach."
+    "4-6 zdań w 1-2 akapitach."
 )
 
 TASK_TRIAGE = (
     "Oceń JEDYNIE pilność tej sytuacji. Powiedz, czy to niska, średnia czy wysoka pilność, "
-    "i osadź to w czasie (48–72 h / dzisiaj / natychmiast). Wspomnij naturalnie o "
-    "1–2 sytuacjach, które powinny skłonić pacjenta do szybszej oceny. "
+    "i osadź to w czasie (48-72 h / dzisiaj / natychmiast). Wspomnij naturalnie o "
+    "1-2 sytuacjach, które powinny skłonić pacjenta do szybszej oceny. "
     "NIE powtarzaj diagnozy, NIE wymieniaj leków, NIE rozpisuj zaleceń domowych. "
-    "3–5 zdań, bez list."
+    "3-5 zdań, bez list."
 )
 
 TASK_OTC = (
-    "Pacjent pyta o leki bez recepty. Wymień 2–4 nazwy substancji czynnych wplecione "
+    "Pacjent pyta o leki bez recepty. Wymień 2-4 nazwy substancji czynnych wplecione "
     "w zdania, z krótkim wyjaśnieniem działania każdej. Bez dawek, bez marek, bez "
     "częstotliwości. Po każdej dopisz: stosuj zgodnie z ulotką. Uwzględnij wiek. "
     "NIE powtarzaj diagnozy, NIE opisuj zaleceń niefarmakologicznych, NIE rozpisuj pilności. "
-    "4–6 zdań w 1–2 akapitach."
+    "4-6 zdań w 1-2 akapitach."
 )
 
 TASK_PROPHYLAXIS = (
@@ -120,13 +120,13 @@ TASK_PROPHYLAXIS = (
     "obrazu objawów (np. szczepienia, higiena, modyfikacja stylu życia, kontrola "
     "chorób przewlekłych, unikanie wyzwalaczy). Konkretnie, w kontekście "
     "zgłoszonych objawów, bez ogólników w stylu zdrowy tryb życia. "
-    "Bez list, ciągłym tekstem. 5–8 zdań."
+    "Bez list, ciągłym tekstem. 5-8 zdań."
 )
 
 TASK_SUMMARY = (
     "Streść w naturalnym tonie: zgłoszone objawy, najprawdopodobniejsza przyczyna "
     "i jej dopasowanie, pozostałe rozważane opcje, pilność i sugerowany następny krok. "
-    "4–6 zdań w jednym akapicie."
+    "4-6 zdań w jednym akapicie."
 )
 
 FALLBACK_POLICY = (
@@ -274,7 +274,7 @@ def build_prompt_strict(
 
     strict_system = (
         "Jesteś polskim asystentem do wstępnej oceny objawów. "
-        "Piszesz krótką wypowiedź w naturalnej polszczyźnie, w 1–3 akapitach ciągłym tekstem. "
+        "Piszesz krótką wypowiedź w naturalnej polszczyźnie, w 1-3 akapitach ciągłym tekstem. "
         "ABSOLUTNIE NIE wolno Ci tworzyć list, używać numeracji (1., 2., 3.), myślników "
         "ani zwrotów typu 'proponuję następujące kroki', 'oto co możesz zrobić'. "
         "Każdą myśl formułujesz jako pełne zdanie. "

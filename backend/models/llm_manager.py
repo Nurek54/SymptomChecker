@@ -19,6 +19,7 @@ from config import (
     LLM_MAX_NEW_TOKENS, LLM_TEMP, LLM_TOP_P,
     LLM_CONTEXT_LEN, LLM_STOP_SEQUENCES, LLM_EOS_STRINGS,
     LLM_MIN_OUTPUT_CHARS, LLM_REPETITION_PENALTY, LLM_TOP_K,
+    LLM_AUTBOOST_ENABLE,
 )
 
 try:
@@ -42,7 +43,6 @@ try:
 except Exception:
     LLM_TUNING_CACHE_MODE = "off"  # 'off'|'hint'|'on'
 
-LLM_AUTBOOST_ENABLE = True
 
 
 _MULTISPACE_RE = re.compile(r"[ \t]{2,}")

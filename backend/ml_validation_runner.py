@@ -148,11 +148,11 @@ class MLValidationRunner:
         if not self._resolve_path(RIVER_MODEL_PATH).exists():
             raise FileNotFoundError(f"Brak artefaktów River: {RIVER_MODEL_PATH}")
 
-        logger.info("  • Ładowanie XGBManager (artefakty istnieją – bez ponownego trenowania).")
+        logger.info("  • Ładowanie XGBManager (artefakty istnieją, bez ponownego trenowania).")
         xgb = XGBManager()
         xgb.train()  # with existing artifacts: load + warm-up only
 
-        logger.info("  • Ładowanie RiverManager (artefakty istnieją – bez bootstrapu od zera).")
+        logger.info("  • Ładowanie RiverManager (artefakty istnieją, bez bootstrapu od zera).")
         river = RiverManager()
         river.set_features(xgb.features)
         river.train()  # with existing artifacts: load + calibration if needed
@@ -273,7 +273,7 @@ class MLValidationRunner:
 
         feats = self.xgb.features
         if not feats:
-            raise RuntimeError("XGBManager.features jest puste – sprawdź trening.")
+            raise RuntimeError("XGBManager.features jest puste, sprawdź trening.")
         missing = [f for f in feats if f not in self.df.columns]
         if missing:
             raise RuntimeError(f"Zbiór testowy nie zawiera cech XGB: {missing[:5]}...")
@@ -493,7 +493,7 @@ class MLValidationRunner:
         ax.set_ylim(0.0, 1.0)
         ax.set_xlabel("Deklarowana pewność")
         ax.set_ylabel("Rzeczywista trafność")
-        ax.set_title(f"Wykres kalibracji – {name}")
+        ax.set_title(f"Wykres kalibracji: {name}")
         ax.legend()
         ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.7)
 
@@ -513,7 +513,7 @@ class MLValidationRunner:
         path: Path,
     ) -> None:
         """(W5) Coverage vs accuracy curve (sorted by confidence), one curve per model."""
-        logger.info(f"[6/7] Rysowanie krzywej pokrycie–dokładność: {path.name}")
+        logger.info(f"[6/7] Rysowanie krzywej pokrycie-dokładność: {path.name}")
 
         def _curve(conf: np.ndarray, hits: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
             order = np.argsort(-conf)
@@ -542,7 +542,7 @@ class MLValidationRunner:
         ax.set_ylabel("Top-1 na pokazanych")
         ax.set_xlim(0.0, 1.0)
         ax.set_ylim(0.0, 1.0)
-        ax.set_title("Krzywa pokrycie–dokładność\n(XGB / River / Ensemble)")
+        ax.set_title("Krzywa pokrycie-dokładność\n(XGB / River / Ensemble)")
         ax.legend()
         ax.grid(True, linestyle=":", linewidth=0.5, alpha=0.7)
 
@@ -613,7 +613,7 @@ class MLValidationRunner:
         baseline_top1 = float(counts_arr[most_idx] / len(y_true))
         baseline_top3 = baseline_top1
         logger.info(
-            f"[4/7] Baseline (najczęstsza klasa: {most_class}) – Top-1/Top-3={baseline_top1:.3f}."
+            f"[4/7] Baseline (najczęstsza klasa: {most_class}), Top-1/Top-3={baseline_top1:.3f}."
         )
 
         # confusion matrices (W1)
@@ -642,21 +642,21 @@ class MLValidationRunner:
         self._plot_confusion(
             cm_xgb_all,
             labels_all,
-            "Macierz pomyłek – XGB (wszystkie klasy)",
+            "Macierz pomyłek: XGB (wszystkie klasy)",
             self.out_dir / "cm_xgb_all.svg",
             normalize_rows=False,
         )
         self._plot_confusion(
             cm_river_all,
             labels_all,
-            "Macierz pomyłek – River (wszystkie klasy)",
+            "Macierz pomyłek: River (wszystkie klasy)",
             self.out_dir / "cm_river_all.svg",
             normalize_rows=False,
         )
         self._plot_confusion(
             cm_ens_all,
             labels_all,
-            "Macierz pomyłek – Ensemble (wszystkie klasy)",
+            "Macierz pomyłek: Ensemble (wszystkie klasy)",
             self.out_dir / "cm_ens_all.svg",
             normalize_rows=False,
         )
@@ -664,21 +664,21 @@ class MLValidationRunner:
         self._plot_confusion(
             cm_xgb_all,
             labels_all,
-            "Macierz pomyłek – XGB (wszystkie klasy)",
+            "Macierz pomyłek: XGB (wszystkie klasy)",
             self.out_dir / "cm_xgb_all_norm.svg",
             normalize_rows=True,
         )
         self._plot_confusion(
             cm_river_all,
             labels_all,
-            "Macierz pomyłek – River (wszystkie klasy)",
+            "Macierz pomyłek: River (wszystkie klasy)",
             self.out_dir / "cm_river_all_norm.svg",
             normalize_rows=True,
         )
         self._plot_confusion(
             cm_ens_all,
             labels_all,
-            "Macierz pomyłek – Ensemble (wszystkie klasy)",
+            "Macierz pomyłek: Ensemble (wszystkie klasy)",
             self.out_dir / "cm_ens_all_norm.svg",
             normalize_rows=True,
         )
@@ -700,21 +700,21 @@ class MLValidationRunner:
             self._plot_confusion(
                 cm_xgb_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – XGB (50 najczęstszych klas)",
+                "Macierz pomyłek: XGB (50 najczęstszych klas)",
                 self.out_dir / "cm_xgb_top50freq.svg",
                 normalize_rows=False,
             )
             self._plot_confusion(
                 cm_river_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – River (50 najczęstszych klas)",
+                "Macierz pomyłek: River (50 najczęstszych klas)",
                 self.out_dir / "cm_river_top50freq.svg",
                 normalize_rows=False,
             )
             self._plot_confusion(
                 cm_ens_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – Ensemble (50 najczęstszych klas)",
+                "Macierz pomyłek: Ensemble (50 najczęstszych klas)",
                 self.out_dir / "cm_ens_top50freq.svg",
                 normalize_rows=False,
             )
@@ -722,21 +722,21 @@ class MLValidationRunner:
             self._plot_confusion(
                 cm_xgb_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – XGB (50 najczęstszych klas)",
+                "Macierz pomyłek: XGB (50 najczęstszych klas)",
                 self.out_dir / "cm_xgb_top50freq_norm.svg",
                 normalize_rows=True,
             )
             self._plot_confusion(
                 cm_river_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – River (50 najczęstszych klas)",
+                "Macierz pomyłek: River (50 najczęstszych klas)",
                 self.out_dir / "cm_river_top50freq_norm.svg",
                 normalize_rows=True,
             )
             self._plot_confusion(
                 cm_ens_top_freq,
                 labels_top50_freq,
-                "Macierz pomyłek – Ensemble (50 najczęstszych klas)",
+                "Macierz pomyłek: Ensemble (50 najczęstszych klas)",
                 self.out_dir / "cm_ens_top50freq_norm.svg",
                 normalize_rows=True,
             )
@@ -749,21 +749,21 @@ class MLValidationRunner:
             self._plot_confusion(
                 cm_xgb_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – XGB (50 najrzadszych klas)",
+                "Macierz pomyłek: XGB (50 najrzadszych klas)",
                 self.out_dir / "cm_xgb_top50rare.svg",
                 normalize_rows=False,
             )
             self._plot_confusion(
                 cm_river_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – River (50 najrzadszych klas)",
+                "Macierz pomyłek: River (50 najrzadszych klas)",
                 self.out_dir / "cm_river_top50rare.svg",
                 normalize_rows=False,
             )
             self._plot_confusion(
                 cm_ens_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – Ensemble (50 najrzadszych klas)",
+                "Macierz pomyłek: Ensemble (50 najrzadszych klas)",
                 self.out_dir / "cm_ens_top50rare.svg",
                 normalize_rows=False,
             )
@@ -771,21 +771,21 @@ class MLValidationRunner:
             self._plot_confusion(
                 cm_xgb_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – XGB (50 najrzadszych klas)",
+                "Macierz pomyłek: XGB (50 najrzadszych klas)",
                 self.out_dir / "cm_xgb_top50rare_norm.svg",
                 normalize_rows=True,
             )
             self._plot_confusion(
                 cm_river_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – River (50 najrzadszych klas)",
+                "Macierz pomyłek: River (50 najrzadszych klas)",
                 self.out_dir / "cm_river_top50rare_norm.svg",
                 normalize_rows=True,
             )
             self._plot_confusion(
                 cm_ens_top_rare,
                 labels_top50_rare,
-                "Macierz pomyłek – Ensemble (50 najrzadszych klas)",
+                "Macierz pomyłek: Ensemble (50 najrzadszych klas)",
                 self.out_dir / "cm_ens_top50rare_norm.svg",
                 normalize_rows=True,
             )
@@ -799,7 +799,7 @@ class MLValidationRunner:
         self._plot_per_class(
             acc_ens,
             counts_ens,
-            "Trafność Top-1 per klasa – Ensemble (wszystkie klasy)",
+            "Trafność Top-1 per klasa: Ensemble (wszystkie klasy)",
             self.out_dir / "perclass_ens.svg",
             top_k=None,
         )
@@ -807,7 +807,7 @@ class MLValidationRunner:
         self._plot_per_class(
             acc_ens,
             counts_ens,
-            "Trafność Top-1 per klasa – Ensemble (50 najczęstszych klas)",
+            "Trafność Top-1 per klasa: Ensemble (50 najczęstszych klas)",
             self.out_dir / "perclass_ens_top50freq.svg",
             top_k=None,
             labels_subset=labels_top50_freq,
@@ -817,7 +817,7 @@ class MLValidationRunner:
         self._plot_per_class(
             acc_ens,
             counts_ens,
-            "Trafność Top-1 per klasa – Ensemble (50 najrzadszych klas)",
+            "Trafność Top-1 per klasa: Ensemble (50 najrzadszych klas)",
             self.out_dir / "perclass_ens_top50rare.svg",
             top_k=None,
             labels_subset=labels_top50_rare,
@@ -855,7 +855,7 @@ class MLValidationRunner:
             self.out_dir / "coverage_accuracy_all.svg",
         )
 
-        logger.info("[7/7] Sprawdzanie kryteriów akceptacji K1–K4 i regresji lokalnych.")
+        logger.info("[7/7] Sprawdzanie kryteriów akceptacji K1-K4 i regresji lokalnych.")
         # K1/K2: ensemble significantly better than the BEST single model. Both are scored on
         # the same cases, so the comparison is paired: exact McNemar test (p < 0.05, two-sided)
         # plus direction of improvement. The "95% CIs do not overlap" check is kept for

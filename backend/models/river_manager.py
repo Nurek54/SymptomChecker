@@ -149,7 +149,7 @@ def _maybe_load_test(features: List[str]) -> Optional[Tuple[pd.DataFrame, pd.Ser
     df = pd.read_csv(TEST_CSV)
     df.columns = [str(c).strip().lower() for c in df.columns]
     if "diseases" not in df.columns:
-        log.warning("[River][IO] TEST bez 'diseases' – pomijam ewaluację.")
+        log.warning("[River][IO] TEST bez 'diseases', pomijam ewaluację.")
         return None
 
     te = df.copy()
@@ -347,7 +347,7 @@ class RiverManager:
                      RIVER_ALPHA, RIVER_BETA, RIVER_L1, RIVER_L2)
         else:
             opt = getattr(optim, "AdaGrad", optim.Adam)()
-            log.warning("[River][Model] optim.FTRL niedostępny – fallback na %s.", opt.__class__.__name__)
+            log.warning("[River][Model] optim.FTRL niedostępny, fallback na %s.", opt.__class__.__name__)
         base = linear_model.LogisticRegression(optimizer=opt, l2=RIVER_L2, clip_gradient=RIVER_CLIP_GRADIENT)
         ovr = OneVsRestClassifier(base)
         log.info("[River][Model] Gotowe w %.2fs - OneVsRest(LogisticRegression).", time.time() - t0)
@@ -369,7 +369,7 @@ class RiverManager:
         cal = RiverTemperatureCalibrator.load(RIVER_CALIB_PATH)
         if cal is not None and self.model is not None:
             if cal.classes_ != self._current_classes():
-                log.warning("[River][Cal] Kalibrator nie pasuje do aktualnych klas – unieważniam.")
+                log.warning("[River][Cal] Kalibrator nie pasuje do aktualnych klas, unieważniam.")
                 return None
         return cal
 
@@ -618,7 +618,7 @@ class RiverManager:
                 self._prepare_vector_template()
                 self.warmup()
                 self._base_proba = None
-                log.info("[River][Train] Artefakty istnieją – pomijam bootstrap.")
+                log.info("[River][Train] Artefakty istnieją, pomijam bootstrap.")
         if self.model is None:
             log.info("[River][Train] Bootstrap: wczytywanie danych i inicjalizacja modelu")
             df = _load_train_dataframe()
@@ -751,7 +751,7 @@ class RiverManager:
         log.debug("[River][Predict] ▶ predict_topk(k=%d)", k)
         t0 = time.perf_counter()
         if self.model is None or not self.features:
-            raise RuntimeError("Model/features niegotowe – wywołaj train().")
+            raise RuntimeError("Model/features niegotowe, wywołaj train().")
 
         x, active = self._x_from_vec(vec)
 

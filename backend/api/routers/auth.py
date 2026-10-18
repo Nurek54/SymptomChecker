@@ -26,7 +26,7 @@ log = logging.getLogger("api.auth")
 # Supabase tokens are verified with HS256 only (shared secret, no JWKS fetch).
 SUPABASE_JWT_SECRET = (os.getenv("SUPABASE_JWT_SECRET") or "").strip()
 if not SUPABASE_JWT_SECRET:
-    log.error("Brak SUPABASE_JWT_SECRET – weryfikacja JWT Supabase nie zadziała (HS256).")
+    log.error("Brak SUPABASE_JWT_SECRET, weryfikacja JWT Supabase nie zadziała (HS256).")
 
 AUTH_SECRET = AUTH_SECRET_KEY  # signs the backend session cookie
 COOKIE_NAME = SESSION_COOKIE_NAME
