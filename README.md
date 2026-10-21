@@ -857,7 +857,7 @@ If you would like to use any part of this project - for academic citation, resea
 
 Third-party open-source dependencies remain governed by their own licenses (see `backend/requirements.txt` and `frontend/package.json`). The datasets keep their original licenses (see [Data sources](#data-sources)).
 
-See the [LICENSE](LICENSE) file for full terms.
+See the [LICENSE](LICENSE) file for full terms. 
 
 ## Contact
 
